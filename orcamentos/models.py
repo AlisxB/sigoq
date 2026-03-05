@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.db import models
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -62,6 +63,10 @@ class Orcamento(BaseModel):
     margem_contrib = models.DecimalField(max_digits=5, decimal_places=4, default=0.2000, verbose_name="Margem de Contribuição (%)")
     desconto_percent = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, verbose_name="Desconto Final (%)")
     
+    # Travas de Segurança (Fase 6)
+    aprovado_gerencia = models.BooleanField(default=False, verbose_name="Aprovado pela Gerência?")
+    motivo_rejeicao = models.TextField(blank=True, verbose_name="Motivo Rejeição")
+    
     validade_dias = models.PositiveIntegerField(default=15, verbose_name="Validade (Dias)")
     prazo_entrega = models.CharField(max_length=100, blank=True, verbose_name="Prazo de Entrega")
     condicao_pagamento = models.CharField(max_length=255, blank=True, verbose_name="Condição de Pagamento")
@@ -80,6 +85,18 @@ class Orcamento(BaseModel):
         if not self.numero:
             last_orc = Orcamento.all_objects.all().order_by('numero').last()
             self.numero = (last_orc.numero + 1) if last_orc else 1
+            
+        # RN-01: Alerta de Margem Baixa (< 15%)
+        if self.margem_contrib < Decimal('0.1500') and not self.aprovado_gerencia:
+            if self.status not in ['REVISAO', 'REPROVADO']:
+                self.status = 'REVISAO'
+                print(f"ALERTA: Orçamento {self.numero} com margem baixa ({self.margem_contrib*100}%). Enviado para revisão.")
+                
+        # RN-07: Alteração Crítica (exemplo de lógica simplificada)
+        # Se valor total aumentou muito em relação à revisão anterior (versao_pai)
+        if self.versao_pai and self.valor_total > (self.versao_pai.valor_total * Decimal('1.10')):
+             print(f"ALERTA CRÍTICO: Orçamento {self.numero} com aumento superior a 10% em relação à R{self.versao_pai.revisao}")
+
         super().save(*args, **kwargs)
 
 class Kit(models.Model):
@@ -116,6 +133,7 @@ class ItemOrcamento(models.Model):
     # Cálculo de Venda
     vlr_unit_venda = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True, verbose_name="Valor Unitário Venda")
     desconto_unit_valor = models.DecimalField(max_digits=15, decimal_places=2, default=0.00, verbose_name="Desconto Unitário (Valor)")
+    desconto_percent_item = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, verbose_name="Desconto Item (%)")
     
     class Meta:
         verbose_name = "Item de Orçamento"
@@ -141,4 +159,15 @@ class ItemOrcamento(models.Model):
             else:
                 self.vlr_unit_venda = self.custo_unit_snapshot * Decimal('1.5') # Fallback
                 
+        # RN-02: Bloqueio de desconto > 10% sem aprovação gerencial
+        if self.vlr_unit_venda > 0:
+            calc_desconto_perc = (self.desconto_unit_valor / self.vlr_unit_venda) * 100
+            self.desconto_percent_item = calc_desconto_perc
+            
+            if calc_desconto_perc > 10 and not self.kit.orcamento.aprovado_gerencia:
+                if self.kit.orcamento.status != 'REVISAO':
+                    self.kit.orcamento.status = 'REVISAO'
+                    self.kit.orcamento.save()
+                    print(f"ALERTA: Item {self.codigo} com desconto excessivo ({calc_desconto_perc}%). Orçamento enviado para revisão.")
+
         super().save(*args, **kwargs)

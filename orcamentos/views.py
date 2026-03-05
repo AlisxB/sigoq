@@ -1,9 +1,10 @@
 from django.shortcuts import get_object_or_404
 from django.views.generic import DetailView
 from django_weasyprint import WeasyTemplateResponseMixin
+from core.mixins import ComercialIsolationMixin
 from .models import Orcamento
 
-class OrcamentoPDFView(WeasyTemplateResponseMixin, DetailView):
+class OrcamentoPDFView(WeasyTemplateResponseMixin, ComercialIsolationMixin, DetailView):
     model = Orcamento
     template_name = 'orcamentos/proposta_pdf.html'
     context_object_name = 'orcamento'
