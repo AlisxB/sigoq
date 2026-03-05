@@ -1,54 +1,216 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Container, Row, Col, Nav } from 'react-bootstrap';
-import { LayoutDashboard, FileText, Settings, Users, LogOut } from 'lucide-react';
+import { Form, InputGroup } from 'react-bootstrap';
+import {
+    LayoutDashboard, FileText, Settings, Users, LogOut, Rocket,
+    Search, Bell, Moon, Sun, LayoutGrid, ChevronDown, MessageSquare,
+    Calendar, Mail, User, Phone, BookOpen, Layers, Menu
+} from 'lucide-react';
 
 const MainLayout: React.FC = () => {
     const location = useLocation();
+    const [isCollapsed, setIsCollapsed] = useState(false);
+    const [isHovered, setIsHovered] = useState(false);
 
-    const menuItems = [
-        { name: 'Dashboard', path: '/', icon: <LayoutDashboard size={20} /> },
-        { name: 'Orçamentos', path: '/', icon: <FileText size={20} /> },
-        { name: 'Clientes', path: '#', icon: <Users size={20} /> },
-        { name: 'Configurações', path: '#', icon: <Settings size={20} /> },
+    const sections = [
+        {
+            title: 'HOME',
+            items: [
+                { name: 'Dashboard', path: '/', icon: <LayoutDashboard size={20} /> },
+            ]
+        },
+        {
+            title: 'APPS',
+            items: [
+                { name: 'Orçamentos', path: '/orcamentos', icon: <FileText size={20} /> },
+                { name: 'Clientes', path: '/clientes', icon: <Users size={20} /> },
+                { name: 'Kanban', path: '/kanban', icon: <Layers size={20} /> },
+                { name: 'Configurações', path: '/configuracoes', icon: <Settings size={20} /> },
+            ]
+        }
     ];
 
+    // Logic for sidebar width
+    const isExpanded = !isCollapsed || isHovered;
+    const sidebarWidth = isExpanded ? '280px' : '90px';
+
     return (
-        <Container fluid>
-            <Row>
-                <Col md={2} className="sidebar px-0 d-none d-md-block">
-                    <div className="px-4 mb-5">
-                        <h2 className="h4 fw-bold">SIGOQ</h2>
-                        <span className="text-secondary small">Painel Orçamentista</span>
+        <div style={{
+            display: 'grid',
+            gridTemplateColumns: `${sidebarWidth} 1fr`,
+            height: '100vh',
+            width: '100vw',
+            backgroundColor: '#F2F6FA',
+            overflow: 'hidden',
+            transition: 'grid-template-columns 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+        }}>
+            {/* Sidebar - Afastada e Arredondada */}
+            <aside
+                onMouseEnter={() => isCollapsed && setIsHovered(true)}
+                onMouseLeave={() => isCollapsed && setIsHovered(false)}
+                style={{
+                    backgroundColor: '#FFFFFF',
+                    borderRadius: '24px',
+                    margin: '15px',
+                    padding: isExpanded ? '24px 15px' : '24px 10px',
+                    boxShadow: '0px 10px 30px rgba(0, 0, 0, 0.03)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    height: 'calc(100vh - 30px)',
+                    border: '1px solid rgba(0, 0, 0, 0.05)',
+                    overflow: 'hidden',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    zIndex: 1000
+                }}
+            >
+                <div className={`d-flex align-items-center mb-4 px-2 ${isExpanded ? 'justify-content-start gap-3' : 'justify-content-center'}`}>
+                    <div style={{
+                        backgroundColor: '#5D87FF',
+                        padding: '10px',
+                        borderRadius: '14px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        flexShrink: 0
+                    }}>
+                        <Rocket size={22} color="#FFFFFF" strokeWidth={3} />
                     </div>
-                    <Nav className="flex-column">
-                        {menuItems.map((item) => (
-                            <Nav.Link
-                                key={item.name}
-                                as={Link as any}
-                                to={item.path}
-                                className={location.pathname === item.path ? 'active' : ''}
-                            >
-                                <span className="me-2">{item.icon}</span>
-                                {item.name}
-                            </Nav.Link>
-                        ))}
-                        <Nav.Link href="http://localhost:8000/admin/logout/" className="mt-5 text-danger">
-                            <span className="me-2"><LogOut size={20} /></span>
-                            Sair
-                        </Nav.Link>
-                    </Nav>
-                </Col>
-                <Col md={10} className="px-0">
-                    <header className="glass-header px-4 py-3">
-                        <h1 className="h5 fw-semibold mb-0">Sistema Integrado de Gestão de Orçamentos</h1>
-                    </header>
-                    <main className="p-4">
-                        <Outlet />
-                    </main>
-                </Col>
-            </Row>
-        </Container>
+                    {isExpanded && (
+                        <h2 className="h5 fw-bold mb-0 text-nowrap" style={{ color: '#2A3547', letterSpacing: '-0.5px' }}>SIGOQ Admin</h2>
+                    )}
+                </div>
+
+                <div style={{ flexGrow: 1, overflowY: 'auto', overflowX: 'hidden', paddingRight: '5px' }}>
+                    {sections.map(section => (
+                        <div key={section.title} className="mb-4">
+                            {isExpanded ? (
+                                <p className="text-muted fw-bold px-3 mb-3" style={{ fontSize: '11px', letterSpacing: '1px', opacity: 0.6 }}>{section.title}</p>
+                            ) : (
+                                <div style={{ height: '1px', backgroundColor: '#F1F3F4', margin: '0 15px 15px 15px' }}></div>
+                            )}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                                {section.items.map((item) => {
+                                    const isActive = location.pathname === item.path;
+                                    return (
+                                        <Link
+                                            key={item.name}
+                                            to={item.path}
+                                            title={!isExpanded ? item.name : ''}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: isExpanded ? 'flex-start' : 'center',
+                                                gap: isExpanded ? '12px' : '0',
+                                                padding: '12px',
+                                                borderRadius: '12px',
+                                                color: isActive ? '#FFFFFF' : '#5A6A83',
+                                                backgroundColor: isActive ? '#5D87FF' : 'transparent',
+                                                textDecoration: 'none',
+                                                fontWeight: isActive ? '600' : '500',
+                                                fontSize: '14px',
+                                                transition: 'all 0.2s',
+                                                boxShadow: isActive ? '0px 4px 12px rgba(93, 135, 255, 0.3)' : 'none'
+                                            }}
+                                        >
+                                            <span style={{ display: 'flex', flexShrink: 0 }}>{item.icon}</span>
+                                            {isExpanded && <span className="text-nowrap">{item.name}</span>}
+                                        </Link>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* User Card - Bottom */}
+                <div style={{
+                    backgroundColor: 'rgba(93, 135, 255, 0.08)',
+                    borderRadius: '20px',
+                    padding: isExpanded ? '15px' : '10px',
+                    display: 'flex',
+                    justifyContent: isExpanded ? 'flex-start' : 'center'
+                }}>
+                    <div className={`d-flex align-items-center ${isExpanded ? 'gap-3 w-100' : 'justify-content-center'}`}>
+                        <div style={{
+                            width: '38px', height: '38px', borderRadius: '50%', backgroundColor: '#5D87FF',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFF', fontWeight: 'bold', flexShrink: 0
+                        }}>A</div>
+                        {isExpanded && (
+                            <>
+                                <div style={{ flexGrow: 1, minWidth: 0 }}>
+                                    <p className="mb-0 fw-bold small text-nowrap text-truncate" style={{ color: '#2A3547' }}>Admin</p>
+                                    <p className="mb-0 text-muted" style={{ fontSize: '10px' }}>SIGOQ Pro</p>
+                                </div>
+                                <LogOut size={18} color="#5D87FF" style={{ cursor: 'pointer', flexShrink: 0 }} />
+                            </>
+                        )}
+                    </div>
+                </div>
+            </aside>
+
+            {/* Main Content Area Area */}
+            <div style={{ display: 'flex', flexDirection: 'column', padding: '15px 15px 15px 0', height: '100vh', width: '100%', overflow: 'hidden' }}>
+                <header style={{
+                    marginBottom: '15px',
+                    backgroundColor: 'transparent',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '5px 10px'
+                }}>
+                    <div className="d-flex align-items-center gap-4">
+                        <div
+                            onClick={() => setIsCollapsed(!isCollapsed)}
+                            style={{ padding: '8px', cursor: 'pointer', borderRadius: '8px', backgroundColor: '#FFF', border: '1px solid #DFE5EF' }}
+                        >
+                            <Menu size={20} color="#5A6A83" />
+                        </div>
+
+                        <InputGroup style={{ width: '300px', backgroundColor: '#FFFFFF', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.05)' }}>
+                            <InputGroup.Text className="bg-transparent border-0 pe-1">
+                                <Search size={18} color="#7C8FAC" />
+                            </InputGroup.Text>
+                            <Form.Control
+                                placeholder="Pesquisar..."
+                                className="bg-transparent border-0 shadow-none"
+                                style={{ fontSize: '14px', padding: '10px' }}
+                            />
+                        </InputGroup>
+                    </div>
+
+                    <div className="d-flex align-items-center gap-3">
+                        <div className="d-flex align-items-center gap-3 pe-4 border-end d-none d-md-flex">
+                            <img src="https://flagcdn.com/w20/br.png" width="22" alt="Brasil" style={{ borderRadius: '3px' }} />
+                            <Moon size={22} color="#5A6A83" style={{ cursor: 'pointer' }} />
+                            <Bell size={22} color="#5A6A83" style={{ cursor: 'pointer' }} />
+                        </div>
+
+                        <div className="d-flex align-items-center gap-2 ps-2">
+                            <div className="d-none d-lg-block text-end">
+                                <p className="mb-0 fw-bold small" style={{ color: '#2A3547' }}>Alison Bezerra</p>
+                                <p className="mb-0 text-muted" style={{ fontSize: '11px' }}>Administrador</p>
+                            </div>
+                            <div style={{
+                                width: '40px',
+                                height: '40px',
+                                borderRadius: '50%',
+                                backgroundColor: 'rgba(93, 135, 255, 0.1)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: '#5D87FF',
+                                fontWeight: 'bold',
+                                cursor: 'pointer'
+                            }}>AB</div>
+                            <ChevronDown size={14} color="#5A6A83" />
+                        </div>
+                    </div>
+                </header>
+
+                <main style={{ flexGrow: 1, overflowY: 'auto', paddingRight: '5px' }}>
+                    <Outlet />
+                </main>
+            </div>
+        </div>
     );
 };
 
