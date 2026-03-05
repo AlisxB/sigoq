@@ -1,57 +1,106 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
 :root {
-  --primary: #4f46e5; /* Indigo 600 */
-  --sidebar-bg: #1e293b; /* Slate 800 */
-  --bg-main: #f8fafc; /* Slate 50 */
+  /* Backgrounds */
+  --bg-primary: #EBF3FE;
+  --bg-secondary: #FFFFFF;
+  --bg-sidebar: #FFFFFF;
+
+  /* Text */
+  --text-primary: #111C2D;
+  --text-secondary: #5A6A83;
+  --text-muted: #7C8FAC;
+
+  /* Accents */
+  --primary: #0085DB;
+  --primary-light: rgba(0, 133, 219, 0.1);
+  --primary-hover: #0074c0;
+
+  /* Semantic */
+  --success: #4BD08B;
+  --error: #FF6680;
+  --warning: #FFAE1F;
+  --info: #0085DB;
+
+  /* Elevation */
+  --shadow-card: 0px 2px 6px rgba(37, 83, 185, 0.1);
+  --shadow-deep: 0px 10px 30px rgba(37, 83, 185, 0.2);
+
+  /* Border Radii */
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 20px;
+  --radius-pill: 9999px;
+
+  /* Transitions */
+  --transition-fast: 0.2s ease-in-out;
+  --transition-standard: 0.3s ease-in-out;
 }
 
 body {
-  font-family: 'Inter', sans-serif;
-  background-color: var(--bg-main);
-  color: #1e293b;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-secondary);
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
 }
 
-.sidebar {
-  background-color: var(--sidebar-bg);
-  min-height: 100vh;
-  color: white;
-  padding-top: 2rem;
-}
-
-.sidebar .nav-link {
-  color: #cbd5e1;
-  padding: 0.75rem 1.5rem;
-  font-weight: 500;
-  transition: all 0.2s;
-}
-
-.sidebar .nav-link:hover, .sidebar .nav-link.active {
-  background-color: #334155;
-  color: white;
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: var(--text-primary);
+  font-weight: 700;
 }
 
 .card-premium {
+  background: var(--bg-secondary);
   border: none;
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  border-radius: 0.75rem;
-  transition: transform 0.2s;
-}
-
-.card-premium:hover {
-  transform: translateY(-2px);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  padding: 24px;
+  transition: transform var(--transition-fast);
 }
 
 .btn-primary {
   background-color: var(--primary);
   border-color: var(--primary);
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  padding: 10px 20px;
+  transition: all var(--transition-fast);
 }
 
-.glass-header {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(8px);
-  border-bottom: 1px solid #e2e8f0;
-  position: sticky;
-  top: 0;
-  z-index: 1020;
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+  border-color: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+.form-control {
+  border-radius: var(--radius-sm);
+  border: 1px solid #DFE5EF;
+  padding: 12px 16px;
+  font-size: 14px;
+}
+
+.form-control:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px var(--primary-light);
+}
+
+/* Melhorar visibilidade do placeholder em fundos escuros */
+.form-control::placeholder {
+  color: rgba(255, 255, 255, 0.4) !important;
+  opacity: 1;
+}
+
+/* Glassmorphism utility */
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
