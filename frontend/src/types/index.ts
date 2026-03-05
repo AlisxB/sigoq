@@ -10,6 +10,7 @@ export interface Cliente {
     razao_social: string;
     nome_fantasia: string;
     cnpj: string;
+    cpf?: string;
 }
 
 export interface Produto {

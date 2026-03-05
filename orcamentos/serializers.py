@@ -6,7 +6,7 @@ from .models import Orcamento, Kit, ItemOrcamento, ConfiguracaoPreco
 class ClienteSimpleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cliente
-        fields = ['id', 'razao_social', 'nome_fantasia', 'cnpj']
+        fields = ['id', 'razao_social', 'nome_fantasia', 'cnpj', 'cpf']
 
 class ProdutoSimpleSerializer(serializers.ModelSerializer):
     class Meta:
