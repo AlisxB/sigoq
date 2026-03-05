@@ -4,20 +4,23 @@ import { orcamentoApi } from '../api/orcamentos';
 import { Table, Button, Card, Badge, Spinner } from 'react-bootstrap';
 import { Plus, Printer, Edit, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Orcamento, OrcamentoStatus } from '../types';
 
-const Dashboard = () => {
-    const { data: orcamentos, isLoading, error } = useQuery({
+const Dashboard: React.FC = () => {
+    const { data: orcamentos, isLoading, error } = useQuery<Orcamento[]>({
         queryKey: ['orcamentos'],
         queryFn: orcamentoApi.list,
     });
 
-    const getStatusBadge = (status) => {
-        const variants = {
+    const getStatusBadge = (status: OrcamentoStatus) => {
+        const variants: Record<OrcamentoStatus, string> = {
             RASCUNHO: 'secondary',
             ELABORACAO: 'primary',
             REVISAO: 'warning',
+            ENVIADO: 'info',
             APROVADO: 'success',
             REPROVADO: 'danger',
+            CANCELADO: 'dark',
         };
         return <Badge bg={variants[status] || 'info'}>{status}</Badge>;
     };
@@ -29,7 +32,7 @@ const Dashboard = () => {
         <div>
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <h2 className="h3 fw-bold">Seus Orçamentos</h2>
-                <Button as={Link} to="/novo-orcamento" variant="primary" className="d-flex align-items-center">
+                <Button as={Link as any} to="/novo-orcamento" variant="primary" className="d-flex align-items-center">
                     <Plus size={18} className="me-2" /> Novo Orçamento
                 </Button>
             </div>
@@ -48,7 +51,7 @@ const Dashboard = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {orcamentos?.map((orc) => (
+                            {orcamentos?.map((orc: Orcamento) => (
                                 <tr key={orc.id}>
                                     <td className="ps-4 fw-medium">
                                         ORC-{orc.numero?.toString().padStart(4, '0')}-R{orc.revisao?.toString().padStart(2, '0')}
@@ -56,12 +59,12 @@ const Dashboard = () => {
                                     <td>{orc.cliente_detalhe?.razao_social || 'N/A'}</td>
                                     <td>{getStatusBadge(orc.status)}</td>
                                     <td>R$ {parseFloat(orc.valor_total).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                                    <td>{(orc.margem_contrib * 100).toFixed(1)}%</td>
+                                    <td>{(parseFloat(orc.margem_contrib) * 100).toFixed(1)}%</td>
                                     <td className="text-end pe-4">
-                                        <Button variant="link" size="sm" className="text-primary" as={Link} to={`/orcamento/${orc.id}`}>
+                                        <Button variant="link" size="sm" className="text-primary" as={Link as any} to={`/orcamento/${orc.id}`}>
                                             <Edit size={16} />
                                         </Button>
-                                        <Button variant="link" size="sm" className="text-secondary" href={`/orcamentos/pdf/${orc.id}/`} target="_blank">
+                                        <Button variant="link" size="sm" className="text-secondary" href={`http://localhost:8000/orcamentos/pdf/${orc.id}/`} target="_blank">
                                             <Printer size={16} />
                                         </Button>
                                         <Button variant="link" size="sm" className="text-danger">
@@ -72,7 +75,7 @@ const Dashboard = () => {
                             ))}
                             {orcamentos?.length === 0 && (
                                 <tr>
-                                    <td colSpan="6" className="text-center py-5 text-muted">
+                                    <td colSpan={6} className="text-center py-5 text-muted">
                                         Nenhum orçamento encontrado. Comece criando um novo!
                                     </td>
                                 </tr>

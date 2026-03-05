@@ -9,7 +9,7 @@ import OrcamentoEditor from './pages/OrcamentoEditor'
 
 const queryClient = new QueryClient()
 
-function App() {
+const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>

@@ -3,7 +3,7 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import { Container, Row, Col, Nav } from 'react-bootstrap';
 import { LayoutDashboard, FileText, Settings, Users, LogOut } from 'lucide-react';
 
-const MainLayout = () => {
+const MainLayout: React.FC = () => {
     const location = useLocation();
 
     const menuItems = [
@@ -25,7 +25,7 @@ const MainLayout = () => {
                         {menuItems.map((item) => (
                             <Nav.Link
                                 key={item.name}
-                                as={Link}
+                                as={Link as any}
                                 to={item.path}
                                 className={location.pathname === item.path ? 'active' : ''}
                             >
@@ -33,7 +33,7 @@ const MainLayout = () => {
                                 {item.name}
                             </Nav.Link>
                         ))}
-                        <Nav.Link href="/admin/logout/" className="mt-5 text-danger">
+                        <Nav.Link href="http://localhost:8000/admin/logout/" className="mt-5 text-danger">
                             <span className="me-2"><LogOut size={20} /></span>
                             Sair
                         </Nav.Link>

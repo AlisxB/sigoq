@@ -3,8 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Card, Button } from 'react-bootstrap';
 import { ArrowLeft, Save } from 'lucide-react';
 
-const OrcamentoEditor = () => {
-    const { id } = useParams();
+const OrcamentoEditor: React.FC = () => {
+    const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const isNew = !id;
 
