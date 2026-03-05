@@ -7,6 +7,8 @@ import MainLayout from './layouts/MainLayout'
 import Dashboard from './pages/Dashboard'
 import OrcamentoEditor from './pages/OrcamentoEditor'
 
+import Login from './pages/Login'
+
 const queryClient = new QueryClient()
 
 const App: React.FC = () => {
@@ -14,6 +16,7 @@ const App: React.FC = () => {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <Routes>
+          <Route path="/login" element={<Login />} />
           <Route path="/" element={<MainLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="orcamento/:id" element={<OrcamentoEditor />} />
