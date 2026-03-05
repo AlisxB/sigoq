@@ -1,0 +1,57 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --primary: #4f46e5; /* Indigo 600 */
+  --sidebar-bg: #1e293b; /* Slate 800 */
+  --bg-main: #f8fafc; /* Slate 50 */
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--bg-main);
+  color: #1e293b;
+}
+
+.sidebar {
+  background-color: var(--sidebar-bg);
+  min-height: 100vh;
+  color: white;
+  padding-top: 2rem;
+}
+
+.sidebar .nav-link {
+  color: #cbd5e1;
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.sidebar .nav-link:hover, .sidebar .nav-link.active {
+  background-color: #334155;
+  color: white;
+}
+
+.card-premium {
+  border: none;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  border-radius: 0.75rem;
+  transition: transform 0.2s;
+}
+
+.card-premium:hover {
+  transform: translateY(-2px);
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+
+.glass-header {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid #e2e8f0;
+  position: sticky;
+  top: 0;
+  z-index: 1020;
+}
