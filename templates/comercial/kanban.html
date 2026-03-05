@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+
+{% block title %}Pipeline Kanban{% endblock %}
+
+{% block extra_css %}
+<style>
+    .kanban-board {
+        display: flex;
+        overflow-x: auto;
+        padding: 20px 0;
+        gap: 1.5rem;
+        min-height: calc(100vh - 150px);
+    }
+
+    .kanban-column {
+        flex: 0 0 320px;
+        background-color: #f1f5f9;
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        max-height: 100%;
+    }
+
+    .kanban-header {
+        padding: 1rem;
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: #475569;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .kanban-list {
+        padding: 0.75rem;
+        flex-grow: 1;
+        overflow-y: auto;
+        min-height: 100px;
+    }
+
+    .kanban-card {
+        background: #ffffff;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        cursor: grab;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .kanban-card:hover {
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-title {
+        font-size: 0.95rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #1e293b;
+    }
+
+    .card-meta {
+        font-size: 0.8rem;
+        color: #64748b;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .badge-priority {
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.7rem;
+    }
+
+    .priority-ALTA {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+
+    .priority-MEDIA {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+
+    .priority-BAIXA {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 fw-bold">Funil de Vendas</h1>
+    <a href="{% url 'admin:comercial_oportunidade_add' %}" class="btn btn-primary">+ Nova Oportunidade</a>
+</div>
+
+<div class="kanban-board" x-data="kanbanBoard()">
+    {% for status in status_list %}
+    <div class="kanban-column">
+        <div class="kanban-header">
+            <span>{{ status.nome }}</span>
+            <span class="badge bg-secondary rounded-pill">{{ status.oportunidades.count }}</span>
+        </div>
+        <div class="kanban-list" data-status-id="{{ status.id }}" id="status-{{ status.id }}">
+            {% for op in status.oportunidades.all %}
+            {% if op.vendedor == user %}
+            <div class="kanban-card" data-id="{{ op.id }}">
+                <div class="card-title">{{ op.titulo }}</div>
+                <div class="card-meta">
+                    <span class="badge-priority priority-{{ op.prioridade }}">{{ op.get_prioridade_display }}</span>
+                    <span>R$ {{ op.valor_estimado|floatformat:2 }}</span>
+                </div>
+                <div class="mt-2" style="font-size: 0.75rem; color: #94a3b8;">
+                    {{ op.cliente.nome_fantasia|default:op.cliente.razao_social }}
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script>
+    function kanbanBoard() {
+        return {
+            init() {
+                const lists = document.querySelectorAll('.kanban-list');
+                lists.forEach(list => {
+                    new Sortable(list, {
+                        group: 'kanban',
+                        animation: 150,
+                        ghostClass: 'bg-light',
+                        onEnd: (evt) => {
+                            const opId = evt.item.dataset.id;
+                            const newStatusId = evt.to.dataset.statusId;
+                            this.updateStatus(opId, newStatusId);
+                        }
+                    });
+                });
+            },
+            updateStatus(opId, statusId) {
+                fetch('{% url "comercial:update_status" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({
+                        oportunidade_id: opId,
+                        status_id: statusId
+                    })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'error') {
+                            alert('Erro ao atualizar status: ' + data.message);
+                            location.reload();
+                        }
+                    });
+            }
+        }
+    }
+</script>
+{% endblock %}
