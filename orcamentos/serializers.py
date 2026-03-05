@@ -29,14 +29,15 @@ class ItemOrcamentoSerializer(serializers.ModelSerializer):
         read_only_fields = ['codigo', 'descricao', 'custo_unit_snapshot', 'vlr_unit_venda']
 
 class KitSerializer(serializers.ModelSerializer):
-    itens = ItemOrcamentoSerializer(many=True, read_only=True)
+    itens = ItemOrcamentoSerializer(many=True)
 
     class Meta:
         model = Kit
         fields = ['id', 'orcamento', 'nome', 'descricao', 'ordem', 'itens']
+        read_only_fields = ['orcamento']
 
 class OrcamentoSerializer(serializers.ModelSerializer):
-    kits = KitSerializer(many=True, read_only=True)
+    kits = KitSerializer(many=True)
     cliente_detalhe = ClienteSimpleSerializer(source='cliente', read_only=True)
 
     class Meta:
@@ -49,3 +50,58 @@ class OrcamentoSerializer(serializers.ModelSerializer):
             'aprovado_gerencia', 'motivo_rejeicao', 'kits'
         ]
         read_only_fields = ['numero', 'revisao', 'custo_total', 'valor_total']
+
+    def create(self, validated_data):
+        kits_data = validated_data.pop('kits', [])
+        orcamento = Orcamento.objects.create(**validated_data)
+        
+        for kit_data in kits_data:
+            itens_data = kit_data.pop('itens', [])
+            kit = Kit.objects.create(orcamento=orcamento, **kit_data)
+            for item_data in itens_data:
+                # Buscar produto para obter snapshot
+                produto = item_data['produto']
+                ItemOrcamento.objects.create(
+                    kit=kit,
+                    codigo=produto.codigo,
+                    descricao=produto.descricao,
+                    custo_unit_snapshot=produto.custo_base,
+                    **item_data
+                )
+        
+        # Recalcular totais usando o service
+        from .services import PricingService
+        PricingService.update_orcamento_totals(orcamento)
+        return orcamento
+
+    def update(self, instance, validated_data):
+        kits_data = validated_data.pop('kits', [])
+        
+        # Atualizar campos básicos
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        
+        # Atualizar Kits (Simplificado: remove todos e recria para consistência total no MVP)
+        instance.kits.all().delete()
+        for kit_data in kits_data:
+            itens_data = kit_data.pop('itens', [])
+            kit = Kit.objects.create(orcamento=instance, **kit_data)
+            for item_data in itens_data:
+                produto = item_data['produto']
+                ItemOrcamento.objects.create(
+                    kit=kit,
+                    codigo=produto.codigo,
+                    descricao=produto.descricao,
+                    custo_unit_snapshot=produto.custo_base,
+                    **item_data
+                )
+        
+        from .services import PricingService
+        # Atualizar preços de venda de todos os itens antes de totalizar
+        for kit in instance.kits.all():
+            for item in kit.itens.all():
+                PricingService.update_item_pricing(item)
+                
+        PricingService.update_orcamento_totals(instance)
+        return instance
