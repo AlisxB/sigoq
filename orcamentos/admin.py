@@ -33,11 +33,14 @@ class KitInline(admin.StackedInline):
     extra = 1
     show_change_link = True
 
+from django.utils.html import format_html
+from django.urls import reverse
+
 @admin.register(Orcamento)
 class OrcamentoAdmin(admin.ModelAdmin):
     list_display = (
         'get_full_number', 'cliente', 'status', 'vendedor', 
-        'valor_total', 'margem_contrib', 'is_deleted'
+        'valor_total', 'margem_contrib', 'pdf_link', 'is_deleted'
     )
     list_filter = ('status', 'vendedor', 'is_deleted')
     search_fields = ('numero', 'cliente__razao_social')
@@ -47,6 +50,11 @@ class OrcamentoAdmin(admin.ModelAdmin):
     def get_full_number(self, obj):
         return f"ORC-{obj.numero:04d}-R{obj.revisao:02d}"
     get_full_number.short_description = 'Nº Orçamento'
+
+    def pdf_link(self, obj):
+        url = reverse('orcamentos:gerar_pdf', args=[obj.pk])
+        return format_html('<a href="{}" target="_blank">🖨️ Imprimir PDF</a>', url)
+    pdf_link.short_description = 'Ações'
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)

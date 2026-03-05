@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+
+            @bottom-right {
+                content: "Página " counter(page) " de " counter(pages);
+                font-size: 8pt;
+            }
+        }
+
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            font-size: 10pt;
+            color: #333;
+            line-height: 1.4;
+        }
+
+        .header {
+            border-bottom: 2px solid #2563eb;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            color: #2563eb;
+            font-size: 18pt;
+            margin: 0;
+        }
+
+        .info-grid {
+            display: flex;
+            /* Weasyprint supports flexbox in newer versions or use tables for compatibility */
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+
+        th {
+            background-color: #f1f5f9;
+            text-align: left;
+            padding: 8px;
+            font-size: 9pt;
+            border-bottom: 1px solid #cbd5e1;
+        }
+
+        td {
+            padding: 8px;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: top;
+        }
+
+        .kit-header {
+            background-color: #2563eb;
+            color: white;
+            font-weight: bold;
+            padding: 5px 10px;
+            margin-top: 15px;
+        }
+
+        .totais {
+            margin-top: 30px;
+            text-align: right;
+        }
+
+        .footer-box {
+            margin-top: 40px;
+            padding: 15px;
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 5px;
+        }
+
+        .label {
+            font-weight: bold;
+            color: #475569;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <table style="border: none;">
+            <tr>
+                <td style="border: none; width: 60%;">
+                    <h1>PROPOSTA COMERCIAL</h1>
+                    <p><span class="label">Nº:</span> ORC-{{ orcamento.numero|stringformat:"04d" }}-R{{
+                        orcamento.revisao|stringformat:"02d" }}</p>
+                    <p><span class="label">Data de Emissão:</span> {{ orcamento.criado_em|date:"d/m/Y" }}</p>
+                </td>
+                <td style="border: none; text-align: right;">
+                    <h2 style="margin: 0; color: #64748b;">SIGOQ</h2>
+                    <p style="font-size: 8pt;">Setor de Orçamentos Elétricos</p>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div>
+        <h3>DADOS DO CLIENTE</h3>
+        <p><span class="label">Razão Social:</span> {{ orcamento.cliente.razao_social }}</p>
+        <p><span class="label">CNPJ:</span> {{ orcamento.cliente.cnpj }}</p>
+        <p><span class="label">Cidade/UF:</span> {{ orcamento.cliente.cidade }}/{{ orcamento.cliente.estado }}</p>
+        <p><span class="label">Vendedor:</span> {{ orcamento.vendedor.get_full_name|default:orcamento.vendedor.username
+            }}</p>
+    </div>
+
+    {% for kit in orcamento.kits.all %}
+    <div class="kit-header">Kit: {{ kit.nome }}</div>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 15%;">Código</th>
+                <th style="width: 55%;">Descrição</th>
+                <th style="width: 10%; text-align: center;">Qtd</th>
+                <th style="width: 20%; text-align: right;">Vlr Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in kit.itens.all %}
+            <tr>
+                <td>{{ item.codigo }}</td>
+                <td>{{ item.descricao }}</td>
+                <td style="text-align: center;">{{ item.quantidade|floatformat:0 }}</td>
+                <td style="text-align: right;">R$ {{ item.vlr_unit_venda|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endfor %}
+
+    <div class="totais">
+        <p style="font-size: 14pt;"><span class="label">VALOR TOTAL DA PROPOSTA:</span>
+            <strong style="color: #2563eb;">R$ {{ orcamento.valor_total|floatformat:2 }}</strong>
+        </p>
+    </div>
+
+    <div class="footer-box">
+        <h3>CONDIÇÕES COMERCIAIS</h3>
+        <p><span class="label">Prazo de Entrega:</span> {{ orcamento.prazo_entrega|default:"A combinar" }}</p>
+        <p><span class="label">Condição de Pagamento:</span> {{ orcamento.condicao_pagamento|default:"Conforme política
+            comercial" }}</p>
+        <p><span class="label">Validade da Proposta:</span> {{ orcamento.validade_dias }} dias</p>
+        <div style="margin-top: 15px; font-size: 9pt; color: #64748b;">
+            <p><span class="label">Observações:</span> {{ orcamento.observacoes|default:"Sem observações adicionais." }}
+            </p>
+        </div>
+    </div>
+</body>
+
+</html>
