@@ -19,6 +19,34 @@ class StatusOportunidade(models.Model):
     def __str__(self):
         return f"{self.ordem} - {self.nome}"
 
+class MetaMensal(models.Model):
+    MESES_CHOICES = [
+        (1, 'Janeiro'), (2, 'Fevereiro'), (3, 'Março'), (4, 'Abril'),
+        (5, 'Maio'), (6, 'Junho'), (7, 'Julho'), (8, 'Agosto'),
+        (9, 'Setembro'), (10, 'Outubro'), (11, 'Novembro'), (12, 'Dezembro'),
+    ]
+    
+    mes = models.PositiveSmallIntegerField(choices=MESES_CHOICES, verbose_name="Mês")
+    ano = models.PositiveIntegerField(default=2026, verbose_name="Ano")
+    valor_meta = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Valor da Meta (R$)")
+    vendedor = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.CASCADE, 
+        null=True, blank=True, 
+        related_name='metas',
+        help_text="Deixe em branco para meta GLOBAL da empresa."
+    )
+
+    class Meta:
+        verbose_name = "Meta Mensal"
+        verbose_name_plural = "Metas Mensais"
+        unique_together = ('mes', 'ano', 'vendedor')
+        ordering = ['-ano', '-mes']
+
+    def __str__(self):
+        vendedor_str = self.vendedor.get_full_name() if self.vendedor else "GLOBAL"
+        return f"{vendedor_str} | {self.get_mes_display()}/{self.ano} - R$ {self.valor_meta}"
+
 class Oportunidade(BaseModel):
     PRIORIDADE_CHOICES = [
         ('BAIXA', 'Baixa'),

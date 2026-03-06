@@ -1,11 +1,17 @@
 from django.contrib import admin
-from .models import StatusOportunidade, Oportunidade
+from .models import StatusOportunidade, Oportunidade, MetaMensal
 
 @admin.register(StatusOportunidade)
 class StatusOportunidadeAdmin(admin.ModelAdmin):
     list_display = ('ordem', 'nome', 'cor', 'notifica_setor_tecnico')
     list_editable = ('nome', 'cor', 'notifica_setor_tecnico')
     ordering = ('ordem',)
+
+@admin.register(MetaMensal)
+class MetaMensalAdmin(admin.ModelAdmin):
+    list_display = ('get_mes_display', 'ano', 'valor_meta', 'vendedor')
+    list_filter = ('ano', 'mes', 'vendedor')
+    list_editable = ('valor_meta',)
 
 @admin.register(Oportunidade)
 class OportunidadeAdmin(admin.ModelAdmin):
