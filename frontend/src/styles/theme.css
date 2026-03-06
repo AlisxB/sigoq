@@ -1,5 +1,39 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
+/* -------------------------------------------------------------------------- */
+/* UI INTEGRITY: Prevent text selection and unwanted cursors                  */
+/* -------------------------------------------------------------------------- */
+
+/* Esconde o cursor piscante (|) globalmente por padrão */
+* {
+    caret-color: transparent;
+}
+
+/* Ativa o cursor apenas onde a edição é necessária */
+input, textarea, [contenteditable="true"], .form-control, .form-select {
+    caret-color: auto !important;
+    cursor: text;
+}
+
+/* Impede seleção acidental em elementos de interface */
+.sidebar, .nav, .btn, .badge, svg, .dropdown-menu, .card-header {
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* Define cursor padrão para o corpo do sistema */
+body, div, section, header, h1, h2, h3, h4, h5, h6, p, span {
+    cursor: default;
+}
+
+/* Cursor pointer para elementos clicáveis */
+a, .btn, button, [role="button"], .cursor-pointer, .nav-link, .dropdown-item {
+    cursor: pointer !important;
+}
+
+/* Fim da UI INTEGRITY */
+
+/* Original Styles... */
 :root {
   /* Backgrounds */
   --bg-primary: #F2F6FA;
