@@ -26,6 +26,12 @@ class ConfiguracaoPreco(models.Model):
     def __str__(self):
         return self.nome
 
+    @property
+    def soma_encargos(self):
+        return (self.markup_engenharia + self.markup_capitalizacao + self.markup_frete + 
+                self.markup_imposto + self.markup_comissao + self.markup_difal +
+                self.markup_frete_especial)
+
 class Orcamento(BaseModel):
     STATUS_CHOICES = [
         ('RASCUNHO', 'Rascunho'),
@@ -54,6 +60,7 @@ class Orcamento(BaseModel):
     desconto_percent = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
     
     aprovado_gerencia = models.BooleanField(default=False)
+    motivo_rejeicao = models.TextField(blank=True)
     validade_dias = models.PositiveIntegerField(default=15)
     prazo_entrega = models.CharField(max_length=100, blank=True)
     condicao_pagamento = models.CharField(max_length=255, blank=True)

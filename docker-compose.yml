@@ -22,6 +22,8 @@ services:
     command: gunicorn sigoq.wsgi:application --bind 0.0.0.0:8000
     volumes:
       - .:/app
+    environment:
+      - DJANGO_SETTINGS_MODULE=sigoq.settings.local
     env_file:
       - .env
     ports:
