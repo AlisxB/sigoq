@@ -1,23 +1,62 @@
+export type Role = 'ADMIN' | 'COMERCIAL' | 'ORCAMENTISTA';
+
 export interface User {
     id: number;
     username: string;
     first_name: string;
     last_name: string;
+    role: Role;
 }
 
 export interface Cliente {
     id: number;
     razao_social: string;
     nome_fantasia: string;
+    cnpj: string | null;
+    cpf: string | null;
+    inscricao_estadual: string;
+    email: string;
+    telefone: string;
+    endereco: string;
+    cidade: string;
+    estado: string;
+    vendedor: number | null;
+    vendedor_nome?: string;
+    observacoes: string;
+}
+
+export interface Fornecedor {
+    id: number;
+    razao_social: string;
+    nome_fantasia: string;
     cnpj: string;
-    cpf?: string;
+    email: string;
+    telefone: string;
+    contato_nome: string;
+    prazo_entrega_medio: number;
+    observacoes: string;
+}
+
+export interface Categoria {
+    id: number;
+    nome: string;
+    descricao: string;
 }
 
 export interface Produto {
     id: number;
     codigo: string;
     descricao: string;
+    categoria: number;
+    categoria_nome?: string;
+    fornecedor: number;
+    fornecedor_nome?: string;
+    unidade_medida: 'UN' | 'M' | 'KG' | 'PC' | 'CJ';
     custo_base: string; // Decimal comes as string from DRF
+    estoque_minimo: number;
+    estoque_atual: number;
+    ncm: string;
+    observacoes: string;
 }
 
 export interface ItemOrcamento {
@@ -52,6 +91,8 @@ export interface Orcamento {
     cliente: number;
     cliente_detalhe: Cliente;
     resp_orcam: number | null;
+    vendedor: number | null;
+    vendedor_nome?: string;
     status: OrcamentoStatus;
     custo_total: string;
     valor_total: string;
