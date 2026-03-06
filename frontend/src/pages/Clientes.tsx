@@ -11,12 +11,12 @@ import { keepOnlyNumbers, maskCPF, maskCNPJ, maskPhone, maskCEP } from '../utils
 
 const Clientes: React.FC = () => {
     const { user } = useAuth();
-    const isAdmin = user?.role === 'ADMIN' || user?.role === 'ORCAMENTISTA'; // Orçamentista também costuma ver dados técnicos
+    const isAdmin = user?.role === 'ADMIN' || user?.role === 'ORCAMENTISTA';
 
     const { data: vendedores = [] } = useQuery({
         queryKey: ['vendedores'],
         queryFn: () => usuarioApi.list({ role: 'VENDEDOR' }),
-        enabled: isAdmin // Só busca a lista de vendedores se for admin
+        enabled: isAdmin 
     });
 
     const columns = [
@@ -26,7 +26,6 @@ const Clientes: React.FC = () => {
         { header: 'Cidade/UF', accessor: (item: Cliente) => `${item.cidade}/${item.estado}` },
     ];
 
-    // Define os dados iniciais dinamicamente baseados no usuário logado
     const initialData = useMemo(() => ({
         razao_social: '',
         nome_fantasia: '',
@@ -261,7 +260,6 @@ const Clientes: React.FC = () => {
                 </Form.Group>
             </Col>
 
-            {/* Campo de Vendedor Responsável: Visível apenas para Administradores */}
             {isAdmin && (
                 <Col md={12}>
                     <Form.Group>
@@ -272,10 +270,13 @@ const Clientes: React.FC = () => {
                                 className="form-select-premium"
                                 value={data.vendedor || ''}
                                 onChange={(e) => onChange('vendedor', e.target.value ? parseInt(e.target.value) : null)}
+                                style={{ color: '#2A3547', opacity: 1 }}
                             >
-                                <option value="">Selecione um vendedor...</option>
+                                <option value="" style={{ color: '#2A3547' }}>Selecione um vendedor...</option>
                                 {vendedores.map((v: User) => (
-                                    <option key={v.id} value={v.id}>{v.first_name} {v.last_name}</option>
+                                    <option key={v.id} value={v.id} style={{ color: '#2A3547' }}>
+                                        {v.full_name || v.username}
+                                    </option>
                                 ))}
                             </Form.Select>
                         </div>
