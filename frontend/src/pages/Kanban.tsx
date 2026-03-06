@@ -148,7 +148,7 @@ const Kanban: React.FC = () => {
                                                                             <MoreVertical size={14} />
                                                                         </Dropdown.Toggle>
                                                                         <Dropdown.Menu className="shadow border-0">
-                                                                            <Dropdown.Item className="small" onClick={() => window.open(`http://localhost:8001/comercial/api/oportunidade/${op.id}/pdf/`, '_blank')}>
+                                                                            <Dropdown.Item className="small" onClick={() => window.open(`http://localhost:8000/comercial/api/oportunidade/${op.id}/pdf/`, '_blank')}>
                                                                                 Gerar Proposta PDF
                                                                             </Dropdown.Item>
                                                                             <Dropdown.Item className="small">Ver Detalhes</Dropdown.Item>
