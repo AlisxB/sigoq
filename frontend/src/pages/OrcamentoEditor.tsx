@@ -295,7 +295,8 @@ const OrcamentoEditor: React.FC = () => {
                                     <Form.Group className="mb-3">
                                         <Form.Label className="fw-bold small">Cliente</Form.Label>
                                         <Form.Select
-                                            className="text-dark"
+                                            disabled
+                                            className="text-dark bg-light"
                                             value={localOrcamento.cliente || ''}
                                             onChange={(e) => setLocalOrcamento({ ...localOrcamento, cliente: parseInt(e.target.value) })}
                                         >
@@ -308,7 +309,8 @@ const OrcamentoEditor: React.FC = () => {
                                     <Form.Group className="mb-3">
                                         <Form.Label className="fw-bold small">Vendedor Responsável</Form.Label>
                                         <Form.Select
-                                            className="text-dark"
+                                            disabled
+                                            className="text-dark bg-light"
                                             value={localOrcamento.vendedor || ''}
                                             onChange={(e) => setLocalOrcamento({ ...localOrcamento, vendedor: e.target.value ? parseInt(e.target.value) : null })}
                                         >

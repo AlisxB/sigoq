@@ -63,11 +63,8 @@ const Orcamentos: React.FC = () => {
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <div>
                     <h1 className="h4 fw-extrabold mb-1" style={{ color: '#2A3547', letterSpacing: '-0.5px' }}>Gestão de Orçamentos</h1>
-                    <p className="text-muted small mb-0">Visualize e gerencie todas as propostas comerciais do sistema.</p>
+                    <p className="text-muted small mb-0">Acompanhe e edite as propostas técnicas enviadas pelo comercial através do Pipeline.</p>
                 </div>
-                <Button variant="primary" className="d-flex align-items-center shadow-sm" onClick={() => navigate('/novo-orcamento')}>
-                    <Plus size={18} className="me-2" /> Novo Orçamento
-                </Button>
             </div>
 
             <Card className="card-premium border-0 shadow-sm mb-4">
