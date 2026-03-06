@@ -6,7 +6,7 @@ _thread_locals = threading.local()
 def get_current_user():
     return getattr(_thread_locals, 'user', None)
 
-class IsolationMiddleware:
+class ThreadLocalMiddleware:
     """
     Middleware que gerencia o usuário da requisição atual para fins de 
     auditoria e isolamento no BaseModel.
