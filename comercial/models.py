@@ -45,6 +45,7 @@ class Oportunidade(BaseModel):
     data_prevista_fechamento = models.DateField(null=True, blank=True, verbose_name="Previsão de Fechamento")
     fonte = models.CharField(max_length=20, choices=FONTE_CHOICES, default='SITE', verbose_name="Fonte")
     prioridade = models.CharField(max_length=10, choices=PRIORIDADE_CHOICES, default='MEDIA', verbose_name="Prioridade")
+    vendedor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='oportunidades', verbose_name="Vendedor")
 
     class Meta:
         verbose_name = "Oportunidade"

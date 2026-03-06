@@ -28,6 +28,8 @@ class Produto(BaseModel):
     unidade_medida = models.CharField(max_length=10, choices=UNIDADES, default='UN', verbose_name="Unidade de Medida")
     custo_base = models.DecimalField(max_length=12, max_digits=12, decimal_places=2, verbose_name="Custo Base")
     estoque_minimo = models.PositiveIntegerField(default=0, verbose_name="Estoque Mínimo")
+    estoque_atual = models.PositiveIntegerField(default=0, verbose_name="Estoque Atual")
+    ncm = models.CharField(max_length=10, blank=True, verbose_name="NCM")
     observacoes = models.TextField(blank=True, verbose_name="Observações")
 
     class Meta:

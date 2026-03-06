@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 from core.models import BaseModel
 
 class Cliente(BaseModel):
@@ -12,6 +13,7 @@ class Cliente(BaseModel):
     endereco = models.TextField(verbose_name="Endereço")
     cidade = models.CharField(max_length=100, verbose_name="Cidade")
     estado = models.CharField(max_length=2, verbose_name="Estado")
+    vendedor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='clientes', verbose_name="Vendedor")
     observacoes = models.TextField(blank=True, verbose_name="Observações")
 
     class Meta:

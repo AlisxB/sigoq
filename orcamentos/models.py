@@ -52,6 +52,7 @@ class Orcamento(BaseModel):
     
     cliente = models.ForeignKey(Cliente, on_delete=models.PROTECT, related_name='orcamentos', verbose_name="Cliente")
     resp_orcam = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='orcamentos_tecnicos', verbose_name="Orçamentista")
+    vendedor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='orcamentos_comerciais', verbose_name="Vendedor")
     
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='RASCUNHO', verbose_name="Status")
     
