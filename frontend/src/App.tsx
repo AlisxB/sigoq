@@ -15,6 +15,7 @@ import Categorias from './pages/Categorias'
 import Kanban from './pages/Kanban'
 import Metas from './pages/Metas'
 import ConfiguracoesPreco from './pages/ConfiguracoesPreco'
+import Usuarios from './pages/Usuarios'
 import Error404 from './pages/Error404'
 import AccessDenied from './pages/AccessDenied'
 import { AuthProvider } from './contexts/AuthContext'
@@ -57,7 +58,7 @@ const App: React.FC = () => {
                 {/* Sistema / Admin */}
                 <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
                   <Route path="configuracoes" element={<ConfiguracoesPreco />} />
-                  <Route path="usuarios" element={<div>Gestão de Equipe (Em breve)</div>} />
+                  <Route path="usuarios" element={<Usuarios />} />
                 </Route>
 
                 {/* Fallback para rotas não encontradas no dashboard */}
