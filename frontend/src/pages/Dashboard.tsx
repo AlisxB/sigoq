@@ -1,13 +1,11 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { orcamentoApi } from '../api/orcamentos';
-import { Table, Button, Card, Row, Col, Spinner } from 'react-bootstrap';
+import { Row, Col, Card, Button, Spinner } from 'react-bootstrap';
+import Chart from 'react-apexcharts';
 import {
-    Plus, Printer, Edit, Trash2, TrendingUp, DollarSign,
-    FileCheck, UserCheck, ShoppingBag, PieChart, MoreHorizontal
+    TrendingUp, ShoppingBag, Target, Award, MoreHorizontal
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { Orcamento, OrcamentoStatus } from '../types';
+import { analyticsApi } from '../api/analytics';
 
 const StatCard: React.FC<{ title: string, value: string, change: string, icon: React.ReactNode, bgColor: string, txtColor?: string }> = ({ title, value, change, icon, bgColor, txtColor = '#FFFFFF' }) => (
     <Card className="h-100 border-0 overflow-hidden shadow-none" style={{ backgroundColor: bgColor, borderRadius: '24px', position: 'relative' }}>
@@ -32,208 +30,193 @@ const StatCard: React.FC<{ title: string, value: string, change: string, icon: R
 );
 
 const Dashboard: React.FC = () => {
-    const { data: orcamentos, isLoading } = useQuery<Orcamento[]>({
-        queryKey: ['orcamentos'],
-        queryFn: orcamentoApi.list,
+    const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
+
+    const { data: funnelData, isLoading: isLoadingFunnel } = useQuery({
+        queryKey: ['analytics-funnel'],
+        queryFn: analyticsApi.getFunnel,
+        staleTime: 1000 * 60 * 5,
     });
 
-    const getStatusBadge = (status: OrcamentoStatus) => {
-        const variants: Record<OrcamentoStatus, { bg: string, color: string }> = {
-            RASCUNHO: { bg: 'rgba(90, 106, 131, 0.1)', color: '#5A6A83' },
-            ELABORACAO: { bg: 'rgba(93, 135, 255, 0.1)', color: '#5D87FF' },
-            REVISAO: { bg: 'rgba(255, 174, 31, 0.1)', color: '#FFAE1F' },
-            ENVIADO: { bg: 'rgba(93, 135, 255, 0.05)', color: '#5D87FF' },
-            APROVADO: { bg: 'rgba(19, 222, 185, 0.1)', color: '#13DEB9' },
-            REPROVADO: { bg: 'rgba(250, 137, 107, 0.1)', color: '#FA896B' },
-            CANCELADO: { bg: 'rgba(124, 143, 172, 0.1)', color: '#7C8FAC' },
-        };
-        const style = variants[status] || variants.ENVIADO;
-        return (
-            <span style={{
-                backgroundColor: style.bg,
-                color: style.color,
-                padding: '5px 14px',
-                borderRadius: '8px',
-                fontSize: '12px',
-                fontWeight: '700'
-            }}>
-                {status}
-            </span>
-        );
-    };
+    const { data: financeData, isLoading: isLoadingFinance } = useQuery({
+        queryKey: ['analytics-finance'],
+        queryFn: analyticsApi.getFinance,
+        staleTime: 1000 * 60 * 5,
+    });
 
-    if (isLoading) return <div className="d-flex justify-content-center py-5"><Spinner animation="border" variant="primary" /></div>;
+    const totalFunnel = funnelData?.reduce((acc, curr) => acc + parseFloat(curr.total || 0), 0) || 0;
+    const margemAtual = (parseFloat(financeData?.margem_media || '0') * 100);
+
+    // Configuração do Radial Bar (Pipeline)
+    const radialOptions: any = useMemo(() => ({
+        chart: {
+            height: 380,
+            type: 'radialBar',
+            fontFamily: "'Plus Jakarta Sans', sans-serif",
+            events: {
+                dataPointSelection: (event: any, chartContext: any, config: any) => {
+                    const idx = config.dataPointIndex;
+                    setSelectedIdx(selectedIdx === idx ? null : idx);
+                }
+            }
+        },
+        plotOptions: {
+            radialBar: {
+                offsetY: 0,
+                startAngle: 0,
+                endAngle: 270,
+                hollow: {
+                    margin: 5,
+                    size: '35%',
+                    background: 'transparent',
+                    image: undefined,
+                },
+                dataLabels: {
+                    name: {
+                        show: true,
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        color: '#5A6A83',
+                    },
+                    value: {
+                        show: true,
+                        fontSize: '22px',
+                        fontWeight: 800,
+                        color: '#2A3547',
+                        formatter: function (val: number, opt: any) {
+                            // val aqui é a porcentagem, precisamos do valor real do dado
+                            const idx = opt.config.series.indexOf(val);
+                            const realVal = funnelData ? parseFloat(funnelData[idx]?.total || 0) : 0;
+                            return "R$ " + (realVal / 1000).toFixed(1) + "k";
+                        }
+                    },
+                    total: {
+                        show: true,
+                        label: selectedIdx !== null && funnelData ? funnelData[selectedIdx].status__nome : 'Total Funil',
+                        formatter: function (w: any) {
+                            const val = selectedIdx !== null && funnelData ? parseFloat(funnelData[selectedIdx].total) : totalFunnel;
+                            return "R$ " + (val / 1000).toFixed(0) + "k";
+                        }
+                    }
+                }
+            }
+        },
+        colors: funnelData?.map(d => d.status__cor || '#5D87FF') || ['#5D87FF'],
+        labels: funnelData?.map(d => d.status__nome) || [],
+        legend: {
+            show: true,
+            floating: true,
+            fontSize: '12px',
+            position: 'left',
+            offsetX: 0,
+            offsetY: 15,
+            labels: { useSeriesColors: true },
+            markers: { size: 0 },
+            formatter: function (seriesName: string, opts: any) {
+                return seriesName + ":  " + opts.w.globals.series[opts.seriesIndex] + "%";
+            },
+            itemMargin: { vertical: 3 }
+        },
+    }), [funnelData, selectedIdx, totalFunnel]);
+
+    // Cálculo das porcentagens para o Radial Bar (Baseado no valor total)
+    const radialSeries = useMemo(() => {
+        if (!funnelData || totalFunnel === 0) return [];
+        return funnelData.map(d => Math.round((parseFloat(d.total) / totalFunnel) * 100));
+    }, [funnelData, totalFunnel]);
+
+    const categoryChartOptions: any = useMemo(() => ({
+        chart: { type: 'bar', toolbar: { show: false }, fontFamily: "'Plus Jakarta Sans', sans-serif" },
+        plotOptions: {
+            bar: { borderRadius: 6, horizontal: false, columnWidth: '35%', distributed: true }
+        },
+        colors: ['#5D87FF', '#49BEFF', '#13DEB9', '#FFAE1F', '#FA896B'],
+        dataLabels: { enabled: false },
+        xaxis: {
+            categories: financeData?.categorias.map((c: any) => c.produto__categoria__nome) || [],
+            labels: { style: { fontWeight: 600, colors: '#5A6A83' } },
+            axisBorder: { show: false },
+            axisLine: { show: false }
+        },
+        yaxis: { labels: { show: false } },
+        grid: { borderColor: 'rgba(0,0,0,0.05)', strokeDashArray: 4, vertical: false },
+        legend: { show: false },
+        tooltip: { theme: 'dark' }
+    }), [financeData]);
+
+    if (isLoadingFunnel || isLoadingFinance) return <div className="d-flex justify-content-center py-5"><Spinner animation="border" variant="primary" /></div>;
 
     return (
         <div style={{ padding: '0 5px' }}>
-            {/* Header / Stats Row */}
             <Row className="mb-4 g-4 overflow-hidden">
-                {/* Welcome Card - Traduzido */}
                 <Col md={5} lg={5}>
-                    <Card className="h-100 border-1 shadow-sm" style={{ backgroundColor: '#FFFFFF', borderRadius: '24px', overflow: 'hidden', border: '1px solid rgba(0,0,0,0.05)' }}>
+                    <Card className="h-100 border-0 shadow-sm" style={{ backgroundColor: '#FFFFFF', borderRadius: '24px', overflow: 'hidden', border: '1px solid rgba(0,0,0,0.05)' }}>
                         <Card.Body className="p-4 d-flex align-items-center">
                             <div className="flex-grow-1">
-                                <h2 className="h4 fw-bold mb-1" style={{ color: '#2A3547' }}>Bem-vindo de volta, Alison!</h2>
-                                <p className="text-muted small mb-4">Veja o desempenho das propostas hoje.</p>
-                                <Button className="px-4 py-2 fw-bold" style={{ backgroundColor: '#5D87FF', border: 'none', borderRadius: '10px', boxShadow: '0 4px 10px rgba(93,135,255,0.3)' }}>Ver Orçamentos</Button>
+                                <h2 className="h4 fw-bold mb-1" style={{ color: '#2A3547' }}>Estatísticas Estratégicas</h2>
+                                <p className="text-muted small mb-4">Bem-vindo, Alison! Veja o desempenho hoje.</p>
+                                <Button className="px-4 py-2 fw-bold d-flex align-items-center" style={{ backgroundColor: '#5D87FF', border: 'none', borderRadius: '10px', boxShadow: '0 4px 10px rgba(93,135,255,0.3)' }}>
+                                    <Target size={18} className="me-2" /> Gerenciar Funil
+                                </Button>
                             </div>
                             <div className="d-none d-lg-block">
-                                <img src="https://spike-angular-pro-main.netlify.app/assets/images/backgrounds/welcome-bg.png"
-                                    alt="Welcome"
-                                    style={{ height: '140px', objectFit: 'contain' }}
-                                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                                />
+                                <img src="https://spike-angular-pro-main.netlify.app/assets/images/backgrounds/welcome-bg.png" alt="Welcome" style={{ height: '140px' }} />
                             </div>
                         </Card.Body>
                     </Card>
                 </Col>
 
-                {/* Stat Cards - Mais Sólidos */}
                 <Col md={2} lg={2}>
-                    <StatCard title="Total Vendas" value="2,358" change="+12.5%" icon={<ShoppingBag size={22} color="white" />} bgColor="#5D87FF" />
+                    <StatCard title="Total Funil" value={`R$${(totalFunnel / 1000).toFixed(0)}k`} change="+12%" icon={<ShoppingBag size={22} color="white" />} bgColor="#5D87FF" />
                 </Col>
                 <Col md={2} lg={2}>
-                    <StatCard title="Orçamentos" value="356" change="+8.5%" icon={<FileCheck size={22} color="white" />} bgColor="#49BEFF" />
+                    <StatCard title="Margem Média" value={`${margemAtual.toFixed(1)}%`} change={margemAtual >= 20 ? 'Alta' : 'Baixa'} icon={<Award size={22} color="white" />} bgColor="#49BEFF" />
                 </Col>
                 <Col md={3} lg={3}>
                     <StatCard title="Meta Mensal" value="89%" change="+3%" icon={<TrendingUp size={22} color="white" />} bgColor="#2A3547" />
                 </Col>
             </Row>
 
-            {/* Charts Section */}
             <Row className="g-4 mb-4">
-                <Col lg={7}>
+                {/* Pipeline Comercial com Radial Bar (Visual de Alto Nível) */}
+                <Col lg={5}>
                     <Card className="border-0 shadow-sm p-4 h-100" style={{ borderRadius: '24px' }}>
-                        <div className="d-flex justify-content-between align-items-center mb-4">
-                            <div>
-                                <h3 className="h5 fw-bold mb-1">Lucros e Despesas</h3>
-                                <p className="text-muted small mb-0">Comparativo mensal de desempenho</p>
-                            </div>
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                            <h3 className="h5 fw-bold mb-0">Pipeline Comercial</h3>
                             <Button variant="link" className="p-0 text-muted"><MoreHorizontal size={20} /></Button>
                         </div>
-                        {/* Placeholder Gráfico Barras */}
-                        <div className="flex-grow-1 d-flex align-items-end justify-content-between mt-4" style={{ height: '280px', padding: '0 20px' }}>
-                            {[45, 65, 50, 90, 60, 75, 70, 85].map((h, i) => (
-                                <div key={i} className="d-flex flex-column align-items-center gap-2" style={{ width: '10%' }}>
-                                    <div style={{ height: h * 2.2, width: '100%', backgroundColor: '#5D87FF', borderRadius: '10px', boxShadow: '0 4px 6px rgba(93,135,255,0.2)' }}></div>
-                                    <div style={{ height: h * 1.2, width: '100%', backgroundColor: '#FA896B', borderRadius: '10px', boxShadow: '0 4px 6px rgba(250,137,107,0.2)' }}></div>
-                                    <span className="text-muted fw-bold" style={{ fontSize: '10px' }}>Set</span>
-                                </div>
-                            ))}
+                        <p className="text-muted small mb-4">Anéis representam o percentual financeiro de cada etapa sobre o total do funil.</p>
+                        <div className="d-flex justify-content-center align-items-center" style={{ height: '350px' }}>
+                            <Chart
+                                options={radialOptions}
+                                series={radialSeries}
+                                type="radialBar"
+                                height={400}
+                                width="100%"
+                            />
                         </div>
                     </Card>
                 </Col>
 
-                <Col lg={5}>
+                <Col lg={7}>
                     <Card className="border-0 shadow-sm p-4 h-100" style={{ borderRadius: '24px' }}>
-                        <div className="d-flex justify-content-between align-items-center mb-4">
-                            <h3 className="h5 fw-bold mb-0">Venda de Produtos</h3>
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                            <h3 className="h5 fw-bold mb-0">Mix por Categoria</h3>
                             <Button variant="link" className="p-0 text-muted"><MoreHorizontal size={20} /></Button>
                         </div>
-                        {/* Placeholder Gráfico Linha */}
-                        <div className="flex-grow-1 position-relative d-flex align-items-center justify-content-center" style={{ height: '180px' }}>
-                            <svg width="100%" height="150" viewBox="0 0 400 150" preserveAspectRatio="none">
-                                <defs>
-                                    <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="0%" stopColor="#5D87FF" stopOpacity="0.2" />
-                                        <stop offset="100%" stopColor="#5D87FF" stopOpacity="0" />
-                                    </linearGradient>
-                                </defs>
-                                <path d="M 0 100 Q 50 70, 100 80 T 200 60 T 300 90 T 400 30" fill="none" stroke="#5D87FF" strokeWidth="4" />
-                                <path d="M 0 100 Q 50 70, 100 80 T 200 60 T 300 90 T 400 30 V 150 H 0 Z" fill="url(#lineGrad)" />
-                            </svg>
-                        </div>
-
-                        <div className="mt-4 pt-4 border-top">
-                            <div className="d-flex justify-content-between align-items-center mb-3">
-                                <div>
-                                    <h3 className="h3 fw-bold mb-1">36,436</h3>
-                                    <p className="text-muted small mb-0">Novas Propostas <span className="text-success fw-bold">+23%</span></p>
-                                </div>
-                                <div style={{ backgroundColor: 'rgba(93, 135, 255, 0.1)', padding: '12px', borderRadius: '15px' }}>
-                                    <UserCheck size={24} color="#5D87FF" />
-                                </div>
-                            </div>
+                        <p className="text-muted small mb-4">Volume total de itens convertidos em vendas para cada categoria técnica.</p>
+                        <div className="d-flex align-items-center justify-content-center" style={{ height: '320px' }}>
+                            <Chart
+                                options={categoryChartOptions}
+                                series={[{ name: 'Orçamentos', data: financeData?.categorias.map((c: any) => c.total) || [] }]}
+                                type="bar"
+                                height={350}
+                                width="100%"
+                            />
                         </div>
                     </Card>
                 </Col>
             </Row>
-
-            {/* List Section */}
-            <Card className="border-0 shadow-sm" style={{ borderRadius: '24px', padding: '30px' }}>
-                <div className="d-flex justify-content-between align-items-center mb-4">
-                    <h3 className="h5 fw-bold mb-0" style={{ color: '#2A3547' }}>Orçamentos Recentes</h3>
-                    <MoreHorizontal size={20} color="#7C8FAC" style={{ cursor: 'pointer' }} />
-                </div>
-                <Table responsive hover className="mb-0 overflow-hidden" style={{ borderCollapse: 'separate', borderSpacing: '0 0' }}>
-                    <thead>
-                        <tr style={{ color: '#7C8FAC', fontSize: '14px', borderBottom: '1px solid #F1F3F4' }}>
-                            <th className="border-0 ps-0 pb-3" style={{ fontWeight: '500' }}>Cliente/Proposta</th>
-                            <th className="border-0 pb-3" style={{ fontWeight: '500' }}>Valor Total</th>
-                            <th className="border-0 pb-3" style={{ fontWeight: '500' }}>Margem</th>
-                            <th className="border-0 pb-3 text-center" style={{ fontWeight: '500' }}>Status</th>
-                            <th className="border-0 text-end pe-0 pb-3" style={{ fontWeight: '500' }}></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {orcamentos?.slice(0, 5).map((orc: Orcamento) => (
-                            <tr key={orc.id} style={{ verticalAlign: 'middle' }}>
-                                <td className="py-3 border-0 ps-0">
-                                    <div className="d-flex align-items-center gap-3">
-                                        <div style={{
-                                            width: '45px',
-                                            height: '45px',
-                                            borderRadius: '50%',
-                                            backgroundColor: 'rgba(93, 135, 255, 0.1)',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            color: '#5D87FF',
-                                            fontWeight: 'bold',
-                                            flexShrink: 0
-                                        }}>
-                                            {orc.cliente_detalhe?.razao_social?.charAt(0) || 'C'}
-                                        </div>
-                                        <div>
-                                            <div className="fw-bold" style={{ color: '#2A3547', fontSize: '15px' }}>
-                                                {orc.cliente_detalhe?.razao_social || 'N/A'}
-                                            </div>
-                                            <div className="text-muted" style={{ fontSize: '13px' }}>
-                                                ORC-{orc.numero?.toString().padStart(4, '0')} · Rev {orc.revisao}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td className="border-0">
-                                    <span className="fw-bold" style={{ color: '#2A3547', fontSize: '15px' }}>
-                                        R$ {parseFloat(orc.valor_total).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                                    </span>
-                                    <span style={{ color: '#7C8FAC', fontSize: '13px' }}>,00</span>
-                                </td>
-                                <td className="border-0">
-                                    <span style={{ color: '#2A3547', fontSize: '15px', fontWeight: '500' }}>
-                                        {(parseFloat(orc.margem_contrib) * 100).toFixed(0)}%
-                                    </span>
-                                    <span style={{ color: '#7C8FAC', fontSize: '14px' }}> margem</span>
-                                </td>
-                                <td className="border-0 text-center">
-                                    {getStatusBadge(orc.status)}
-                                </td>
-                                <td className="border-0 text-end pe-0">
-                                    <div className="d-flex justify-content-end gap-1">
-                                        <Button variant="link" size="sm" className="p-1 text-muted" as={Link as any} to={`/orcamento/${orc.id}`}>
-                                            <Edit size={18} />
-                                        </Button>
-                                        <Button variant="link" size="sm" className="p-1 text-muted">
-                                            <Trash2 size={18} />
-                                        </Button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </Table>
-            </Card>
         </div>
     );
 };
