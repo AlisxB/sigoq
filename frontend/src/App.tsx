@@ -10,7 +10,7 @@ import Orcamentos from './pages/Orcamentos'
 import Login from './pages/Login'
 import Clientes from './pages/Clientes'
 import Fornecedores from './pages/Fornecedores'
-import Produtos from './pages/Produtos'
+import Materiais from './pages/Materiais'
 import Categorias from './pages/Categorias'
 import Kanban from './pages/Kanban'
 import Metas from './pages/Metas'
@@ -38,7 +38,7 @@ const App: React.FC = () => {
                   <Route path="orcamentos" element={<Orcamentos />} />
                   <Route path="orcamento/:id" element={<OrcamentoEditor />} />
                   <Route path="novo-orcamento" element={<OrcamentoEditor />} />
-                  <Route path="produtos" element={<Produtos />} />
+                  <Route path="materiais" element={<Materiais />} />
                   <Route path="categorias" element={<Categorias />} />
                 </Route>
 

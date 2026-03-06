@@ -1,14 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Form, Row, Col } from 'react-bootstrap';
 import GenericCRUD from '../components/GenericCRUD';
 import { produtoApi, categoriaApi } from '../api/produtos';
 import { fornecedorApi } from '../api/fornecedores';
-import { Produto, Categoria, Fornecedor } from '../types';
+import { Produto, User } from '../types';
 import { useQuery } from '@tanstack/react-query';
 import { keepOnlyNumbers, maskCurrency, unmaskCurrency } from '../utils/masks';
-import { Barcode, Box, Layers, Building, Ruler, DollarSign, FileText, PackageSearch, Archive, AlignLeft } from 'lucide-react';
+import { Barcode, Box, Layers, Building, Ruler, DollarSign, FileText, PackageSearch, Archive, AlignLeft, Filter } from 'lucide-react';
 
-const Produtos: React.FC = () => {
+const Materiais: React.FC = () => {
+    const [categoriaFilter, setCategoriaFilter] = useState<string>('');
+    const [fornecedorFilter, setFornecedorFilter] = useState<string>('');
+
     const { data: categorias = [] } = useQuery({ queryKey: ['categorias'], queryFn: categoriaApi.list });
     const { data: fornecedores = [] } = useQuery({ queryKey: ['fornecedores'], queryFn: fornecedorApi.list });
 
@@ -16,10 +19,50 @@ const Produtos: React.FC = () => {
         { header: 'Código', accessor: 'codigo' as const },
         { header: 'Descrição', accessor: 'descricao' as const },
         { header: 'Categoria', accessor: 'categoria_nome' as const },
+        { header: 'Fornecedor', accessor: 'fornecedor_nome' as const },
         { header: 'Preço Custo', accessor: (item: Produto) => `R$ ${parseFloat(item.custo_base).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` },
         { header: 'Estoque', accessor: 'estoque_atual' as const },
         { header: 'Unid.', accessor: 'unidade_medida' as const },
     ];
+
+    const renderFilters = () => (
+        <>
+            <div style={{ flex: '1 1 200px', maxWidth: '300px' }}>
+                <Form.Label className="form-premium-label">Filtrar Categoria</Form.Label>
+                <div className="input-icon-wrapper">
+                    <Layers size={16} />
+                    <Form.Select
+                        className="form-select-premium ps-4"
+                        value={categoriaFilter}
+                        onChange={(e) => setCategoriaFilter(e.target.value)}
+                    >
+                        <option value="">Todas as Categorias</option>
+                        {categorias.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                    </Form.Select>
+                </div>
+            </div>
+            <div style={{ flex: '1 1 200px', maxWidth: '300px' }}>
+                <Form.Label className="form-premium-label">Filtrar Fornecedor</Form.Label>
+                <div className="input-icon-wrapper">
+                    <Building size={16} />
+                    <Form.Select
+                        className="form-select-premium ps-4"
+                        value={fornecedorFilter}
+                        onChange={(e) => setFornecedorFilter(e.target.value)}
+                    >
+                        <option value="">Todos os Fornecedores</option>
+                        {fornecedores.map(f => <option key={f.id} value={f.id}>{f.nome_fantasia || f.razao_social}</option>)}
+                    </Form.Select>
+                </div>
+            </div>
+        </>
+    );
+
+    const filterFn = (item: Produto) => {
+        const matchesCat = categoriaFilter ? item.categoria === parseInt(categoriaFilter) : true;
+        const matchesFor = fornecedorFilter ? item.fornecedor === parseInt(fornecedorFilter) : true;
+        return matchesCat && matchesFor;
+    };
 
     const renderForm = (data: Partial<Produto>, onChange: (field: keyof Produto, value: any) => void) => (
         <Row className="g-3">
@@ -195,15 +238,17 @@ const Produtos: React.FC = () => {
 
     return (
         <GenericCRUD<Produto>
-            title="Catálogo de Produtos"
-            entityName="Produto"
+            title="Catálogo de Materiais"
+            entityName="Material"
             api={produtoApi}
             columns={columns}
             renderForm={renderForm}
             initialData={{ codigo: '', descricao: '', unidade_medida: 'UN', custo_base: '0.00', estoque_minimo: 0 }}
             queryKey="produtos"
+            renderFilters={renderFilters}
+            filterFn={filterFn}
         />
     );
 };
 
-export default Produtos;
+export default Materiais;
