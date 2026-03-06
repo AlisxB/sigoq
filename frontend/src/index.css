@@ -124,3 +124,29 @@ h6 {
 .btn-premium-secondary:hover {
   background-color: #EBF1F6 !important;
 }
+
+/* -------------------------------------
+   Correções de Visibilidade de Texto 
+-------------------------------------- */
+.text-muted {
+  color: #7C8FAC !important; /* Cor sólida em vez de transparente */
+  opacity: 1 !important;
+}
+
+.small, small {
+  color: #5A6A83;
+}
+
+.card-premium .text-muted {
+  color: #5A6A83 !important;
+}
+
+/* Garante visibilidade em Selects e Controls */
+.form-select, .form-control, option {
+  color: #2A3547 !important;
+}
+
+.x-small {
+  font-size: 0.75rem;
+  font-weight: 600;
+}

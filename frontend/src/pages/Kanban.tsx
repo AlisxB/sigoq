@@ -6,6 +6,7 @@ import { Container, Row, Col, Card, Badge, Button, Spinner, Dropdown } from 'rea
 import { Plus, MoreVertical, DollarSign, Calendar, User, Search, Briefcase, Building, Flag, ListTodo, Lock } from 'lucide-react';
 import { comercialApi } from '../api/comercial';
 import { clienteApi } from '../api/clientes';
+import { useAuth } from '../contexts/AuthContext';
 import { Oportunidade, StatusOportunidade, Cliente } from '../types';
 import { Modal, Form } from 'react-bootstrap';
 import { maskCurrency, unmaskCurrency } from '../utils/masks';
@@ -13,6 +14,8 @@ import { maskCurrency, unmaskCurrency } from '../utils/masks';
 const Kanban: React.FC = () => {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
+    const { user: currentUser } = useAuth();
+    
     const { data: statusList = [], isLoading: loadingStatus } = useQuery<StatusOportunidade[]>({
         queryKey: ['kanban-status'],
         queryFn: comercialApi.listStatus
@@ -74,7 +77,7 @@ const Kanban: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['kanban-ops'] });
             setShowModal(false);
-            setFormData({ titulo: '', valor_estimado: '0.00' });
+            setFormData({ titulo: '', valor_estimado: '0.00', prioridade: 'MEDIA', fonte: 'SITE' });
         }
     });
 
@@ -137,6 +140,15 @@ const Kanban: React.FC = () => {
                                             .filter((o: Oportunidade) => o.status === status.id)
                                             .map((op: Oportunidade, index: number) => {
                                                 const isLocked = op.status_detalhe?.notifica_setor_tecnico;
+                                                
+                                                // Lógica de fallback para o nome do vendedor (Garante que nunca seja transparente/vazio)
+                                                let vendedorNome = "Vendedor";
+                                                if (op.vendedor_nome && op.vendedor_nome.trim() !== "") {
+                                                    vendedorNome = op.vendedor_nome;
+                                                } else if (currentUser) {
+                                                    vendedorNome = `${currentUser.first_name} ${currentUser.last_name}`.trim() || currentUser.username;
+                                                }
+
                                                 return (
                                                     <Draggable
                                                         key={op.id}
@@ -158,7 +170,7 @@ const Kanban: React.FC = () => {
                                                                 <Card.Body className="p-3">
                                                                     <div className="d-flex justify-content-between align-items-start mb-2">
                                                                         <div className="d-flex align-items-center">
-                                                                            <span className="text-muted x-small fw-bold me-2">OP-{op.numero.toString().padStart(4, '0')}</span>
+                                                                            <span className="text-muted x-small fw-bold me-2">OP-{op.numero?.toString().padStart(4, '0') || '0000'}</span>
                                                                             {isLocked && <Lock size={12} className="text-warning" />}
                                                                         </div>
                                                                         <Dropdown align="end">
@@ -172,7 +184,7 @@ const Kanban: React.FC = () => {
                                                                                 >
                                                                                     Gerar Orçamento
                                                                                 </Dropdown.Item>
-                                                                                <Dropdown.Item className="small" onClick={() => window.open(`http://127.0.0.1:8000/comercial/api/oportunidade/${op.id}/pdf/`, '_blank')}>
+                                                                                <Dropdown.Item className="small" onClick={() => window.open(`http://localhost:8000/comercial/api/oportunidade/${op.id}/pdf/`, '_blank')}>
                                                                                     Gerar Proposta PDF
                                                                                 </Dropdown.Item>
                                                                                 <Dropdown.Item className="small">Ver Detalhes</Dropdown.Item>
@@ -183,35 +195,48 @@ const Kanban: React.FC = () => {
                                                                         </Dropdown>
                                                                     </div>
                                                                     <h6 className="fw-bold mb-2 text-dark" style={{ fontSize: '0.9rem' }}>{op.titulo}</h6>
-                                                                    <p className="small text-muted mb-3 line-clamp-2" style={{ fontSize: '0.8rem' }}>{op.descricao}</p>
-
+                                                                    
                                                                     <div className="mb-3">
-                                                                        <div className="d-flex align-items-center mb-1">
-                                                                            <User size={12} className="text-primary me-2" />
-                                                                            <span className="small fw-medium text-muted" style={{ fontSize: '0.75rem' }}>{op.cliente_detalhe?.razao_social || 'Cliente não definido'}</span>
+                                                                        {/* Cliente */}
+                                                                        <div className="d-flex align-items-center mb-2">
+                                                                            <User size={14} className="text-primary me-2" />
+                                                                            <span className="small fw-bold" style={{ fontSize: '0.8rem', color: '#5A6A83' }}>
+                                                                                {op.cliente_detalhe?.nome_fantasia || op.cliente_detalhe?.razao_social || 'Cliente'}
+                                                                            </span>
                                                                         </div>
-                                                                        <div className="d-flex align-items-center mb-1">
-                                                                            <div className="bg-light rounded-circle p-1 me-2" style={{ fontSize: '10px' }}>👤</div>
-                                                                            <span className="small text-muted" style={{ fontSize: '0.7rem' }}>{op.vendedor_nome || 'Sistema'}</span>
+                                                                        
+                                                                        {/* Vendedor (Onde estava o problema) */}
+                                                                        <div className="d-flex align-items-center mb-2">
+                                                                            <div style={{ 
+                                                                                width: '20px', height: '20px', borderRadius: '50%', 
+                                                                                backgroundColor: '#5D87FF', display: 'flex', 
+                                                                                alignItems: 'center', justifyContent: 'center', 
+                                                                                marginRight: '8px' 
+                                                                            }}>
+                                                                                <User size={12} color="white" />
+                                                                            </div>
+                                                                            <span className="small fw-medium" style={{ fontSize: '0.8rem', color: '#2A3547' }}>
+                                                                                {vendedorNome}
+                                                                            </span>
                                                                         </div>
-                                                                        <div className="d-flex align-items-center">
-                                                                            <DollarSign size={12} className="text-success me-2" />
-                                                                            <span className="small fw-bold text-success" style={{ fontSize: '0.85rem' }}>R$ {parseFloat(op.valor_estimado).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+
+                                                                        {/* Valor */}
+                                                                        <div className="d-flex align-items-center mb-2">
+                                                                            <DollarSign size={14} className="text-success me-2" />
+                                                                            <span className="small fw-bold text-success" style={{ fontSize: '0.9rem' }}>
+                                                                                R$ {parseFloat(op.valor_estimado || '0').toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                                                            </span>
                                                                         </div>
                                                                     </div>
 
-                                                                    <div className="d-flex justify-content-between align-items-center">
+                                                                    <div className="d-flex justify-content-between align-items-center pt-2 border-top">
                                                                         <div className="d-flex align-items-center">
                                                                             <Calendar size={12} className="text-muted me-1" />
-                                                                            <span className="x-small text-muted">
-                                                                                {op.data_prevista_fechamento
-                                                                                    ? new Date(op.data_prevista_fechamento).toLocaleDateString('pt-BR')
-                                                                                    : op.criado_em
-                                                                                        ? new Date(op.criado_em).toLocaleDateString('pt-BR')
-                                                                                        : '--/--/--'}
+                                                                            <span className="x-small text-muted fw-bold">
+                                                                                {op.criado_em ? new Date(op.criado_em).toLocaleDateString('pt-BR') : '--/--/--'}
                                                                             </span>
                                                                         </div>
-                                                                        <Badge bg={op.prioridade === 'ALTA' ? 'danger' : op.prioridade === 'MEDIA' ? 'warning' : 'info'} className="x-small">
+                                                                        <Badge bg={op.prioridade === 'ALTA' ? 'danger' : op.prioridade === 'MEDIA' ? 'warning' : 'info'} className="x-small rounded-pill px-2">
                                                                             {op.prioridade}
                                                                         </Badge>
                                                                     </div>
