@@ -120,3 +120,30 @@ export interface ConfiguracaoPreco {
     margem_contribuicao_padrao: string;
     ativo: boolean;
 }
+export interface StatusOportunidade {
+    id: number;
+    nome: string;
+    cor: string;
+    ordem: number;
+    notifica_setor_tecnico: boolean;
+}
+
+export interface Oportunidade {
+    id: number;
+    numero: number;
+    titulo: string;
+    descricao: string;
+    cliente: number;
+    cliente_detalhe?: Cliente;
+    status: number;
+    status_nome?: string;
+    valor_estimado: string;
+    margem_lucro: string;
+    probabilidade: number;
+    data_prevista_fechamento: string | null;
+    fonte: 'INDICACAO' | 'SITE' | 'PROSPECCAO' | 'WHATSAPP' | 'OUTRO';
+    prioridade: 'BAIXA' | 'MEDIA' | 'ALTA';
+    vendedor: number | null;
+    vendedor_nome?: string;
+    criado_em?: string;
+}
