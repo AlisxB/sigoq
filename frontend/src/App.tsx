@@ -13,6 +13,7 @@ import Fornecedores from './pages/Fornecedores'
 import Produtos from './pages/Produtos'
 import Categorias from './pages/Categorias'
 import Kanban from './pages/Kanban'
+import Metas from './pages/Metas'
 import ConfiguracoesPreco from './pages/ConfiguracoesPreco'
 import { AuthProvider } from './contexts/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -46,6 +47,7 @@ const App: React.FC = () => {
                   <Route path="clientes" element={<Clientes />} />
                   <Route path="fornecedores" element={<Fornecedores />} />
                   <Route path="kanban" element={<Kanban />} />
+                  <Route path="metas" element={<Metas />} />
                 </Route>
 
                 {/* Sistema / Admin */}
