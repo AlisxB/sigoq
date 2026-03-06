@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Container, Row, Col, Card, Badge, Button, Spinner, Dropdown } from 'react-bootstrap';
-import { Plus, MoreVertical, DollarSign, Calendar, User, Search } from 'lucide-react';
+import { Plus, MoreVertical, DollarSign, Calendar, User, Search, Briefcase, Building, Flag, ListTodo } from 'lucide-react';
 import { comercialApi } from '../api/comercial';
 import { clienteApi } from '../api/common';
 import { Oportunidade, StatusOportunidade, Cliente } from '../types';
@@ -209,60 +209,75 @@ const Kanban: React.FC = () => {
                     <Form className="g-3 row">
                         <Col md={12} className="mb-3">
                             <Form.Label className="form-premium-label">Título da Oportunidade</Form.Label>
-                            <Form.Control
-                                required
-                                className="form-control-premium"
-                                value={formData.titulo}
-                                onChange={e => setFormData({ ...formData, titulo: e.target.value })}
-                                placeholder="Ex: Projeto Residencial Alpha"
-                            />
+                            <div className="input-icon-wrapper">
+                                <Briefcase size={18} />
+                                <Form.Control
+                                    required
+                                    className="form-control-premium"
+                                    value={formData.titulo}
+                                    onChange={e => setFormData({ ...formData, titulo: e.target.value })}
+                                    placeholder="Ex: Projeto Residencial Alpha"
+                                />
+                            </div>
                         </Col>
                         <Col md={12} className="mb-3">
                             <Form.Label className="form-premium-label">Cliente</Form.Label>
-                            <Form.Select
-                                required
-                                className="form-select-premium"
-                                value={formData.cliente}
-                                onChange={e => setFormData({ ...formData, cliente: parseInt(e.target.value) })}
-                            >
-                                <option value="">Selecione o Cliente</option>
-                                {clientes.map((c: Cliente) => <option key={c.id} value={c.id}>{c.razao_social}</option>)}
-                            </Form.Select>
+                            <div className="input-icon-wrapper">
+                                <Building size={18} />
+                                <Form.Select
+                                    required
+                                    className="form-select-premium"
+                                    value={formData.cliente}
+                                    onChange={e => setFormData({ ...formData, cliente: parseInt(e.target.value) })}
+                                >
+                                    <option value="">Selecione o Cliente</option>
+                                    {clientes.map((c: Cliente) => <option key={c.id} value={c.id}>{c.razao_social}</option>)}
+                                </Form.Select>
+                            </div>
                         </Col>
                         <Col md={6} className="mb-3">
                             <Form.Label className="form-premium-label">Valor Estimado (R$)</Form.Label>
-                            <Form.Control
-                                required
-                                className="form-control-premium"
-                                value={formData.valor_estimado ? maskCurrency(formData.valor_estimado) : ''}
-                                onChange={(e) => {
-                                    const unmasked = unmaskCurrency(e.target.value);
-                                    setFormData({ ...formData, valor_estimado: unmasked });
-                                }}
-                                placeholder="R$ 0,00"
-                            />
+                            <div className="input-icon-wrapper">
+                                <DollarSign size={18} />
+                                <Form.Control
+                                    required
+                                    className="form-control-premium"
+                                    value={formData.valor_estimado ? maskCurrency(formData.valor_estimado) : ''}
+                                    onChange={(e) => {
+                                        const unmasked = unmaskCurrency(e.target.value);
+                                        setFormData({ ...formData, valor_estimado: unmasked });
+                                    }}
+                                    placeholder="R$ 0,00"
+                                />
+                            </div>
                         </Col>
                         <Col md={6} className="mb-3">
                             <Form.Label className="form-premium-label">Prioridade</Form.Label>
-                            <Form.Select
-                                className="form-select-premium"
-                                value={formData.prioridade}
-                                onChange={e => setFormData({ ...formData, prioridade: e.target.value as any })}
-                            >
-                                <option value="BAIXA">Baixa</option>
-                                <option value="MEDIA">Média</option>
-                                <option value="ALTA">Alta</option>
-                            </Form.Select>
+                            <div className="input-icon-wrapper">
+                                <Flag size={18} />
+                                <Form.Select
+                                    className="form-select-premium"
+                                    value={formData.prioridade}
+                                    onChange={e => setFormData({ ...formData, prioridade: e.target.value as any })}
+                                >
+                                    <option value="BAIXA">Baixa</option>
+                                    <option value="MEDIA">Média</option>
+                                    <option value="ALTA">Alta</option>
+                                </Form.Select>
+                            </div>
                         </Col>
                         <Col md={12} className="mb-3">
                             <Form.Label className="form-premium-label">Status Inicial</Form.Label>
-                            <Form.Select
-                                className="form-select-premium"
-                                value={formData.status}
-                                onChange={e => setFormData({ ...formData, status: parseInt(e.target.value) })}
-                            >
-                                {statusList.map((s: StatusOportunidade) => <option key={s.id} value={s.id}>{s.nome}</option>)}
-                            </Form.Select>
+                            <div className="input-icon-wrapper">
+                                <ListTodo size={18} />
+                                <Form.Select
+                                    className="form-select-premium"
+                                    value={formData.status}
+                                    onChange={e => setFormData({ ...formData, status: parseInt(e.target.value) })}
+                                >
+                                    {statusList.map((s: StatusOportunidade) => <option key={s.id} value={s.id}>{s.nome}</option>)}
+                                </Form.Select>
+                            </div>
                         </Col>
                     </Form>
                 </Modal.Body>

@@ -18,6 +18,7 @@ a {
   color: #646cff;
   text-decoration: inherit;
 }
+
 a:hover {
   color: #535bf2;
 }
@@ -46,9 +47,11 @@ button {
   cursor: pointer;
   transition: border-color 0.25s;
 }
+
 button:hover {
   border-color: #646cff;
 }
+
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
@@ -59,10 +62,100 @@ button:focus-visible {
     color: #213547;
     background-color: #ffffff;
   }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+}
+
+/* -------------------------------------
+   Premium UI Forms & Modals 
+-------------------------------------- */
+.modal-premium .modal-content {
+  border: none;
+  border-radius: 16px;
+  box-shadow: 0 15px 45px rgba(0, 0, 0, 0.1);
+}
+
+.modal-premium .modal-header {
+  padding: 24px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.modal-premium .modal-body {
+  padding: 24px;
+}
+
+.form-premium-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #2A3547;
+  margin-bottom: 6px;
+}
+
+.form-control-premium,
+.form-select-premium {
+  border-radius: 10px;
+  border: 1px solid #DFE5EF;
+  padding: 10px 14px;
+  font-size: 0.95rem;
+  color: #2A3547;
+  background-color: #FFFFFF;
+  transition: all 0.2s ease;
+  box-shadow: none !important;
+}
+
+.form-control-premium:focus,
+.form-select-premium:focus {
+  border-color: #5D87FF;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(93, 135, 255, 0.15) !important;
+}
+
+.form-control-premium::placeholder {
+  color: #A1B4CB !important;
+  opacity: 1 !important;
+}
+
+.input-icon-wrapper {
+  position: relative;
+}
+
+.input-icon-wrapper svg {
+  position: absolute;
+  top: 50%;
+  left: 14px;
+  transform: translateY(-50%);
+  color: #A1B4CB;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.input-icon-wrapper .form-control-premium,
+.input-icon-wrapper .form-select-premium {
+  padding-left: 42px;
+}
+
+.btn-premium-primary {
+  background-color: #5D87FF !important;
+  border: none !important;
+  border-radius: 10px !important;
+  padding: 10px 24px !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-premium-primary:hover {
+  background-color: #4570EA !important;
+  transform: translateY(-1px);
+}
+
+.btn-premium-secondary {
+  background-color: #F8F9FA !important;
+  color: #2A3547 !important;
+  border: 1px solid #DFE5EF !important;
+  border-radius: 10px !important;
+  padding: 10px 24px !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-premium-secondary:hover {
+  background-color: #EBF1F6 !important;
 }

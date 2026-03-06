@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Container, Row, Col, Card, Form, Button, Spinner, Table, Alert } from 'react-bootstrap';
-import { Save, Info, CheckCircle } from 'lucide-react';
+import { Save, Info, CheckCircle, Percent } from 'lucide-react';
 import { orcamentoApi } from '../api/orcamentos';
 import { ConfiguracaoPreco } from '../types';
 
@@ -92,13 +92,16 @@ const ConfiguracoesPreco: React.FC = () => {
                                                 {field.label}
                                                 <span className="text-dark">{(parseFloat(localData[field.key as keyof ConfiguracaoPreco] as string || '0') * 100).toFixed(2)}%</span>
                                             </Form.Label>
-                                            <Form.Control
-                                                type="number"
-                                                step="0.0001"
-                                                className="form-control-premium"
-                                                value={localData[field.key as keyof ConfiguracaoPreco] as string}
-                                                onChange={(e) => handleChange(field.key as keyof ConfiguracaoPreco, e.target.value)}
-                                            />
+                                            <div className="input-icon-wrapper">
+                                                <Percent size={18} />
+                                                <Form.Control
+                                                    type="number"
+                                                    step="0.0001"
+                                                    className="form-control-premium"
+                                                    value={localData[field.key as keyof ConfiguracaoPreco] as string}
+                                                    onChange={(e) => handleChange(field.key as keyof ConfiguracaoPreco, e.target.value)}
+                                                />
+                                            </div>
                                         </Form.Group>
                                     </Col>
                                 ))}

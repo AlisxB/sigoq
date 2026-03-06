@@ -1,5 +1,6 @@
 import React from 'react';
 import { Form, Row, Col } from 'react-bootstrap';
+import { Layers, AlignLeft } from 'lucide-react';
 import GenericCRUD from '../components/GenericCRUD';
 import { categoriaApi } from '../api/produtos';
 import { Categoria } from '../types';
@@ -15,26 +16,32 @@ const Categorias: React.FC = () => {
             <Col md={12}>
                 <Form.Group>
                     <Form.Label className="form-premium-label">Nome da Categoria</Form.Label>
-                    <Form.Control
-                        required
-                        className="form-control-premium"
-                        value={data.nome || ''}
-                        onChange={(e) => onChange('nome', e.target.value)}
-                        placeholder="Ex: Disjuntores"
-                    />
+                    <div className="input-icon-wrapper">
+                        <Layers size={18} />
+                        <Form.Control
+                            required
+                            className="form-control-premium"
+                            value={data.nome || ''}
+                            onChange={(e) => onChange('nome', e.target.value)}
+                            placeholder="Ex: Disjuntores"
+                        />
+                    </div>
                 </Form.Group>
             </Col>
             <Col md={12}>
                 <Form.Group>
                     <Form.Label className="form-premium-label">Descrição</Form.Label>
-                    <Form.Control
-                        as="textarea"
-                        rows={3}
-                        className="form-control-premium"
-                        value={data.descricao || ''}
-                        onChange={(e) => onChange('descricao', e.target.value)}
-                        placeholder="Breve descrição da categoria..."
-                    />
+                    <div className="input-icon-wrapper">
+                        <AlignLeft size={18} style={{ top: '24px' }} />
+                        <Form.Control
+                            as="textarea"
+                            rows={3}
+                            className="form-control-premium"
+                            value={data.descricao || ''}
+                            onChange={(e) => onChange('descricao', e.target.value)}
+                            placeholder="Breve descrição da categoria..."
+                        />
+                    </div>
                 </Form.Group>
             </Col>
         </Row>
