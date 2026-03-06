@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        body {
+            font-family: 'Helvetica', sans-serif;
+            color: #333;
+            line-height: 1.6;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #3498db;
+            margin: 0;
+            font-size: 24px;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        .section-title {
+            background-color: #f8f9fa;
+            padding: 8px;
+            font-weight: bold;
+            border-left: 4px solid #3498db;
+            margin-bottom: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f8f9fa;
+        }
+        .footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 10px;
+            color: #777;
+            border-top: 1px solid #dee2e6;
+            padding-top: 10px;
+        }
+        .total-box {
+            background-color: #3498db;
+            color: white;
+            padding: 15px;
+            text-align: right;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>PROPOSTA COMERCIAL</h1>
+        <p>SIGOQ - Sistema Integrado de Gestão</p>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Dados do Cliente</div>
+        <table>
+            <tr>
+                <td width="20%"><strong>Razão Social:</strong></td>
+                <td>{{ oportunidade.cliente.razao_social }}</td>
+            </tr>
+            <tr>
+                <td><strong>CNPJ/CPF:</strong></td>
+                <td>{{ oportunidade.cliente.cnpj|default:oportunidade.cliente.cpf }}</td>
+            </tr>
+            <tr>
+                <td><strong>Título:</strong></td>
+                <td>{{ oportunidade.titulo }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Descrição da Solução</div>
+        <p>{{ oportunidade.descricao|linebreaks }}</p>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Valores Estimados</div>
+        <div class="total-box">
+            <h2 style="margin: 0;">VALOR TOTAL: R$ {{ oportunidade.valor_estimado }}</h2>
+            <p style="margin: 5px 0 0 0;">Condições sujeitas a análise técnica após aprovação inicial.</p>
+        </div>
+    </div>
+
+    <div class="section" style="margin-top: 50px;">
+        <div class="section-title">Assinaturas</div>
+        <table style="border: none;">
+            <tr>
+                <td style="border: none; text-align: center; padding-top: 50px;">
+                    <div style="border-top: 1px solid #000; width: 80%; margin: 0 auto;"></div>
+                    <p>{{ oportunidade.vendedor.get_full_name|default:oportunidade.vendedor.username }}<br>Vendedor Responsável</p>
+                </td>
+                <td style="border: none; text-align: center; padding-top: 50px;">
+                    <div style="border-top: 1px solid #000; width: 80%; margin: 0 auto;"></div>
+                    <p>{{ oportunidade.cliente.razao_social }}<br>Aceite do Cliente</p>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="footer">
+        Gerado automaticamente pelo SIGOQ em {% now "d/m/Y H:i" %}
+    </div>
+</body>
+</html>
