@@ -142,7 +142,13 @@ h6 {
 }
 
 /* Garante visibilidade em Selects e Controls */
-.form-select, .form-control, option {
+.form-select, .form-control, .form-select-premium, .form-control-premium, select, option {
+  color: #2A3547 !important;
+  opacity: 1 !important;
+}
+
+select option {
+  background-color: #ffffff !important;
   color: #2A3547 !important;
 }
 
