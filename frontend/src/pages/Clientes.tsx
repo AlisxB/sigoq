@@ -156,7 +156,7 @@ const Clientes: React.FC = () => {
                                 }
                             }}
                             placeholder="00000-000"
-                            maxLength={8}
+                            maxLength={9}
                         />
                     </div>
                 </Form.Group>
