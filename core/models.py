@@ -40,8 +40,8 @@ class BaseModel(models.Model):
         super().delete()
 
     def save(self, *args, **kwargs):
-        # Garantir que o vendedor seja definido caso não exista
-        if not self.vendedor_id:
+        # Atribui o vendedor automaticamente apenas se ele for nulo
+        if self.vendedor_id is None:
             from .middleware import get_current_user
             user = get_current_user()
             if user:
