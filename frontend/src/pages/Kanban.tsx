@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Container, Row, Col, Card, Badge, Button, Spinner, Dropdown } from 'react-bootstrap';
-import { Plus, MoreVertical, DollarSign, Calendar, User, Search, Briefcase, Building, Flag, ListTodo } from 'lucide-react';
+import { Plus, MoreVertical, DollarSign, Calendar, User, Search, Briefcase, Building, Flag, ListTodo, Lock } from 'lucide-react';
 import { comercialApi } from '../api/comercial';
-import { clienteApi } from '../api/common';
+import { clienteApi } from '../api/clientes';
 import { Oportunidade, StatusOportunidade, Cliente } from '../types';
 import { Modal, Form } from 'react-bootstrap';
 import { maskCurrency, unmaskCurrency } from '../utils/masks';
@@ -30,11 +30,17 @@ const Kanban: React.FC = () => {
     const [formData, setFormData] = useState<Partial<Oportunidade>>({
         titulo: '',
         cliente: undefined,
-        status: statusList[0]?.id,
+        status: undefined,
         valor_estimado: '0.00',
         prioridade: 'MEDIA',
         fonte: 'SITE'
     });
+
+    useEffect(() => {
+        if (statusList.length > 0 && !formData.status) {
+            setFormData(prev => ({ ...prev, status: statusList[0].id }));
+        }
+    }, [statusList, formData.status]);
 
     const updateStatusMutation = useMutation({
         mutationFn: ({ id, statusId }: { id: number, statusId: number }) =>
@@ -127,27 +133,43 @@ const Kanban: React.FC = () => {
                                     >
                                         {oportunidades
                                             .filter(o => o.status === status.id)
-                                            .map((op, index) => (
-                                                <Draggable key={op.id} draggableId={op.id.toString()} index={index}>
-                                                    {(provided, snapshot) => (
-                                                        <Card
-                                                            ref={provided.innerRef}
-                                                            {...provided.draggableProps}
-                                                            {...provided.dragHandleProps}
-                                                            className={`mb-3 border-0 shadow-sm card-premium ${snapshot.isDragging ? 'shadow-lg rotate-1' : ''}`}
-                                                            style={{
-                                                                ...provided.draggableProps.style,
-                                                                borderLeft: `4px solid ${status.cor} !important`
-                                                            }}
-                                                        >
-                                                            <Card.Body className="p-3">
-                                                                <div className="d-flex justify-content-between align-items-start mb-2">
-                                                                    <span className="text-muted x-small fw-bold">OP-{op.numero.toString().padStart(4, '0')}</span>
-                                                                    <Dropdown align="end">
+                                            .map((op, index) => {
+                                                const isLocked = op.status_detalhe?.notifica_setor_tecnico;
+                                                return (
+                                                    <Draggable 
+                                                        key={op.id} 
+                                                        draggableId={op.id.toString()} 
+                                                        index={index}
+                                                        isDragDisabled={isLocked}
+                                                    >
+                                                        {(provided, snapshot) => (
+                                                            <Card
+                                                                ref={provided.innerRef}
+                                                                {...provided.draggableProps}
+                                                                {...provided.dragHandleProps}
+                                                                className={`mb-3 border-0 shadow-sm card-premium ${snapshot.isDragging ? 'shadow-lg rotate-1' : ''} ${isLocked ? 'locked-card' : ''}`}
+                                                                style={{
+                                                                    ...provided.draggableProps.style,
+                                                                    borderLeft: `4px solid ${status.cor} !important`
+                                                                }}
+                                                            >
+                                                                <Card.Body className="p-3">
+                                                                    <div className="d-flex justify-content-between align-items-start mb-2">
+                                                                        <div className="d-flex align-items-center">
+                                                                            <span className="text-muted x-small fw-bold me-2">OP-{op.numero.toString().padStart(4, '0')}</span>
+                                                                            {isLocked && <Lock size={12} className="text-warning" title="Aguardando Orçamento" />}
+                                                                        </div>
+                                                                        <Dropdown align="end">
                                                                         <Dropdown.Toggle as="div" className="p-0 border-0 bg-transparent text-muted cursor-pointer">
                                                                             <MoreVertical size={14} />
                                                                         </Dropdown.Toggle>
                                                                         <Dropdown.Menu className="shadow border-0">
+                                                                            <Dropdown.Item 
+                                                                                className="small fw-bold text-primary" 
+                                                                                onClick={() => navigate(`/novo-orcamento?oportunidade=${op.id}&cliente=${op.cliente}`)}
+                                                                            >
+                                                                                Gerar Orçamento
+                                                                            </Dropdown.Item>
                                                                             <Dropdown.Item className="small" onClick={() => window.open(`http://localhost:8000/comercial/api/oportunidade/${op.id}/pdf/`, '_blank')}>
                                                                                 Gerar Proposta PDF
                                                                             </Dropdown.Item>
@@ -165,6 +187,10 @@ const Kanban: React.FC = () => {
                                                                     <div className="d-flex align-items-center mb-1">
                                                                         <User size={12} className="text-primary me-2" />
                                                                         <span className="small fw-medium text-muted" style={{ fontSize: '0.75rem' }}>{op.cliente_detalhe?.razao_social || 'Cliente não definido'}</span>
+                                                                    </div>
+                                                                    <div className="d-flex align-items-center mb-1">
+                                                                        <div className="bg-light rounded-circle p-1 me-2" style={{ fontSize: '10px' }}>👤</div>
+                                                                        <span className="small text-muted" style={{ fontSize: '0.7rem' }}>{op.vendedor_nome || 'Sistema'}</span>
                                                                     </div>
                                                                     <div className="d-flex align-items-center">
                                                                         <DollarSign size={12} className="text-success me-2" />
@@ -191,7 +217,8 @@ const Kanban: React.FC = () => {
                                                         </Card>
                                                     )}
                                                 </Draggable>
-                                            ))}
+                                            );
+                                        })}
                                         {provided.placeholder}
                                     </div>
                                 )}
@@ -266,6 +293,23 @@ const Kanban: React.FC = () => {
                                 </Form.Select>
                             </div>
                         </Col>
+                        <Col md={6} className="mb-3">
+                            <Form.Label className="form-premium-label">Fonte</Form.Label>
+                            <div className="input-icon-wrapper">
+                                <Search size={18} />
+                                <Form.Select
+                                    className="form-select-premium"
+                                    value={formData.fonte}
+                                    onChange={e => setFormData({ ...formData, fonte: e.target.value as any })}
+                                >
+                                    <option value="INDICACAO">Indicação</option>
+                                    <option value="SITE">Site</option>
+                                    <option value="PROSPECCAO">Prospecção</option>
+                                    <option value="WHATSAPP">WhatsApp</option>
+                                    <option value="OUTRO">Outro</option>
+                                </Form.Select>
+                            </div>
+                        </Col>
                         <Col md={12} className="mb-3">
                             <Form.Label className="form-premium-label">Status Inicial</Form.Label>
                             <div className="input-icon-wrapper">
@@ -315,6 +359,11 @@ const Kanban: React.FC = () => {
                     -webkit-line-clamp: 2;
                     -webkit-box-orient: vertical;
                     overflow: hidden;
+                }
+                .locked-card {
+                    background-color: #f8fafc !important;
+                    cursor: default !important;
+                    opacity: 0.85;
                 }
             `}</style>
         </Container>
