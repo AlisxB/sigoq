@@ -21,10 +21,10 @@ class Produto(BaseModel):
         ('CJ', 'Conjunto'),
     ]
 
-    codigo = models.CharField(max_length=50, unique=True, verbose_name="Código")
-    descricao = models.CharField(max_length=255, verbose_name="Descrição")
-    categoria = models.ForeignKey(Categoria, on_delete=models.PROTECT, related_name='produtos', verbose_name="Categoria")
-    fornecedor = models.ForeignKey('fornecedores.Fornecedor', on_delete=models.PROTECT, related_name='produtos', verbose_name="Fornecedor")
+    codigo = models.CharField(max_length=50, unique=True, verbose_name="Código", db_index=True)
+    descricao = models.CharField(max_length=255, verbose_name="Descrição", db_index=True)
+    categoria = models.ForeignKey(Categoria, on_delete=models.PROTECT, related_name='produtos', verbose_name="Categoria", db_index=True)
+    fornecedor = models.ForeignKey('fornecedores.Fornecedor', on_delete=models.PROTECT, related_name='produtos', verbose_name="Fornecedor", db_index=True)
     unidade_medida = models.CharField(max_length=10, choices=UNIDADES, default='UN', verbose_name="Unidade de Medida")
     custo_base = models.DecimalField(max_length=12, max_digits=12, decimal_places=2, verbose_name="Custo Base")
     estoque_minimo = models.PositiveIntegerField(default=0, verbose_name="Estoque Mínimo")

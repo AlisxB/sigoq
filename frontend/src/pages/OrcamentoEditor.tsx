@@ -10,6 +10,16 @@ import { produtoApi, categoriaApi } from '../api/produtos';
 import { fornecedorApi } from '../api/fornecedores';
 import { Orcamento, Kit, ItemOrcamento, Cliente, Produto, ConfiguracaoPreco, User, Categoria, Fornecedor } from '../types';
 
+// Hook personalizado para Debounce
+function useDebounce<T>(value: T, delay: number): T {
+    const [debouncedValue, setDebouncedValue] = useState<T>(value);
+    useEffect(() => {
+        const handler = setTimeout(() => setDebouncedValue(value), delay);
+        return () => clearTimeout(handler);
+    }, [value, delay]);
+    return debouncedValue;
+}
+
 const OrcamentoEditor: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
@@ -37,16 +47,19 @@ const OrcamentoEditor: React.FC = () => {
     const { data: config } = useQuery<ConfiguracaoPreco[]>({
         queryKey: ['config-preco'],
         queryFn: orcamentoApi.getConfig,
+        staleTime: 1000 * 60 * 5, // 5 minutos
     });
 
     const { data: clientes } = useQuery<Cliente[]>({
         queryKey: ['clientes'],
         queryFn: clienteApi.list,
+        staleTime: 1000 * 60 * 2, // 2 minutos
     });
 
     const { data: vendedores = [] } = useQuery({
         queryKey: ['vendedores'],
-        queryFn: () => usuarioApi.list({ role: 'COMERCIAL' })
+        queryFn: () => usuarioApi.list({ role: 'COMERCIAL' }),
+        staleTime: 1000 * 60 * 10, // 10 minutos
     });
 
     const { data: remoteOrcamento, isLoading: isFetchingOrcamento } = useQuery({
@@ -492,16 +505,29 @@ const OrcamentoEditor: React.FC = () => {
 // Componente Modal de Busca
 const ProductSearchModal: React.FC<{ show: boolean, onHide: () => void, onSelect: (p: Produto) => void }> = ({ show, onHide, onSelect }) => {
     const [search, setSearch] = useState('');
+    const debouncedSearch = useDebounce(search, 500); // 500ms de atraso
+    
     const [selCategoria, setSelCategoria] = useState<number | undefined>(undefined);
     const [selFornecedor, setSelFornecedor] = useState<number | undefined>(undefined);
 
-    const { data: categorias = [] } = useQuery({ queryKey: ['categorias'], queryFn: categoriaApi.list, enabled: show });
-    const { data: fornecedores = [] } = useQuery({ queryKey: ['fornecedores'], queryFn: fornecedorApi.list, enabled: show });
+    const { data: categorias = [] } = useQuery({ 
+        queryKey: ['categorias'], 
+        queryFn: categoriaApi.list, 
+        enabled: show,
+        staleTime: 1000 * 60 * 30 // 30 minutos
+    });
+    
+    const { data: fornecedores = [] } = useQuery({ 
+        queryKey: ['fornecedores'], 
+        queryFn: fornecedorApi.list, 
+        enabled: show,
+        staleTime: 1000 * 60 * 30 // 30 minutos
+    });
 
     const { data: results, isLoading } = useQuery<Produto[]>({
-        queryKey: ['search-products', search, selCategoria, selFornecedor],
-        queryFn: () => produtoApi.search(search, { categoria: selCategoria, fornecedor: selFornecedor }),
-        enabled: show && (search.length > 0 || !!selCategoria || !!selFornecedor)
+        queryKey: ['search-products', debouncedSearch, selCategoria, selFornecedor],
+        queryFn: () => produtoApi.search(debouncedSearch, { categoria: selCategoria, fornecedor: selFornecedor }),
+        enabled: show && (debouncedSearch.length > 0 || !!selCategoria || !!selFornecedor)
     });
 
     return (

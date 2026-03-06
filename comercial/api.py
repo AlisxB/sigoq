@@ -7,7 +7,7 @@ class StatusOportunidadeViewSet(viewsets.ModelViewSet):
     serializer_class = StatusOportunidadeSerializer
 
 class OportunidadeViewSet(viewsets.ModelViewSet):
-    queryset = Oportunidade.objects.all()
+    queryset = Oportunidade.objects.all().select_related('cliente', 'status', 'vendedor')
     serializer_class = OportunidadeSerializer
 
     def get_queryset(self):
@@ -21,10 +21,11 @@ class OportunidadeViewSet(viewsets.ModelViewSet):
             user.perfil.cargo in ['ADMIN', 'GERENTE', 'ORCAMENTISTA']
         )
         
-        if permite_tudo:
-            return Oportunidade.all_objects.all()
+        qs = self.queryset
+        if not permite_tudo:
+            qs = qs.filter(vendedor=user)
             
-        return Oportunidade.objects.filter(vendedor=user)
+        return qs.order_by('-numero')
 
     def perform_create(self, serializer):
         if self.request.user.is_authenticated:

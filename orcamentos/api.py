@@ -8,7 +8,7 @@ from .serializers import (
 )
 
 class OrcamentoViewSet(viewsets.ModelViewSet):
-    queryset = Orcamento.objects.all()
+    queryset = Orcamento.objects.all().select_related('cliente', 'vendedor', 'oportunidade').prefetch_related('kits__itens')
     serializer_class = OrcamentoSerializer
 
     def get_queryset(self):
@@ -22,10 +22,11 @@ class OrcamentoViewSet(viewsets.ModelViewSet):
             user.perfil.cargo in ['ADMIN', 'GERENTE', 'ORCAMENTISTA']
         )
         
-        if permite_tudo:
-            return Orcamento.all_objects.all()
+        qs = self.queryset
+        if not permite_tudo:
+            qs = qs.filter(vendedor=user)
             
-        return Orcamento.objects.filter(vendedor=user)
+        return qs.order_by('-numero', '-revisao')
 
     def perform_create(self, serializer):
         # Auto-set vendedor no create

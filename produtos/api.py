@@ -7,7 +7,7 @@ class CategoriaViewSet(viewsets.ModelViewSet):
     serializer_class = CategoriaSerializer
 
 class ProdutoViewSet(viewsets.ModelViewSet):
-    queryset = Produto.objects.all()
+    queryset = Produto.objects.all().select_related('categoria', 'fornecedor')
     serializer_class = ProdutoSerializer
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['codigo', 'descricao', 'ncm']

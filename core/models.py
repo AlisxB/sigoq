@@ -17,7 +17,8 @@ class BaseModel(models.Model):
         blank=True,
         on_delete=models.SET_NULL,
         related_name="%(class)s_vendedor",
-        help_text="Vendedor responsável pelo registro."
+        help_text="Vendedor responsável pelo registro.",
+        db_index=True
     )
     is_deleted = models.BooleanField(default=False, verbose_name="Excluído?")
     deleted_at = models.DateTimeField(null=True, blank=True, verbose_name="Data de Exclusão")

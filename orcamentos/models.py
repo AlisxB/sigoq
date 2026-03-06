@@ -51,12 +51,12 @@ class Orcamento(BaseModel):
     revisao = models.PositiveIntegerField(default=0, verbose_name="Revisão")
     versao_pai = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='revisoes', verbose_name="Versão Original")
     
-    oportunidade = models.ForeignKey(Oportunidade, on_delete=models.SET_NULL, null=True, blank=True, related_name='orcamentos', verbose_name="Oportunidade (CRM)")
-    cliente = models.ForeignKey(Cliente, on_delete=models.PROTECT, related_name='orcamentos', verbose_name="Cliente")
+    oportunidade = models.ForeignKey(Oportunidade, on_delete=models.SET_NULL, null=True, blank=True, related_name='orcamentos', verbose_name="Oportunidade (CRM)", db_index=True)
+    cliente = models.ForeignKey(Cliente, on_delete=models.PROTECT, related_name='orcamentos', verbose_name="Cliente", db_index=True)
     resp_orcam = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='orcamentos_tecnicos', verbose_name="Orçamentista")
     vendedor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='orcamentos_comerciais', verbose_name="Vendedor")
     
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='RASCUNHO', verbose_name="Status")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='RASCUNHO', verbose_name="Status", db_index=True)
     
     # Valores Totais
     custo_total = models.DecimalField(max_digits=15, decimal_places=2, default=0.00, verbose_name="Custo Total")
@@ -108,6 +108,19 @@ class Orcamento(BaseModel):
                         print(f"AUTO-RELEASE: Oportunidade {self.oportunidade.numero} movida para {next_status.nome} via Orçamento {self.numero}.")
                 except StatusOportunidade.DoesNotExist:
                     pass
+
+        # RN-01: Alerta de Margem Baixa (< 15%)
+        if self.margem_contrib < Decimal('0.1500') and not self.aprovado_gerencia:
+            if self.status not in ['REVISAO', 'REPROVADO']:
+                self.status = 'REVISAO'
+                print(f"ALERTA: Orçamento {self.numero} com margem baixa ({self.margem_contrib*100}%). Enviado para revisão.")
+                
+        # RN-07: Alteração Crítica (exemplo de lógica simplificada)
+        # Se valor total aumentou muito em relação à revisão anterior (versao_pai)
+        if self.versao_pai and self.valor_total > (self.versao_pai.valor_total * Decimal('1.10')):
+             print(f"ALERTA CRÍTICO: Orçamento {self.numero} com aumento superior a 10% em relação à R{self.versao_pai.revisao}")
+
+        super().save(*args, **kwargs)
 
     def duplicate(self):
         """
@@ -161,8 +174,8 @@ class ItemOrcamento(models.Model):
     """
     SNAPSHOT físico do produto no momento da inclusão.
     """
-    kit = models.ForeignKey(Kit, on_delete=models.CASCADE, related_name='itens', verbose_name="Kit")
-    produto = models.ForeignKey(Produto, on_delete=models.PROTECT, related_name='orcamentos_relacionados', verbose_name="Produto Original")
+    kit = models.ForeignKey(Kit, on_delete=models.CASCADE, related_name='itens', verbose_name="Kit", db_index=True)
+    produto = models.ForeignKey(Produto, on_delete=models.PROTECT, related_name='orcamentos_relacionados', verbose_name="Produto Original", db_index=True)
     
     # Snapshot dos campos do produto
     codigo = models.CharField(max_length=50, verbose_name="Código (Snapshot)")
