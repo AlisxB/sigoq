@@ -1,19 +1,20 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Container, Row, Col, Card, Form, Button, Spinner, Table, Alert } from 'react-bootstrap';
-import { Save, Info, CheckCircle, Percent } from 'lucide-react';
+import { Container, Row, Col, Card, Form, Button, Spinner, Table, Alert, InputGroup, Badge } from 'react-bootstrap';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { Save, Info, CheckCircle, Percent, PieChart as PieChartIcon } from 'lucide-react';
 import { orcamentoApi } from '../api/orcamentos';
 import { ConfiguracaoPreco } from '../types';
 
 const CONFIG_FIELDS = [
-    { key: 'markup_engenharia', label: 'Markup Engenharia', color: '#3498db' },
-    { key: 'markup_capitalizacao', label: 'Markup Capitalização', color: '#9b59b6' },
-    { key: 'markup_frete', label: 'Markup Frete (Padrão)', color: '#f1c40f' },
-    { key: 'markup_imposto', label: 'Markup Impostos', color: '#e74c3c' },
-    { key: 'markup_comissao', label: 'Markup Comissão', color: '#2ecc71' },
-    { key: 'markup_difal', label: 'Markup DIFAL', color: '#1abc9c' },
-    { key: 'markup_frete_especial', label: 'Markup Frete Especial', color: '#34495e' },
-    { key: 'margem_contribuicao_padrao', label: 'Margem Contribuição (Alvo)', color: '#e67e22' },
+    { key: 'markup_engenharia', label: 'Engenharia', color: '#5D87FF' },
+    { key: 'markup_capitalizacao', label: 'Capitalização', color: '#49BEFF' },
+    { key: 'markup_frete', label: 'Frete (Padrão)', color: '#13DEB9' },
+    { key: 'markup_imposto', label: 'Impostos', color: '#FFAE1F' },
+    { key: 'markup_comissao', label: 'Comissão', color: '#FA896B' },
+    { key: 'markup_difal', label: 'DIFAL', color: '#539BFF' },
+    { key: 'markup_frete_especial', label: 'Frete Especial', color: '#7C8FAC' },
+    { key: 'margem_contribuicao_padrao', label: 'Margem Alvo', color: '#2A3547' },
 ];
 
 const ConfiguracoesPreco: React.FC = () => {
@@ -44,8 +45,10 @@ const ConfiguracoesPreco: React.FC = () => {
 
     if (isLoading || !localData) return <div className="text-center p-5"><Spinner animation="border" /></div>;
 
-    const handleChange = (field: keyof ConfiguracaoPreco, value: string) => {
-        setLocalData(prev => prev ? { ...prev, [field]: value } : null);
+    const handlePercentChange = (field: keyof ConfiguracaoPreco, displayValue: string) => {
+        const floatVal = parseFloat(displayValue) || 0;
+        const decimalValue = (floatVal / 100).toString();
+        setLocalData(prev => prev ? { ...prev, [field]: decimalValue } : null);
     };
 
     const totalMarkups = CONFIG_FIELDS.filter(f => f.key !== 'margem_contribuicao_padrao')
@@ -54,54 +57,61 @@ const ConfiguracoesPreco: React.FC = () => {
     const marginTarget = parseFloat(localData.margem_contribuicao_padrao || '0');
     const totalDivisor = 1 - (totalMarkups + marginTarget);
 
+    // Dados para o Gráfico de Relação
+    const chartData = CONFIG_FIELDS.map(f => ({
+        name: f.label,
+        value: parseFloat(localData[f.key as keyof ConfiguracaoPreco] as string || '0'),
+        color: f.color
+    })).filter(d => d.value > 0);
+
     return (
-        <Container className="py-4">
-            <div className="d-flex justify-content-between align-items-center mb-4">
+        <Container fluid className="px-1 py-2 pb-5">
+            <div className="d-flex justify-content-between align-items-center mb-4 pt-2">
                 <div>
-                    <h2 className="fw-bold mb-1">Configurações de Preço</h2>
-                    <p className="text-muted small mb-0">Parâmetros globais para cálculo automático de orçamentos.</p>
+                    <h1 className="h4 fw-extrabold mb-1" style={{ color: '#2A3547', letterSpacing: '-0.5px' }}>Configuração de Markups</h1>
+                    <p className="text-muted small mb-0 fw-medium">Defina os percentuais de encargos e margens globais.</p>
                 </div>
                 <Button
-                    variant="success"
-                    className="d-flex align-items-center btn-premium-primary shadow-sm"
+                    variant="primary"
+                    className="shadow-premium rounded-pill px-4 fw-bold d-flex align-items-center"
                     onClick={() => updateMutation.mutate(localData as ConfiguracaoPreco)}
                     disabled={updateMutation.isPending}
                 >
                     <Save size={18} className="me-2" />
-                    {updateMutation.isPending ? 'Salvando...' : 'Salvar Alterações'}
+                    {updateMutation.isPending ? 'Salvando...' : 'SALVAR PARÂMETROS'}
                 </Button>
             </div>
 
             {success && (
-                <Alert variant="success" className="d-flex align-items-center border-0 shadow-sm mb-4">
+                <Alert variant="success" className="d-flex align-items-center border-0 shadow-sm mb-4 rounded-16">
                     <CheckCircle size={20} className="me-2" />
-                    Parâmetros atualizados com sucesso! Todos os novos orçamentos usarão estes valores.
+                    <span className="fw-bold">Markups atualizados com sucesso!</span> Novos itens seguirão estas métricas.
                 </Alert>
             )}
 
             <Row className="g-4">
-                <Col lg={8}>
-                    <Card className="card-premium mb-4">
-                        <Card.Body>
-                            <h5 className="fw-bold mb-4">Markups de Encargos</h5>
+                <Col lg={7}>
+                    <Card className="card-premium mb-4 border-0 shadow-sm" style={{ borderRadius: '24px' }}>
+                        <Card.Body className="p-4">
+                            <h5 className="fw-bold mb-4 d-flex align-items-center gap-2">
+                                <Percent size={20} className="text-primary" /> Percentuais de Encargos
+                            </h5>
                             <Row className="g-3">
                                 {CONFIG_FIELDS.map(field => (
                                     <Col md={6} key={field.key}>
                                         <Form.Group>
-                                            <Form.Label className="form-premium-label d-flex justify-content-between text-muted">
-                                                {field.label}
-                                                <span className="text-dark">{(parseFloat(localData[field.key as keyof ConfiguracaoPreco] as string || '0') * 100).toFixed(2)}%</span>
-                                            </Form.Label>
-                                            <div className="input-icon-wrapper">
-                                                <Percent size={18} />
+                                            <Form.Label className="small fw-bold text-dark opacity-75 mb-2">{field.label}</Form.Label>
+                                            <InputGroup className="modern-input-group border shadow-sm rounded-12 overflow-hidden">
                                                 <Form.Control
                                                     type="number"
-                                                    step="0.0001"
-                                                    className="form-control-premium"
-                                                    value={localData[field.key as keyof ConfiguracaoPreco] as string}
-                                                    onChange={(e) => handleChange(field.key as keyof ConfiguracaoPreco, e.target.value)}
+                                                    step="0.01"
+                                                    className="border-0 ps-3 fw-bold text-dark shadow-none"
+                                                    value={(parseFloat(localData[field.key as keyof ConfiguracaoPreco] as string || '0') * 100).toFixed(2)}
+                                                    onChange={(e) => handlePercentChange(field.key as keyof ConfiguracaoPreco, e.target.value)}
+                                                    placeholder="0.00"
                                                 />
-                                            </div>
+                                                <InputGroup.Text className="bg-light border-0 text-muted fw-bold">%</InputGroup.Text>
+                                            </InputGroup>
                                         </Form.Group>
                                     </Col>
                                 ))}
@@ -109,28 +119,39 @@ const ConfiguracoesPreco: React.FC = () => {
                         </Card.Body>
                     </Card>
 
-                    <Card className="card-premium">
-                        <Card.Body>
-                            <h5 className="fw-bold mb-3">Simulação de Cálculo</h5>
-                            <p className="text-muted small mb-4">Baseado nos parâmetros acima (Fórmula: Custo / (1 - (Markups + Margem)))</p>
-                            <Table responsive hover size="sm">
-                                <thead className="text-muted x-small uppercase">
+                    <Card className="card-premium border-0 shadow-sm overflow-hidden" style={{ borderRadius: '24px' }}>
+                        <Card.Body className="p-4">
+                            <h5 className="fw-bold mb-3 d-flex align-items-center gap-2">
+                                <Info size={20} className="text-info" /> Simulação de Preço Final
+                            </h5>
+                            <p className="text-muted small mb-4 fw-medium">Exemplo prático aplicado a um custo base de R$ 1.000,00.</p>
+                            <Table responsive hover className="mb-0">
+                                <thead className="bg-light">
                                     <tr>
-                                        <th>Custo do Item</th>
-                                        <th>Soma Encargos</th>
-                                        <th>Margem Alvo</th>
-                                        <th>Markup Final (Venda)</th>
-                                        <th className="text-end">Preço de Venda</th>
+                                        <th className="ps-4 py-3 text-muted small fw-bold uppercase letter-spacing-1">CUSTO</th>
+                                        <th className="py-3 text-muted small fw-bold uppercase letter-spacing-1">Σ ENCARGOS</th>
+                                        <th className="py-3 text-muted small fw-bold uppercase letter-spacing-1">MARGEM</th>
+                                        <th className="py-3 text-end text-muted small fw-bold uppercase letter-spacing-1">VENDA FINAL</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr className="align-middle">
-                                        <td className="fw-bold">R$ 1.000,00</td>
-                                        <td>{(totalMarkups * 100).toFixed(2)}%</td>
-                                        <td>{(marginTarget * 100).toFixed(2)}%</td>
-                                        <td className="text-primary fw-bold">{(1 / totalDivisor).toFixed(2)}x</td>
-                                        <td className="text-end text-success fw-bold h4 mb-0">
-                                            R$ {(1000 / totalDivisor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                    <tr className="align-middle border-bottom border-light">
+                                        <td className="ps-4 py-3 fw-bold text-dark">R$ 1.000,00</td>
+                                        <td>
+                                            <Badge bg="light" text="dark" className="fw-bold rounded-pill px-3 py-2 border">
+                                                {(totalMarkups * 100).toFixed(2)}%
+                                            </Badge>
+                                        </td>
+                                        <td>
+                                            <Badge bg="primary-subtle" className="text-primary fw-bold rounded-pill px-3 py-2 border">
+                                                {(marginTarget * 100).toFixed(2)}%
+                                            </Badge>
+                                        </td>
+                                        <td className="text-end py-3">
+                                            <div className="text-success fw-extrabold h4 mb-0">
+                                                R$ {(1000 / totalDivisor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                            </div>
+                                            <div className="text-muted x-small fw-bold">DIVISOR: {totalDivisor.toFixed(4)}</div>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -139,43 +160,51 @@ const ConfiguracoesPreco: React.FC = () => {
                     </Card>
                 </Col>
 
-                <Col lg={4}>
-                    <Card className="bg-primary text-white border-0 shadow-lg mb-4" style={{ borderRadius: '15px' }}>
+                <Col lg={5}>
+                    {/* Gráfico de Relação Restaurado */}
+                    <Card className="card-premium mb-4 border-0 shadow-sm" style={{ borderRadius: '24px' }}>
                         <Card.Body className="p-4">
-                            <div className="d-flex align-items-center mb-3">
-                                <Info size={24} className="me-2" />
-                                <h5 className="fw-bold mb-0">Informação Importante</h5>
+                            <h5 className="fw-bold mb-1 d-flex align-items-center gap-2">
+                                <PieChartIcon size={20} className="text-primary" /> Relação de Markups
+                            </h5>
+                            <p className="text-muted small mb-4">Composição percentual do Markup total.</p>
+                            <div style={{ width: '100%', height: 350 }}>
+                                <ResponsiveContainer>
+                                    <PieChart>
+                                        <Pie
+                                            data={chartData}
+                                            innerRadius={80}
+                                            outerRadius={110}
+                                            paddingAngle={5}
+                                            dataKey="value"
+                                            stroke="none"
+                                        >
+                                            {chartData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={entry.color} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip 
+                                            formatter={(value: any) => `${(parseFloat(value) * 100).toFixed(2)}%`}
+                                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                                        />
+                                        <Legend verticalAlign="bottom" height={36}/>
+                                    </PieChart>
+                                </ResponsiveContainer>
                             </div>
-                            <p className="small mb-0 opacity-75">
-                                Estes valores são utilizados para gerar o **Preço de Venda** sugerido.
-                                O orçamentista ainda poderá ajustar a margem individualmente por orçamento,
-                                mas os markups de impostos e encargos são fixos para garantir a saúde financeira.
-                            </p>
                         </Card.Body>
                     </Card>
 
-                    <Card className="card-premium border-start border-warning border-4">
-                        <Card.Body>
-                            <h6 className="fw-bold mb-2">Composição do Markup</h6>
-                            <div className="mt-3">
-                                {CONFIG_FIELDS.filter(f => f.key !== 'margem_contribuicao_padrao').map(f => {
-                                    const value = parseFloat(localData[f.key as keyof ConfiguracaoPreco] as string || '0');
-                                    const percent = (value / totalMarkups) * 100;
-                                    return (
-                                        <div key={f.key} className="mb-2">
-                                            <div className="d-flex justify-content-between x-small mb-1">
-                                                <span>{f.label}</span>
-                                                <span className="fw-bold">{(value * 100).toFixed(1)}%</span>
-                                            </div>
-                                            <div className="progress" style={{ height: '4px' }}>
-                                                <div
-                                                    className="progress-bar"
-                                                    style={{ width: `${percent}%`, backgroundColor: f.color }}
-                                                />
-                                            </div>
-                                        </div>
-                                    );
-                                })}
+                    <Card className="bg-primary text-white border-0 shadow-premium p-2" style={{ borderRadius: '24px' }}>
+                        <Card.Body className="p-4">
+                            <div className="d-flex align-items-center mb-3">
+                                <Info size={24} className="me-2" />
+                                <h5 className="fw-bold mb-0">Regra de Cálculo</h5>
+                            </div>
+                            <p className="small mb-4 opacity-90">
+                                O sistema aplica o Markup Divisor. O preço de venda é calculado dividindo o custo pelo inverso da soma de todos os percentuais incidentes.
+                            </p>
+                            <div className="bg-white bg-opacity-10 p-3 rounded-16 border border-white border-opacity-20 text-center">
+                                <code className="text-white fw-bold h6 mb-0">Venda = Custo / Divisor</code>
                             </div>
                         </Card.Body>
                     </Card>
@@ -183,8 +212,15 @@ const ConfiguracoesPreco: React.FC = () => {
             </Row>
 
             <style>{`
-                .x-small { font-size: 0.75rem; }
-                .uppercase { text-transform: uppercase; letter-spacing: 0.05em; }
+                .rounded-12 { border-radius: 12px !important; }
+                .rounded-16 { border-radius: 16px !important; }
+                .shadow-premium { box-shadow: 0 10px 30px rgba(93, 135, 255, 0.2) !important; }
+                .modern-input-group { border: 1px solid #DFE5EF; border-radius: 12px; transition: 0.3s; }
+                .modern-input-group:focus-within { border-color: #5D87FF; box-shadow: 0 0 0 4px rgba(93, 135, 255, 0.1); }
+                .bg-primary-subtle { background-color: rgba(93, 135, 255, 0.1) !important; }
+                .text-primary { color: #5D87FF !important; }
+                .letter-spacing-1 { letter-spacing: 1px; }
+                .recharts-legend-item-text { font-family: 'Plus Jakarta Sans' !important; font-size: 12px !important; font-weight: 600 !important; color: #5A6A83 !important; }
             `}</style>
         </Container>
     );
