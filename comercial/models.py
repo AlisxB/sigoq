@@ -59,27 +59,24 @@ class Oportunidade(BaseModel):
         is_new = not self.pk
         old_status = None
         if not is_new:
-            old_status = Oportunidade.objects.get(pk=self.pk).status
+            try:
+                old_status = Oportunidade.objects.get(pk=self.pk).status
+            except Oportunidade.DoesNotExist:
+                pass
 
         if not self.numero:
-            # Lógica para número sequencial automático
             last_op = Oportunidade.all_objects.all().order_by('numero').last()
-            if last_op:
-                self.numero = last_op.numero + 1
-            else:
-                self.numero = 1
+            self.numero = (last_op.numero + 1) if last_op else 1
         
         super().save(*args, **kwargs)
 
-        # Lógica de Automação: Criar ou Reabrir Orçamento ao entrar em status técnico
+        # Importação tardia para evitar recursão
+        from orcamentos.models import Orcamento
+
+        # 1. Lógica para Status Técnico (Engenharia)
         if self.status.notifica_setor_tecnico:
-            # Só dispara se mudou de status agora
             if is_new or old_status != self.status:
-                from orcamentos.models import Orcamento
-                
-                # Busca orçamento existente para esta oportunidade
                 orcamento_existente = Orcamento.all_objects.filter(oportunidade_id=self.id).first()
-                
                 if not orcamento_existente:
                     Orcamento.all_objects.create(
                         oportunidade=self,
@@ -88,14 +85,18 @@ class Oportunidade(BaseModel):
                         status='RASCUNHO',
                         margem_contrib=0.2000
                     )
-                    print(f"AUTO-ORCAMENTO: Orçamento em Rascunho criado e vinculado para OP {self.numero}")
                 else:
-                    # Se já existe e está como ENVIADO ou APROVADO, reseta para RASCUNHO para reedição
                     if orcamento_existente.status in ['ENVIADO', 'APROVADO']:
                         orcamento_existente.status = 'RASCUNHO'
                         orcamento_existente.save()
-                        print(f"REABERTURA: Orçamento {orcamento_existente.numero} resetado para RASCUNHO pois OP {self.numero} voltou para a Engenharia.")
-                
-        # Lógica de notificação legacy (opcional manter)
-        if not is_new and old_status != self.status and self.status.notifica_setor_tecnico:
-            print(f"NOTIFICAÇÃO: Setor Técnico avisado sobre Oportunidade {self.numero}")
+
+        # 2. Lógica para Fechamento (Ganho ou Perda)
+        if not is_new and old_status != self.status:
+            # Fechado/Ganho (ID 5 no sistema padrão)
+            if self.status.id == 5:
+                Orcamento.objects.filter(oportunidade_id=self.id, status='ENVIADO').update(status='APROVADO')
+                print(f"AUTO-SYNC: Orçamento da OP {self.numero} aprovado automaticamente.")
+            
+            # Perdido (ID 6 no sistema padrão)
+            elif self.status.id == 6:
+                Orcamento.objects.filter(oportunidade_id=self.id).update(status='REPROVADO')
