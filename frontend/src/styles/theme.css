@@ -46,6 +46,36 @@ body {
 }
 
 h1,
+.h1 {
+  font-size: 1.75rem !important;
+}
+
+h2,
+.h2 {
+  font-size: 1.5rem !important;
+}
+
+h3,
+.h3 {
+  font-size: 1.25rem !important;
+}
+
+h4,
+.h4 {
+  font-size: 1.15rem !important;
+}
+
+h5,
+.h5 {
+  font-size: 1rem !important;
+}
+
+h6,
+.h6 {
+  font-size: 0.875rem !important;
+}
+
+h1,
 h2,
 h3,
 h4,
@@ -53,6 +83,7 @@ h5,
 h6 {
   color: var(--text-primary);
   font-weight: 700;
+  margin-bottom: 0.5rem;
 }
 
 .card-premium {
@@ -104,6 +135,7 @@ h6 {
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
+
 .sidebar-floating {
   background-color: var(--bg-sidebar);
   border-radius: var(--radius-xl);
@@ -135,9 +167,11 @@ h6 {
 ::-webkit-scrollbar {
   width: 6px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   background: rgba(0, 0, 0, 0.05);
   border-radius: 10px;

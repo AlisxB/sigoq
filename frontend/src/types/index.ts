@@ -153,3 +153,13 @@ export interface Oportunidade {
     vendedor_nome?: string;
     criado_em?: string;
 }
+
+export interface MetaMensal {
+    id?: number;
+    mes: number;
+    mes_nome?: string;
+    ano: number;
+    valor_meta: string;
+    vendedor?: number;
+    vendedor_nome?: string;
+}

@@ -96,7 +96,7 @@ const Kanban: React.FC = () => {
         <Container fluid className="py-4">
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <div>
-                    <h2 className="fw-bold mb-1">Pipeline de Vendas</h2>
+                    <h1 className="h4 fw-extrabold mb-1" style={{ color: '#2A3547', letterSpacing: '-0.5px' }}>Pipeline de Vendas</h1>
                     <p className="text-muted small mb-0">Gerencie suas oportunidades comerciais e acompanhe o progresso.</p>
                 </div>
                 <Button variant="primary" className="d-flex align-items-center shadow-sm" onClick={() => setShowModal(true)}>

@@ -21,6 +21,8 @@ interface GenericCRUDProps<T> {
     renderForm: (data: Partial<T>, onChange: (field: keyof T, value: any) => void) => React.ReactNode;
     initialData: Partial<T>;
     queryKey: string;
+    renderFilters?: () => React.ReactNode;
+    filterFn?: (item: T) => boolean;
 }
 
 const GenericCRUD = <T extends { id: number | string }>({
@@ -30,7 +32,9 @@ const GenericCRUD = <T extends { id: number | string }>({
     columns,
     renderForm,
     initialData,
-    queryKey
+    queryKey,
+    renderFilters,
+    filterFn
 }: GenericCRUDProps<T>) => {
     const queryClient = useQueryClient();
     const [searchTerm, setSearchTerm] = useState('');
@@ -102,17 +106,19 @@ const GenericCRUD = <T extends { id: number | string }>({
         }
     };
 
-    const filteredItems = items.filter(item =>
-        Object.values(item).some(val =>
+    const filteredItems = items.filter(item => {
+        const matchesSearch = Object.values(item).some(val =>
             String(val).toLowerCase().includes(searchTerm.toLowerCase())
-        )
-    );
+        );
+        const matchesCustom = filterFn ? filterFn(item) : true;
+        return matchesSearch && matchesCustom;
+    });
 
     return (
         <div className="p-4">
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <div>
-                    <h2 className="fw-bold" style={{ color: '#2A3547' }}>{title}</h2>
+                    <h1 className="h4 fw-extrabold mb-1" style={{ color: '#2A3547', letterSpacing: '-0.5px' }}>{title}</h1>
                     <p className="text-muted small mb-0">Gerencie seus {entityName.toLowerCase()}s de forma simples e rápida.</p>
                 </div>
                 <Button
@@ -126,20 +132,21 @@ const GenericCRUD = <T extends { id: number | string }>({
 
             <Card style={{ borderRadius: '20px', border: 'none', boxShadow: '0px 10px 30px rgba(0, 0, 0, 0.02)' }}>
                 <Card.Body className="p-0">
-                    <div className="p-4 border-bottom">
-                        <div style={{ position: 'relative', maxWidth: '400px' }}>
-                            <Search size={18} color="#7C8FAC" style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)' }} />
-                            <Form.Control
-                                placeholder={`Pesquisar ${entityName.toLowerCase()}...`}
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                style={{
-                                    paddingLeft: '45px',
-                                    borderRadius: '12px',
-                                    border: '1px solid #DFE5EF',
-                                    backgroundColor: '#F8F9FA'
-                                }}
-                            />
+                    <div className="p-4 border-bottom bg-light bg-opacity-10">
+                        <div className="d-flex flex-wrap align-items-end gap-3">
+                            <div style={{ position: 'relative', flex: '1 1 300px', maxWidth: '400px' }}>
+                                <Form.Label className="form-premium-label">Pesquisar</Form.Label>
+                                <div style={{ position: 'relative' }}>
+                                    <Search size={18} color="#7C8FAC" style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)' }} />
+                                    <Form.Control
+                                        placeholder={`Buscar ${entityName.toLowerCase()}...`}
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        className="form-control-premium ps-5"
+                                    />
+                                </div>
+                            </div>
+                            {renderFilters?.()}
                         </div>
                     </div>
 

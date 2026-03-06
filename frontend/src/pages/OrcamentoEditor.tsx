@@ -102,7 +102,7 @@ const OrcamentoEditor: React.FC = () => {
         const activeConfig = config[0];
         const margin = parseFloat(marginStr || '0.2000');
         const discount = parseFloat(discountStr || '0') / 100;
-        
+
         const somaEncargos = parseFloat(activeConfig.markup_engenharia) +
             parseFloat(activeConfig.markup_capitalizacao) +
             parseFloat(activeConfig.markup_frete) +
@@ -142,8 +142,8 @@ const OrcamentoEditor: React.FC = () => {
 
     const calculateTotals = () => {
         performCalculation(
-            localOrcamento.kits || [], 
-            localOrcamento.margem_contrib || '0.2000', 
+            localOrcamento.kits || [],
+            localOrcamento.margem_contrib || '0.2000',
             localOrcamento.desconto_percent || '0'
         );
     };
@@ -196,7 +196,7 @@ const OrcamentoEditor: React.FC = () => {
             ...updatedKits[activeKitIndex],
             itens: [...updatedKits[activeKitIndex].itens, newItem]
         };
-        
+
         performCalculation(updatedKits, localOrcamento.margem_contrib || '0.2000', localOrcamento.desconto_percent || '0');
         setShowModal(false);
     };
@@ -227,9 +227,9 @@ const OrcamentoEditor: React.FC = () => {
                     <Button variant="link" onClick={() => navigate(-1)} className="me-3 p-0 text-dark">
                         <ArrowLeft size={24} />
                     </Button>
-                    <h2 className="h3 fw-bold mb-0">
+                    <h1 className="h4 fw-extrabold mb-0" style={{ color: '#2A3547', letterSpacing: '-0.5px' }}>
                         {!id ? 'Novo Orçamento' : `ORC-${localOrcamento.numero?.toString().padStart(4, '0')}`}
-                    </h2>
+                    </h1>
                     {localOrcamento.status && (
                         <Badge bg="primary" className="ms-3">{localOrcamento.status}</Badge>
                     )}
@@ -411,9 +411,9 @@ const OrcamentoEditor: React.FC = () => {
                                         ))}
                                         <tr>
                                             <td colSpan={5} className="p-3 bg-light text-center">
-                                                <Button 
-                                                    variant="outline-primary" 
-                                                    size="sm" 
+                                                <Button
+                                                    variant="outline-primary"
+                                                    size="sm"
                                                     className="d-inline-flex align-items-center"
                                                     onClick={() => {
                                                         setActiveKitIndex(kIdx);
@@ -483,10 +483,10 @@ const OrcamentoEditor: React.FC = () => {
             </Row>
 
             {/* Modal de Busca de Produtos */}
-            <ProductSearchModal 
-                show={showSearchModal} 
-                onHide={() => setShowModal(false)} 
-                onSelect={addItemToKit} 
+            <ProductSearchModal
+                show={showSearchModal}
+                onHide={() => setShowModal(false)}
+                onSelect={addItemToKit}
             />
 
             <style>{`
@@ -506,20 +506,20 @@ const OrcamentoEditor: React.FC = () => {
 const ProductSearchModal: React.FC<{ show: boolean, onHide: () => void, onSelect: (p: Produto) => void }> = ({ show, onHide, onSelect }) => {
     const [search, setSearch] = useState('');
     const debouncedSearch = useDebounce(search, 500); // 500ms de atraso
-    
+
     const [selCategoria, setSelCategoria] = useState<number | undefined>(undefined);
     const [selFornecedor, setSelFornecedor] = useState<number | undefined>(undefined);
 
-    const { data: categorias = [] } = useQuery({ 
-        queryKey: ['categorias'], 
-        queryFn: categoriaApi.list, 
+    const { data: categorias = [] } = useQuery({
+        queryKey: ['categorias'],
+        queryFn: categoriaApi.list,
         enabled: show,
         staleTime: 1000 * 60 * 30 // 30 minutos
     });
-    
-    const { data: fornecedores = [] } = useQuery({ 
-        queryKey: ['fornecedores'], 
-        queryFn: fornecedorApi.list, 
+
+    const { data: fornecedores = [] } = useQuery({
+        queryKey: ['fornecedores'],
+        queryFn: fornecedorApi.list,
         enabled: show,
         staleTime: 1000 * 60 * 30 // 30 minutos
     });
@@ -560,9 +560,9 @@ const ProductSearchModal: React.FC<{ show: boolean, onHide: () => void, onSelect
                             <Form.Label className="small fw-bold text-muted d-flex align-items-center">
                                 <Filter size={14} className="me-1" /> Categoria
                             </Form.Label>
-                            <Form.Select 
-                                className="text-dark" 
-                                value={selCategoria || ''} 
+                            <Form.Select
+                                className="text-dark"
+                                value={selCategoria || ''}
                                 onChange={(e) => setSelCategoria(e.target.value ? parseInt(e.target.value) : undefined)}
                             >
                                 <option value="">Todas as Categorias</option>
@@ -575,9 +575,9 @@ const ProductSearchModal: React.FC<{ show: boolean, onHide: () => void, onSelect
                             <Form.Label className="small fw-bold text-muted d-flex align-items-center">
                                 <Compass size={14} className="me-1" /> Fabricante
                             </Form.Label>
-                            <Form.Select 
-                                className="text-dark" 
-                                value={selFornecedor || ''} 
+                            <Form.Select
+                                className="text-dark"
+                                value={selFornecedor || ''}
                                 onChange={(e) => setSelFornecedor(e.target.value ? parseInt(e.target.value) : undefined)}
                             >
                                 <option value="">Todos os Fabricantes</option>

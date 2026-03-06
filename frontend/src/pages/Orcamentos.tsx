@@ -46,8 +46,8 @@ const Orcamentos: React.FC = () => {
     };
 
     const filteredOrcamentos = orcamentos.filter(orc => {
-        const matchesSearch = orc.numero.toString().includes(searchTerm) || 
-                             orc.cliente_detalhe?.razao_social.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesSearch = orc.numero.toString().includes(searchTerm) ||
+            orc.cliente_detalhe?.razao_social.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesStatus = statusFilter ? orc.status === statusFilter : true;
         return matchesSearch && matchesStatus;
     });
@@ -62,7 +62,7 @@ const Orcamentos: React.FC = () => {
         <Container fluid className="py-4">
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <div>
-                    <h2 className="fw-bold mb-1 text-dark">Gestão de Orçamentos</h2>
+                    <h1 className="h4 fw-extrabold mb-1" style={{ color: '#2A3547', letterSpacing: '-0.5px' }}>Gestão de Orçamentos</h1>
                     <p className="text-muted small mb-0">Visualize e gerencie todas as propostas comerciais do sistema.</p>
                 </div>
                 <Button variant="primary" className="d-flex align-items-center shadow-sm" onClick={() => navigate('/novo-orcamento')}>
@@ -89,7 +89,7 @@ const Orcamentos: React.FC = () => {
                         </Col>
                         <Col md={3}>
                             <Form.Label className="small fw-bold text-muted">Status</Form.Label>
-                            <Form.Select 
+                            <Form.Select
                                 className="form-select-premium"
                                 value={statusFilter}
                                 onChange={(e) => setStatusFilter(e.target.value)}
@@ -154,37 +154,37 @@ const Orcamentos: React.FC = () => {
                                     </td>
                                     <td className="text-end pe-4">
                                         <div className="d-flex justify-content-end gap-2">
-                                            <Button 
-                                                variant="outline-primary" 
-                                                size="sm" 
+                                            <Button
+                                                variant="outline-primary"
+                                                size="sm"
                                                 title="Editar"
                                                 onClick={() => navigate(`/orcamento/${orc.id}`)}
                                             >
                                                 <Edit size={14} />
                                             </Button>
-                                            <Button 
-                                                variant="outline-secondary" 
-                                                size="sm" 
+                                            <Button
+                                                variant="outline-secondary"
+                                                size="sm"
                                                 title="Nova Revisão"
                                                 onClick={() => revisionMutation.mutate(orc.id)}
                                                 disabled={revisionMutation.isPending}
                                             >
                                                 <Copy size={14} />
                                             </Button>
-                                            <Button 
-                                                variant="outline-info" 
-                                                size="sm" 
+                                            <Button
+                                                variant="outline-info"
+                                                size="sm"
                                                 title="Gerar PDF"
                                                 onClick={() => window.open(`http://localhost:8000/orcamentos/pdf/${orc.id}/`, '_blank')}
                                             >
                                                 <Printer size={14} />
                                             </Button>
-                                            <Button 
-                                                variant="outline-danger" 
-                                                size="sm" 
+                                            <Button
+                                                variant="outline-danger"
+                                                size="sm"
                                                 title="Excluir"
                                                 onClick={() => {
-                                                    if(window.confirm('Tem certeza que deseja excluir este orçamento?')) {
+                                                    if (window.confirm('Tem certeza que deseja excluir este orçamento?')) {
                                                         deleteMutation.mutate(orc.id);
                                                     }
                                                 }}
