@@ -63,7 +63,7 @@ const ConfiguracoesPreco: React.FC = () => {
                 </div>
                 <Button
                     variant="success"
-                    className="d-flex align-items-center shadow-sm"
+                    className="d-flex align-items-center btn-premium-primary shadow-sm"
                     onClick={() => updateMutation.mutate(localData as ConfiguracaoPreco)}
                     disabled={updateMutation.isPending}
                 >
@@ -88,16 +88,16 @@ const ConfiguracoesPreco: React.FC = () => {
                                 {CONFIG_FIELDS.map(field => (
                                     <Col md={6} key={field.key}>
                                         <Form.Group>
-                                            <Form.Label className="small fw-bold d-flex justify-content-between text-muted">
+                                            <Form.Label className="form-premium-label d-flex justify-content-between text-muted">
                                                 {field.label}
                                                 <span className="text-dark">{(parseFloat(localData[field.key as keyof ConfiguracaoPreco] as string || '0') * 100).toFixed(2)}%</span>
                                             </Form.Label>
                                             <Form.Control
                                                 type="number"
                                                 step="0.0001"
+                                                className="form-control-premium"
                                                 value={localData[field.key as keyof ConfiguracaoPreco] as string}
                                                 onChange={(e) => handleChange(field.key as keyof ConfiguracaoPreco, e.target.value)}
-                                                style={{ borderRadius: '10px' }}
                                             />
                                         </Form.Group>
                                     </Col>

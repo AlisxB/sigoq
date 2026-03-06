@@ -5,6 +5,7 @@ import { produtoApi, categoriaApi } from '../api/produtos';
 import { fornecedorApi } from '../api/fornecedores';
 import { Produto, Categoria, Fornecedor } from '../types';
 import { useQuery } from '@tanstack/react-query';
+import { keepOnlyNumbers, maskCurrency, unmaskCurrency } from '../utils/masks';
 
 const Produtos: React.FC = () => {
     const { data: categorias = [] } = useQuery({ queryKey: ['categorias'], queryFn: categoriaApi.list });
@@ -23,34 +24,36 @@ const Produtos: React.FC = () => {
         <Row className="g-3">
             <Col md={4}>
                 <Form.Group>
-                    <Form.Label className="fw-bold small">Código</Form.Label>
+                    <Form.Label className="form-premium-label">Código</Form.Label>
                     <Form.Control
                         required
+                        className="form-control-premium"
                         value={data.codigo || ''}
                         onChange={(e) => onChange('codigo', e.target.value)}
-                        style={{ borderRadius: '10px' }}
+                        placeholder="Ex: PRD-001"
                     />
                 </Form.Group>
             </Col>
             <Col md={8}>
                 <Form.Group>
-                    <Form.Label className="fw-bold small">Descrição</Form.Label>
+                    <Form.Label className="form-premium-label">Descrição</Form.Label>
                     <Form.Control
                         required
+                        className="form-control-premium"
                         value={data.descricao || ''}
                         onChange={(e) => onChange('descricao', e.target.value)}
-                        style={{ borderRadius: '10px' }}
+                        placeholder="Ex: Janela de Alumínio"
                     />
                 </Form.Group>
             </Col>
             <Col md={6}>
                 <Form.Group>
-                    <Form.Label className="fw-bold small">Categoria</Form.Label>
+                    <Form.Label className="form-premium-label">Categoria</Form.Label>
                     <Form.Select
                         required
+                        className="form-select-premium"
                         value={data.categoria || ''}
                         onChange={(e) => onChange('categoria', parseInt(e.target.value))}
-                        style={{ borderRadius: '10px' }}
                     >
                         <option value="">Selecione...</option>
                         {categorias.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
@@ -59,12 +62,12 @@ const Produtos: React.FC = () => {
             </Col>
             <Col md={6}>
                 <Form.Group>
-                    <Form.Label className="fw-bold small">Fornecedor Principal</Form.Label>
+                    <Form.Label className="form-premium-label">Fornecedor Principal</Form.Label>
                     <Form.Select
                         required
+                        className="form-select-premium"
                         value={data.fornecedor || ''}
                         onChange={(e) => onChange('fornecedor', parseInt(e.target.value))}
-                        style={{ borderRadius: '10px' }}
                     >
                         <option value="">Selecione...</option>
                         {fornecedores.map(f => <option key={f.id} value={f.id}>{f.nome_fantasia || f.razao_social}</option>)}
@@ -73,12 +76,12 @@ const Produtos: React.FC = () => {
             </Col>
             <Col md={4}>
                 <Form.Group>
-                    <Form.Label className="fw-bold small">Unidade de Medida</Form.Label>
+                    <Form.Label className="form-premium-label">Unidade de Medida</Form.Label>
                     <Form.Select
                         required
+                        className="form-select-premium"
                         value={data.unidade_medida || 'UN'}
                         onChange={(e) => onChange('unidade_medida', e.target.value)}
-                        style={{ borderRadius: '10px' }}
                     >
                         <option value="UN">Unidade</option>
                         <option value="M">Metro</option>
@@ -90,14 +93,16 @@ const Produtos: React.FC = () => {
             </Col>
             <Col md={4}>
                 <Form.Group>
-                    <Form.Label className="fw-bold small">Custo Base (R$)</Form.Label>
+                    <Form.Label className="form-premium-label">Custo Base (R$)</Form.Label>
                     <Form.Control
                         required
-                        type="number"
-                        step="0.01"
-                        value={data.custo_base || ''}
-                        onChange={(e) => onChange('custo_base', e.target.value)}
-                        style={{ borderRadius: '10px' }}
+                        className="form-control-premium"
+                        value={data.custo_base ? maskCurrency(data.custo_base) : ''}
+                        onChange={(e) => {
+                            const unmasked = unmaskCurrency(e.target.value);
+                            onChange('custo_base', unmasked);
+                        }}
+                        placeholder="R$ 0,00"
                     />
                 </Form.Group>
             </Col>
@@ -105,33 +110,37 @@ const Produtos: React.FC = () => {
                 <Row>
                     <Col md={4}>
                         <Form.Group>
-                            <Form.Label className="fw-bold small">NCM</Form.Label>
+                            <Form.Label className="form-premium-label">NCM</Form.Label>
                             <Form.Control
+                                className="form-control-premium"
                                 value={data.ncm || ''}
-                                onChange={(e) => onChange('ncm', e.target.value)}
-                                style={{ borderRadius: '10px' }}
+                                onChange={(e) => onChange('ncm', keepOnlyNumbers(e.target.value))}
+                                placeholder="Apenas números"
+                                maxLength={8}
                             />
                         </Form.Group>
                     </Col>
                     <Col md={4}>
                         <Form.Group>
-                            <Form.Label className="fw-bold small">Estoque Atual</Form.Label>
+                            <Form.Label className="form-premium-label">Estoque Atual</Form.Label>
                             <Form.Control
                                 type="number"
+                                className="form-control-premium"
                                 value={data.estoque_atual || 0}
                                 onChange={(e) => onChange('estoque_atual', parseInt(e.target.value))}
-                                style={{ borderRadius: '10px' }}
+                                min={0}
                             />
                         </Form.Group>
                     </Col>
                     <Col md={4}>
                         <Form.Group>
-                            <Form.Label className="fw-bold small">Estoque Mínimo</Form.Label>
+                            <Form.Label className="form-premium-label">Estoque Mínimo</Form.Label>
                             <Form.Control
                                 type="number"
+                                className="form-control-premium"
                                 value={data.estoque_minimo || 0}
                                 onChange={(e) => onChange('estoque_minimo', parseInt(e.target.value))}
-                                style={{ borderRadius: '10px' }}
+                                min={0}
                             />
                         </Form.Group>
                     </Col>
@@ -139,13 +148,14 @@ const Produtos: React.FC = () => {
             </Col>
             <Col md={12}>
                 <Form.Group>
-                    <Form.Label className="fw-bold small">Observações</Form.Label>
+                    <Form.Label className="form-premium-label">Observações</Form.Label>
                     <Form.Control
                         as="textarea"
                         rows={2}
+                        className="form-control-premium"
                         value={data.observacoes || ''}
                         onChange={(e) => onChange('observacoes', e.target.value)}
-                        style={{ borderRadius: '10px' }}
+                        placeholder="Detalhes adicionais e especificações técnicas..."
                     />
                 </Form.Group>
             </Col>

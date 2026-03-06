@@ -14,26 +14,26 @@ const Categorias: React.FC = () => {
         <Row className="g-3">
             <Col md={12}>
                 <Form.Group>
-                    <Form.Label className="fw-bold small">Nome da Categoria</Form.Label>
+                    <Form.Label className="form-premium-label">Nome da Categoria</Form.Label>
                     <Form.Control
                         required
+                        className="form-control-premium"
                         value={data.nome || ''}
                         onChange={(e) => onChange('nome', e.target.value)}
                         placeholder="Ex: Disjuntores"
-                        style={{ borderRadius: '10px' }}
                     />
                 </Form.Group>
             </Col>
             <Col md={12}>
                 <Form.Group>
-                    <Form.Label className="fw-bold small">Descrição</Form.Label>
+                    <Form.Label className="form-premium-label">Descrição</Form.Label>
                     <Form.Control
                         as="textarea"
                         rows={3}
+                        className="form-control-premium"
                         value={data.descricao || ''}
                         onChange={(e) => onChange('descricao', e.target.value)}
                         placeholder="Breve descrição da categoria..."
-                        style={{ borderRadius: '10px' }}
                     />
                 </Form.Group>
             </Col>

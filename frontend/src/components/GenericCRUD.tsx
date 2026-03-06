@@ -197,7 +197,7 @@ const GenericCRUD = <T extends { id: number | string }>({
                 </Card.Body>
             </Card>
 
-            <Modal show={showModal} onHide={handleClose} centered size="lg" style={{ borderRadius: '20px' }}>
+            <Modal show={showModal} onHide={handleClose} centered size="lg" className="modal-premium">
                 <Modal.Header closeButton className="border-0 p-4">
                     <Modal.Title className="fw-bold">{editingItem ? `Editar ${entityName}` : `Novo ${entityName}`}</Modal.Title>
                 </Modal.Header>
@@ -206,13 +206,13 @@ const GenericCRUD = <T extends { id: number | string }>({
                         {renderForm(formData, handleChange)}
                     </Modal.Body>
                     <Modal.Footer className="border-0 p-4 pt-0">
-                        <Button variant="light" onClick={handleClose} style={{ borderRadius: '10px' }}>
+                        <Button variant="light" onClick={handleClose} className="btn-premium-secondary">
                             Cancelar
                         </Button>
                         <Button
                             type="submit"
                             disabled={createMutation.isPending || updateMutation.isPending}
-                            style={{ backgroundColor: '#5D87FF', border: 'none', borderRadius: '10px' }}
+                            className="btn-premium-primary"
                         >
                             {(createMutation.isPending || updateMutation.isPending) ? (
                                 <Spinner animation="border" size="sm" />

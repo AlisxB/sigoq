@@ -7,6 +7,7 @@ import { comercialApi } from '../api/comercial';
 import { clienteApi } from '../api/common';
 import { Oportunidade, StatusOportunidade, Cliente } from '../types';
 import { Modal, Form } from 'react-bootstrap';
+import { maskCurrency, unmaskCurrency } from '../utils/masks';
 
 const Kanban: React.FC = () => {
     const queryClient = useQueryClient();
@@ -207,43 +208,46 @@ const Kanban: React.FC = () => {
                 <Modal.Body className="p-4">
                     <Form className="g-3 row">
                         <Col md={12} className="mb-3">
-                            <Form.Label className="small fw-bold text-muted">Título da Oportunidade</Form.Label>
+                            <Form.Label className="form-premium-label">Título da Oportunidade</Form.Label>
                             <Form.Control
                                 required
+                                className="form-control-premium"
                                 value={formData.titulo}
                                 onChange={e => setFormData({ ...formData, titulo: e.target.value })}
                                 placeholder="Ex: Projeto Residencial Alpha"
-                                style={{ borderRadius: '10px' }}
                             />
                         </Col>
                         <Col md={12} className="mb-3">
-                            <Form.Label className="small fw-bold text-muted">Cliente</Form.Label>
+                            <Form.Label className="form-premium-label">Cliente</Form.Label>
                             <Form.Select
                                 required
+                                className="form-select-premium"
                                 value={formData.cliente}
                                 onChange={e => setFormData({ ...formData, cliente: parseInt(e.target.value) })}
-                                style={{ borderRadius: '10px' }}
                             >
                                 <option value="">Selecione o Cliente</option>
-                                {clientes.map(c => <option key={c.id} value={c.id}>{c.razao_social}</option>)}
+                                {clientes.map((c: Cliente) => <option key={c.id} value={c.id}>{c.razao_social}</option>)}
                             </Form.Select>
                         </Col>
                         <Col md={6} className="mb-3">
-                            <Form.Label className="small fw-bold text-muted">Valor Estimado (R$)</Form.Label>
+                            <Form.Label className="form-premium-label">Valor Estimado (R$)</Form.Label>
                             <Form.Control
-                                type="number"
-                                step="0.01"
-                                value={formData.valor_estimado}
-                                onChange={e => setFormData({ ...formData, valor_estimado: e.target.value })}
-                                style={{ borderRadius: '10px' }}
+                                required
+                                className="form-control-premium"
+                                value={formData.valor_estimado ? maskCurrency(formData.valor_estimado) : ''}
+                                onChange={(e) => {
+                                    const unmasked = unmaskCurrency(e.target.value);
+                                    setFormData({ ...formData, valor_estimado: unmasked });
+                                }}
+                                placeholder="R$ 0,00"
                             />
                         </Col>
                         <Col md={6} className="mb-3">
-                            <Form.Label className="small fw-bold text-muted">Prioridade</Form.Label>
+                            <Form.Label className="form-premium-label">Prioridade</Form.Label>
                             <Form.Select
+                                className="form-select-premium"
                                 value={formData.prioridade}
                                 onChange={e => setFormData({ ...formData, prioridade: e.target.value as any })}
-                                style={{ borderRadius: '10px' }}
                             >
                                 <option value="BAIXA">Baixa</option>
                                 <option value="MEDIA">Média</option>
@@ -251,22 +255,21 @@ const Kanban: React.FC = () => {
                             </Form.Select>
                         </Col>
                         <Col md={12} className="mb-3">
-                            <Form.Label className="small fw-bold text-muted">Status Inicial</Form.Label>
+                            <Form.Label className="form-premium-label">Status Inicial</Form.Label>
                             <Form.Select
+                                className="form-select-premium"
                                 value={formData.status}
                                 onChange={e => setFormData({ ...formData, status: parseInt(e.target.value) })}
-                                style={{ borderRadius: '10px' }}
                             >
-                                {statusList.map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
+                                {statusList.map((s: StatusOportunidade) => <option key={s.id} value={s.id}>{s.nome}</option>)}
                             </Form.Select>
                         </Col>
                     </Form>
                 </Modal.Body>
                 <Modal.Footer className="border-0 p-4 pt-0">
-                    <Button variant="light" onClick={() => setShowModal(false)} className="px-4">Cancelar</Button>
+                    <Button variant="light" onClick={() => setShowModal(false)} className="btn-premium-secondary">Cancelar</Button>
                     <Button
-                        variant="primary"
-                        className="px-4 shadow-sm"
+                        className="btn-premium-primary"
                         onClick={() => createMutation.mutate(formData)}
                         disabled={createMutation.isPending}
                     >

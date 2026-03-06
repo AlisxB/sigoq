@@ -3,7 +3,7 @@ import { Form, Row, Col } from 'react-bootstrap';
 import GenericCRUD from '../components/GenericCRUD';
 import { fornecedorApi } from '../api/fornecedores';
 import { Fornecedor } from '../types';
-
+import { keepOnlyNumbers, maskCNPJ, maskPhone } from '../utils/masks';
 const Fornecedores: React.FC = () => {
     const columns = [
         { header: 'Nome Fantasia', accessor: 'nome_fantasia' as const },
@@ -16,89 +16,100 @@ const Fornecedores: React.FC = () => {
         <Row className="g-3">
             <Col md={6}>
                 <Form.Group>
-                    <Form.Label className="fw-bold small">Razão Social</Form.Label>
+                    <Form.Label className="form-premium-label">Razão Social</Form.Label>
                     <Form.Control
                         required
+                        className="form-control-premium"
                         value={data.razao_social || ''}
                         onChange={(e) => onChange('razao_social', e.target.value)}
-                        style={{ borderRadius: '10px' }}
+                        placeholder="Ex: Indústria XYZ Ltda"
                     />
                 </Form.Group>
             </Col>
             <Col md={6}>
                 <Form.Group>
-                    <Form.Label className="fw-bold small">Nome Fantasia</Form.Label>
+                    <Form.Label className="form-premium-label">Nome Fantasia</Form.Label>
                     <Form.Control
+                        className="form-control-premium"
                         value={data.nome_fantasia || ''}
                         onChange={(e) => onChange('nome_fantasia', e.target.value)}
-                        style={{ borderRadius: '10px' }}
+                        placeholder="Ex: Grupo XYZ"
                     />
                 </Form.Group>
             </Col>
             <Col md={6}>
                 <Form.Group>
-                    <Form.Label className="fw-bold small">CNPJ</Form.Label>
+                    <Form.Label className="form-premium-label">CNPJ</Form.Label>
                     <Form.Control
                         required
-                        value={data.cnpj || ''}
-                        onChange={(e) => onChange('cnpj', e.target.value)}
-                        style={{ borderRadius: '10px' }}
+                        className="form-control-premium"
+                        value={data.cnpj ? maskCNPJ(data.cnpj) : ''}
+                        onChange={(e) => onChange('cnpj', keepOnlyNumbers(e.target.value))}
+                        placeholder="00.000.000/0000-00"
+                        maxLength={18}
                     />
                 </Form.Group>
             </Col>
             <Col md={6}>
                 <Form.Group>
-                    <Form.Label className="fw-bold small">E-mail</Form.Label>
+                    <Form.Label className="form-premium-label">E-mail</Form.Label>
                     <Form.Control
                         required
                         type="email"
+                        className="form-control-premium"
                         value={data.email || ''}
                         onChange={(e) => onChange('email', e.target.value)}
-                        style={{ borderRadius: '10px' }}
+                        placeholder="comercial@fornecedor.com.br"
                     />
                 </Form.Group>
             </Col>
             <Col md={6}>
                 <Form.Group>
-                    <Form.Label className="fw-bold small">Telefone</Form.Label>
+                    <Form.Label className="form-premium-label">Telefone</Form.Label>
                     <Form.Control
                         required
-                        value={data.telefone || ''}
-                        onChange={(e) => onChange('telefone', e.target.value)}
-                        style={{ borderRadius: '10px' }}
+                        className="form-control-premium"
+                        value={data.telefone ? maskPhone(data.telefone) : ''}
+                        onChange={(e) => onChange('telefone', keepOnlyNumbers(e.target.value))}
+                        placeholder="(00) 0000-0000"
+                        maxLength={15}
                     />
                 </Form.Group>
             </Col>
             <Col md={3}>
                 <Form.Group>
-                    <Form.Label className="fw-bold small">Nome Contato</Form.Label>
+                    <Form.Label className="form-premium-label">Nome Contato</Form.Label>
                     <Form.Control
+                        className="form-control-premium"
                         value={data.contato_nome || ''}
                         onChange={(e) => onChange('contato_nome', e.target.value)}
-                        style={{ borderRadius: '10px' }}
+                        placeholder="Ex: João Silva"
                     />
                 </Form.Group>
             </Col>
             <Col md={3}>
                 <Form.Group>
-                    <Form.Label className="fw-bold small">Prazo Entrega (Dias)</Form.Label>
+                    <Form.Label className="form-premium-label">Prazo Entrega (Dias)</Form.Label>
                     <Form.Control
                         type="number"
-                        value={data.prazo_entrega_medio || 0}
+                        className="form-control-premium"
+                        value={data.prazo_entrega_medio || ''}
                         onChange={(e) => onChange('prazo_entrega_medio', parseInt(e.target.value))}
-                        style={{ borderRadius: '10px' }}
+                        placeholder="Ex: 5"
+                        min={0}
                     />
                 </Form.Group>
             </Col>
             <Col md={12}>
                 <Form.Group>
-                    <Form.Label className="fw-bold small">Observações</Form.Label>
+                    <Form.Label className="form-premium-label">Observações</Form.Label>
                     <Form.Control
                         as="textarea"
                         rows={2}
+                        className="form-control-premium"
                         value={data.observacoes || ''}
                         onChange={(e) => onChange('observacoes', e.target.value)}
-                        style={{ borderRadius: '10px' }}
+                        placeholder="Informações adicionais sobre produtos e logística..."
                     />
                 </Form.Group>
             </Col>
