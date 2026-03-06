@@ -194,13 +194,13 @@ const ConfiguracoesPreco: React.FC = () => {
                         </Card.Body>
                     </Card>
 
-                    <Card className="bg-primary text-white border-0 shadow-premium p-2" style={{ borderRadius: '24px' }}>
-                        <Card.Body className="p-4">
-                            <div className="d-flex align-items-center mb-3">
-                                <Info size={24} className="me-2" />
-                                <h5 className="fw-bold mb-0">Regra de Cálculo</h5>
+                    <Card className="bg-primary border-0 shadow-premium p-2" style={{ borderRadius: '24px' }}>
+                        <Card.Body className="p-4 text-white">
+                            <div className="d-flex align-items-center mb-3 text-white">
+                                <Info size={24} className="me-2 text-white" />
+                                <h5 className="fw-bold mb-0 text-white">Regra de Cálculo</h5>
                             </div>
-                            <p className="small mb-4 opacity-90">
+                            <p className="small mb-4 text-white opacity-90">
                                 O sistema aplica o Markup Divisor. O preço de venda é calculado dividindo o custo pelo inverso da soma de todos os percentuais incidentes.
                             </p>
                             <div className="bg-white bg-opacity-10 p-3 rounded-16 border border-white border-opacity-20 text-center">
