@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import MainLayout from './layouts/MainLayout'
 import Dashboard from './pages/Dashboard'
 import OrcamentoEditor from './pages/OrcamentoEditor'
+import Orcamentos from './pages/Orcamentos'
 import Login from './pages/Login'
 import Clientes from './pages/Clientes'
 import Fornecedores from './pages/Fornecedores'
@@ -33,7 +34,7 @@ const App: React.FC = () => {
 
                 {/* Engenharia / Orçamentos */}
                 <Route element={<ProtectedRoute allowedRoles={['ADMIN', 'ORCAMENTISTA']} />}>
-                  <Route path="orcamentos" element={<div>Lista de Orçamentos (Em breve)</div>} />
+                  <Route path="orcamentos" element={<Orcamentos />} />
                   <Route path="orcamento/:id" element={<OrcamentoEditor />} />
                   <Route path="novo-orcamento" element={<OrcamentoEditor />} />
                   <Route path="produtos" element={<Produtos />} />
