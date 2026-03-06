@@ -1,6 +1,6 @@
 import React from 'react';
 import { Form, Row, Col } from 'react-bootstrap';
-import { Building, Briefcase, Hash, FileText, Mail, Phone, MapPin, Map, User, AlignLeft } from 'lucide-react';
+import { Building, Briefcase, Hash, FileText, Mail, Phone, MapPin, Map, UserCircle, AlignLeft } from 'lucide-react';
 import GenericCRUD from '../components/GenericCRUD';
 import { clienteApi } from '../api/clientes';
 import { usuarioApi } from '../api/usuarios';
@@ -180,7 +180,7 @@ const Clientes: React.FC = () => {
                 <Form.Group>
                     <Form.Label className="form-premium-label">Vendedor Responsável</Form.Label>
                     <div className="input-icon-wrapper">
-                        <User size={18} />
+                        <UserCircle size={18} />
                         <Form.Select
                             className="form-select-premium"
                             value={data.vendedor || ''}
