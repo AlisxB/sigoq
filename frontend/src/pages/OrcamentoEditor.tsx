@@ -4,8 +4,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Container, Row, Col, Card, Button, Form, Table, InputGroup, Badge, Spinner, ListGroup } from 'react-bootstrap';
 import { ArrowLeft, Save, Plus, Trash2, Search, Calculator } from 'lucide-react';
 import { orcamentoApi } from '../api/orcamentos';
+import { usuarioApi } from '../api/usuarios';
 import { clienteApi, produtoApi } from '../api/common';
-import { Orcamento, Kit, ItemOrcamento, Cliente, Produto, ConfiguracaoPreco } from '../types';
+import { Orcamento, Kit, ItemOrcamento, Cliente, Produto, ConfiguracaoPreco, User } from '../types';
 
 const OrcamentoEditor: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -26,6 +27,11 @@ const OrcamentoEditor: React.FC = () => {
     const { data: clientes } = useQuery<Cliente[]>({
         queryKey: ['clientes'],
         queryFn: clienteApi.list,
+    });
+
+    const { data: vendedores = [] } = useQuery({
+        queryKey: ['vendedores'],
+        queryFn: () => usuarioApi.list({ role: 'COMERCIAL' })
     });
 
     const { data: remoteOrcamento, isLoading: isFetchingOrcamento } = useQuery({
@@ -173,13 +179,27 @@ const OrcamentoEditor: React.FC = () => {
                             <Row>
                                 <Col md={6}>
                                     <Form.Group className="mb-3">
-                                        <Form.Label>Cliente</Form.Label>
+                                        <Form.Label className="fw-bold small">Cliente</Form.Label>
                                         <Form.Select
                                             value={localOrcamento.cliente || ''}
                                             onChange={(e) => setLocalOrcamento({ ...localOrcamento, cliente: parseInt(e.target.value) })}
                                         >
                                             <option value="">Selecione o Cliente</option>
                                             {clientes?.map(c => <option key={c.id} value={c.id}>{c.razao_social}</option>)}
+                                        </Form.Select>
+                                    </Form.Group>
+                                </Col>
+                                <Col md={6}>
+                                    <Form.Group className="mb-3">
+                                        <Form.Label className="fw-bold small">Vendedor Responsável</Form.Label>
+                                        <Form.Select
+                                            value={localOrcamento.vendedor || ''}
+                                            onChange={(e) => setLocalOrcamento({ ...localOrcamento, vendedor: e.target.value ? parseInt(e.target.value) : null })}
+                                        >
+                                            <option value="">Selecione o Vendedor</option>
+                                            {vendedores.map((v: User) => (
+                                                <option key={v.id} value={v.id}>{v.first_name} {v.last_name}</option>
+                                            ))}
                                         </Form.Select>
                                     </Form.Group>
                                 </Col>
