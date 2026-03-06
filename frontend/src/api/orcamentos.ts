@@ -8,4 +8,5 @@ export const orcamentoApi = {
     update: (id: string | number, data: Partial<Orcamento>): Promise<Orcamento> => api.put(`orcamentos/api/orcamentos/${id}/`, data).then(res => res.data),
     delete: (id: string | number): Promise<void> => api.delete(`orcamentos/api/orcamentos/${id}/`).then(res => res.data),
     getConfig: (): Promise<any[]> => api.get('orcamentos/api/config-preco/').then(res => res.data),
+    updateConfig: (id: number, data: any): Promise<any> => api.patch(`orcamentos/api/config-preco/${id}/`, data).then(res => res.data),
 };

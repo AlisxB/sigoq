@@ -27,6 +27,6 @@ class ItemOrcamentoViewSet(viewsets.ModelViewSet):
     queryset = ItemOrcamento.objects.all()
     serializer_class = ItemOrcamentoSerializer
 
-class ConfiguracaoPrecoViewSet(viewsets.ReadOnlyModelViewSet):
+class ConfiguracaoPrecoViewSet(viewsets.ModelViewSet):
     queryset = ConfiguracaoPreco.objects.filter(ativo=True)
     serializer_class = ConfiguracaoPrecoSerializer
