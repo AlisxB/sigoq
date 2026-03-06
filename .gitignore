@@ -47,3 +47,6 @@ AGENTS.md
 
 # Infrastructure
 .docker_data/
+
+# Node
+node_modules/
