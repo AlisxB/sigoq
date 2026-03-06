@@ -1,22 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Container, Row, Col, Card, Button, Form, Table, InputGroup, Badge, Spinner, ListGroup } from 'react-bootstrap';
-import { ArrowLeft, Save, Plus, Trash2, Search, Calculator, Copy } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Trash2, Search, Calculator, Copy, Send } from 'lucide-react';
 import { orcamentoApi } from '../api/orcamentos';
 import { usuarioApi } from '../api/usuarios';
-import { clienteApi, produtoApi } from '../api/common';
+import { clienteApi } from '../api/clientes';
+import { produtoApi } from '../api/produtos';
 import { Orcamento, Kit, ItemOrcamento, Cliente, Produto, ConfiguracaoPreco, User } from '../types';
 
 const OrcamentoEditor: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const location = useLocation();
     const queryClient = useQueryClient();
+
+    // Captura parâmetros da URL (vindo do Kanban)
+    const queryParams = new URLSearchParams(location.search);
+    const urlOportunidade = queryParams.get('oportunidade');
+    const urlCliente = queryParams.get('cliente');
+
     const [localOrcamento, setLocalOrcamento] = useState<Partial<Orcamento>>({
         status: 'RASCUNHO',
         margem_contrib: '0.2000',
         desconto_percent: '0.00',
-        kits: []
+        kits: [],
+        oportunidade: urlOportunidade ? parseInt(urlOportunidade) : undefined,
+        cliente: urlCliente ? parseInt(urlCliente) : undefined
     });
 
     const { data: config } = useQuery<ConfiguracaoPreco[]>({
@@ -45,8 +55,11 @@ const OrcamentoEditor: React.FC = () => {
             id ? orcamentoApi.update(id, data) : orcamentoApi.create(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['orcamentos'] });
-            navigate('/');
+            navigate('/orcamentos');
         },
+        onError: (err: any) => {
+            alert(`Erro ao salvar: ${err.response?.data ? JSON.stringify(err.response.data) : err.message}`);
+        }
     });
 
     const revisionMutation = useMutation({
@@ -55,6 +68,9 @@ const OrcamentoEditor: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['orcamentos'] });
             navigate(`/orcamento/${newOrc.id}`);
         },
+        onError: (err: any) => {
+            alert(`Erro ao criar revisão: ${err.message}`);
+        }
     });
 
     useEffect(() => {
@@ -132,8 +148,7 @@ const OrcamentoEditor: React.FC = () => {
     };
 
     const addItemToKit = (kitIndex: number, produto: Produto) => {
-        const newItem: ItemOrcamento = {
-            kit: 0, // Will be set by backend
+        const newItem: Partial<ItemOrcamento> = {
             produto: produto.id,
             codigo: produto.codigo,
             descricao: produto.descricao,
@@ -145,9 +160,26 @@ const OrcamentoEditor: React.FC = () => {
         };
 
         const updatedKits = [...localOrcamento.kits!];
-        updatedKits[kitIndex].itens.push(newItem);
+        updatedKits[kitIndex].itens.push(newItem as ItemOrcamento);
         setLocalOrcamento(prev => ({ ...prev, kits: updatedKits }));
         calculateTotals();
+    };
+
+    const handleFinalize = () => {
+        if (!id) {
+            alert("Salve o orçamento primeiro antes de finalizar.");
+            return;
+        }
+
+        const valorTotal = parseFloat(localOrcamento.valor_total || '0');
+        if (valorTotal <= 0) {
+            alert("Não é possível enviar um orçamento com valor zerado. Adicione kits e materiais primeiro.");
+            return;
+        }
+
+        if (window.confirm("Deseja finalizar este orçamento e enviar para o Comercial? Isso liberará o card no Kanban.")) {
+            saveMutation.mutate({ ...localOrcamento, status: 'ENVIADO' });
+        }
     };
 
     if (isFetchingOrcamento) return <Spinner animation="border" />;
@@ -166,17 +198,28 @@ const OrcamentoEditor: React.FC = () => {
                         <Badge bg="primary" className="ms-3">{localOrcamento.status}</Badge>
                     )}
                 </div>
-                <div className="d-flex align-items-center">
+                <div className="d-flex align-items-center gap-2">
                     {id && (
-                        <Button
-                            variant="outline-primary"
-                            className="me-2 d-flex align-items-center"
-                            onClick={() => revisionMutation.mutate()}
-                            disabled={revisionMutation.isPending}
-                        >
-                            <Copy size={18} className="me-2" />
-                            {revisionMutation.isPending ? 'Criando...' : 'Nova Revisão'}
-                        </Button>
+                        <>
+                            <Button
+                                variant="outline-primary"
+                                className="d-flex align-items-center"
+                                onClick={() => revisionMutation.mutate()}
+                                disabled={revisionMutation.isPending}
+                            >
+                                <Copy size={18} className="me-2" />
+                                {revisionMutation.isPending ? 'Criando...' : 'Nova Revisão'}
+                            </Button>
+                            <Button
+                                variant="outline-success"
+                                className="d-flex align-items-center"
+                                onClick={handleFinalize}
+                                disabled={saveMutation.isPending}
+                            >
+                                <Send size={18} className="me-2" />
+                                Finalizar e Enviar
+                            </Button>
+                        </>
                     )}
                     <Button
                         variant="success"
@@ -216,11 +259,12 @@ const OrcamentoEditor: React.FC = () => {
                                     <Form.Group className="mb-3">
                                         <Form.Label className="fw-bold small">Cliente</Form.Label>
                                         <Form.Select
+                                            className="text-dark"
                                             value={localOrcamento.cliente || ''}
                                             onChange={(e) => setLocalOrcamento({ ...localOrcamento, cliente: parseInt(e.target.value) })}
                                         >
-                                            <option value="">Selecione o Cliente</option>
-                                            {clientes?.map(c => <option key={c.id} value={c.id}>{c.razao_social}</option>)}
+                                            <option value="" className="text-dark">Selecione o Cliente</option>
+                                            {clientes?.map(c => <option key={c.id} value={c.id} className="text-dark">{c.razao_social}</option>)}
                                         </Form.Select>
                                     </Form.Group>
                                 </Col>
@@ -228,12 +272,13 @@ const OrcamentoEditor: React.FC = () => {
                                     <Form.Group className="mb-3">
                                         <Form.Label className="fw-bold small">Vendedor Responsável</Form.Label>
                                         <Form.Select
+                                            className="text-dark"
                                             value={localOrcamento.vendedor || ''}
                                             onChange={(e) => setLocalOrcamento({ ...localOrcamento, vendedor: e.target.value ? parseInt(e.target.value) : null })}
                                         >
-                                            <option value="">Selecione o Vendedor</option>
+                                            <option value="" className="text-dark">Selecione o Vendedor</option>
                                             {vendedores.map((v: User) => (
-                                                <option key={v.id} value={v.id}>{v.first_name} {v.last_name}</option>
+                                                <option key={v.id} value={v.id} className="text-dark">{v.first_name} {v.last_name}</option>
                                             ))}
                                         </Form.Select>
                                     </Form.Group>
@@ -272,7 +317,16 @@ const OrcamentoEditor: React.FC = () => {
                     {localOrcamento.kits?.map((kit, kIdx) => (
                         <Card key={kIdx} className="card-premium mb-4 border-start border-primary border-4">
                             <Card.Header className="bg-white border-0 py-3 d-flex justify-content-between align-items-center">
-                                <h6 className="mb-0 fw-bold text-primary">{kit.nome}</h6>
+                                <Form.Control
+                                    className="border-0 fw-bold text-primary p-0 shadow-none fs-6 bg-transparent"
+                                    value={kit.nome}
+                                    onChange={(e) => {
+                                        const updated = [...localOrcamento.kits!];
+                                        updated[kIdx].nome = e.target.value;
+                                        setLocalOrcamento({ ...localOrcamento, kits: updated });
+                                    }}
+                                    style={{ width: 'auto', minWidth: '200px' }}
+                                />
                                 <Button variant="outline-danger" size="sm" onClick={() => deleteKit(kIdx)}>
                                     <Trash2 size={14} />
                                 </Button>
@@ -363,7 +417,7 @@ const OrcamentoEditor: React.FC = () => {
                             </div>
 
                             <div className="mt-4">
-                                <Button variant="primary" className="w-100 py-3 fw-bold mb-3 shadow-sm d-flex justify-content-center align-items-center">
+                                <Button variant="primary" className="w-100 py-3 fw-bold mb-3 shadow-sm d-flex justify-content-center align-items-center" onClick={calculateTotals}>
                                     <Calculator className="me-2" size={18} /> ATUALIZAR CÁLCULOS
                                 </Button>
                                 <Button
@@ -379,6 +433,15 @@ const OrcamentoEditor: React.FC = () => {
                     </Card>
                 </Col>
             </Row>
+            <style>{`
+                .form-select, .form-control, option {
+                    color: #212529 !important;
+                    background-color: #fff !important;
+                }
+                select.form-select option {
+                    color: #000 !important;
+                }
+            `}</style>
         </div>
     );
 };
@@ -389,7 +452,7 @@ const ProductSearch: React.FC<{ onSelect: (p: Produto) => void }> = ({ onSelect 
     const { data: results, isLoading } = useQuery<Produto[]>({
         queryKey: ['search-products', search],
         queryFn: () => produtoApi.search(search),
-        enabled: search.length > 2
+        enabled: search.length > 0
     });
 
     return (
@@ -397,6 +460,7 @@ const ProductSearch: React.FC<{ onSelect: (p: Produto) => void }> = ({ onSelect 
             <InputGroup size="sm">
                 <InputGroup.Text><Search size={14} /></InputGroup.Text>
                 <Form.Control
+                    className="text-dark"
                     placeholder="Buscar produto por nome ou código..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
@@ -409,7 +473,7 @@ const ProductSearch: React.FC<{ onSelect: (p: Produto) => void }> = ({ onSelect 
                             key={p.id}
                             action
                             onClick={() => { onSelect(p); setSearch(''); }}
-                            className="small d-flex justify-content-between"
+                            className="small d-flex justify-content-between text-dark"
                         >
                             <span>{p.codigo} - {p.descricao}</span>
                             <span className="text-success fw-bold">R$ {p.custo_base}</span>
@@ -417,6 +481,15 @@ const ProductSearch: React.FC<{ onSelect: (p: Produto) => void }> = ({ onSelect 
                     ))}
                 </ListGroup>
             )}
+            <style>{`
+                .form-select, .form-control, option {
+                    color: #212529 !important;
+                    background-color: #fff !important;
+                }
+                select.form-select option {
+                    color: #000 !important;
+                }
+            `}</style>
         </div>
     );
 };

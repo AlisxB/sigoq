@@ -258,7 +258,7 @@ const MainLayout: React.FC = () => {
                     </div>
                 </header>
 
-                <main style={{ flexGrow: 1, paddingRight: '5px', height: '100%', overflow: 'hidden' }}>
+                <main style={{ flexGrow: 1, paddingRight: '5px', height: '100%', overflowY: 'auto' }}>
                     <Outlet />
                 </main>
             </div>
