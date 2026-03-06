@@ -1,13 +1,23 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Row, Col, Card, Button, Spinner } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
 import Chart from 'react-apexcharts';
 import {
-    TrendingUp, ShoppingBag, Target, Award, MoreHorizontal
+    TrendingUp, ShoppingBag, Target, Award, MoreHorizontal, Settings
 } from 'lucide-react';
 import { analyticsApi } from '../api/analytics';
+import { useAuth } from '../contexts/AuthContext';
 
-const StatCard: React.FC<{ title: string, value: string, change: string, icon: React.ReactNode, bgColor: string, txtColor?: string }> = ({ title, value, change, icon, bgColor, txtColor = '#FFFFFF' }) => (
+const StatCard: React.FC<{ 
+    title: string, 
+    value: string, 
+    change: string, 
+    icon: React.ReactNode, 
+    bgColor: string, 
+    txtColor?: string,
+    action?: React.ReactNode
+}> = ({ title, value, change, icon, bgColor, txtColor = '#FFFFFF', action }) => (
     <Card className="h-100 border-0 overflow-hidden shadow-none" style={{ backgroundColor: bgColor, borderRadius: '24px', position: 'relative' }}>
         <div style={{ position: 'absolute', top: '-15px', right: '-15px', opacity: 0.1 }}>
             <svg width="120" height="120" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -15,8 +25,11 @@ const StatCard: React.FC<{ title: string, value: string, change: string, icon: R
             </svg>
         </div>
         <Card.Body className="p-4 d-flex flex-column justify-content-between position-relative" style={{ zIndex: 1 }}>
-            <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)', width: '45px', height: '45px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '15px' }}>
-                {icon}
+            <div className="d-flex justify-content-between align-items-start">
+                <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)', width: '45px', height: '45px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '15px' }}>
+                    {icon}
+                </div>
+                {action}
             </div>
             <div>
                 <h3 className="h1 fw-bold mb-1" style={{ color: txtColor, letterSpacing: '-1px' }}>{value}</h3>
@@ -30,6 +43,8 @@ const StatCard: React.FC<{ title: string, value: string, change: string, icon: R
 );
 
 const Dashboard: React.FC = () => {
+    const navigate = useNavigate();
+    const { user } = useAuth();
     const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
 
     const { data: funnelData, isLoading: isLoadingFunnel } = useQuery({
@@ -84,7 +99,6 @@ const Dashboard: React.FC = () => {
                         fontWeight: 800,
                         color: '#2A3547',
                         formatter: function (val: number, opt: any) {
-                            // val aqui é a porcentagem, precisamos do valor real do dado
                             const idx = opt.config.series.indexOf(val);
                             const realVal = funnelData ? parseFloat(funnelData[idx]?.total || 0) : 0;
                             return "R$ " + (realVal / 1000).toFixed(1) + "k";
@@ -119,7 +133,6 @@ const Dashboard: React.FC = () => {
         },
     }), [funnelData, selectedIdx, totalFunnel]);
 
-    // Cálculo das porcentagens para o Radial Bar (Baseado no valor total)
     const radialSeries = useMemo(() => {
         if (!funnelData || totalFunnel === 0) return [];
         return funnelData.map(d => Math.round((parseFloat(d.total) / totalFunnel) * 100));
@@ -154,8 +167,12 @@ const Dashboard: React.FC = () => {
                         <Card.Body className="p-4 d-flex align-items-center">
                             <div className="flex-grow-1">
                                 <h2 className="h4 fw-bold mb-1" style={{ color: '#2A3547' }}>Estatísticas Estratégicas</h2>
-                                <p className="text-muted small mb-4">Bem-vindo, Alison! Veja o desempenho hoje.</p>
-                                <Button className="px-4 py-2 fw-bold d-flex align-items-center" style={{ backgroundColor: '#5D87FF', border: 'none', borderRadius: '10px', boxShadow: '0 4px 10px rgba(93,135,255,0.3)' }}>
+                                <p className="text-muted small mb-4">Bem-vindo, {user?.first_name}! Veja o desempenho hoje.</p>
+                                <Button 
+                                    onClick={() => navigate('/kanban')}
+                                    className="px-4 py-2 fw-bold d-flex align-items-center" 
+                                    style={{ backgroundColor: '#5D87FF', border: 'none', borderRadius: '10px', boxShadow: '0 4px 10px rgba(93,135,255,0.3)' }}
+                                >
                                     <Target size={18} className="me-2" /> Gerenciar Funil
                                 </Button>
                             </div>
@@ -170,15 +187,35 @@ const Dashboard: React.FC = () => {
                     <StatCard title="Total Funil" value={`R$${(totalFunnel / 1000).toFixed(0)}k`} change="+12%" icon={<ShoppingBag size={22} color="white" />} bgColor="#5D87FF" />
                 </Col>
                 <Col md={2} lg={2}>
-                    <StatCard title="Margem Média" value={`${margemAtual.toFixed(1)}%`} change={margemAtual >= 20 ? 'Alta' : 'Baixa'} icon={<Award size={22} color="white" />} bgColor="#49BEFF" />
+                    <StatCard 
+                        title="Margem Média" 
+                        value={`${margemAtual.toFixed(1)}%`} 
+                        change={margemAtual >= 20 ? 'Alta' : 'Baixa'} 
+                        icon={<Award size={22} color="white" />} 
+                        bgColor="#49BEFF" 
+                    />
                 </Col>
                 <Col md={3} lg={3}>
-                    <StatCard title="Meta Mensal" value="89%" change="+3%" icon={<TrendingUp size={22} color="white" />} bgColor="#2A3547" />
+                    <StatCard 
+                        title="Meta Mensal" 
+                        value={`${financeData?.meta?.percentual_atingimento || 0}%`} 
+                        change={`R$ ${(financeData?.meta?.valor_venda_mes / 1000).toFixed(1)}k de R$ ${(financeData?.meta?.valor_meta_configurada / 1000).toFixed(0)}k`}
+                        icon={<TrendingUp size={22} color="white" />} 
+                        bgColor="#2A3547" 
+                        action={user?.role === 'ADMIN' && (
+                            <Button 
+                                variant="link" 
+                                className="p-0 text-white opacity-50 hover-opacity-100" 
+                                onClick={(e) => { e.stopPropagation(); navigate('/metas'); }}
+                            >
+                                <Settings size={18} />
+                            </Button>
+                        )}
+                    />
                 </Col>
             </Row>
 
             <Row className="g-4 mb-4">
-                {/* Pipeline Comercial com Radial Bar (Visual de Alto Nível) */}
                 <Col lg={5}>
                     <Card className="border-0 shadow-sm p-4 h-100" style={{ borderRadius: '24px' }}>
                         <div className="d-flex justify-content-between align-items-center mb-2">
@@ -217,6 +254,9 @@ const Dashboard: React.FC = () => {
                     </Card>
                 </Col>
             </Row>
+            <style>{`
+                .hover-opacity-100:hover { opacity: 1 !important; transition: 0.2s; }
+            `}</style>
         </div>
     );
 };

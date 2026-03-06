@@ -4,7 +4,7 @@ import { Form, InputGroup } from 'react-bootstrap';
 import {
     LayoutDashboard, FileText, Settings, Users, LogOut, Rocket,
     Search, Bell, Moon, Sun, LayoutGrid, ChevronDown, MessageSquare,
-    Calendar, Mail, User, Phone, BookOpen, Layers, Menu
+    Calendar, Mail, User, Phone, BookOpen, Layers, Menu, Target
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { Role } from '../types';
@@ -43,6 +43,7 @@ const MainLayout: React.FC = () => {
                 { name: 'Clientes', path: '/clientes', icon: <Users size={20} />, roles: ['ADMIN', 'COMERCIAL'] },
                 { name: 'Fornecedores', path: '/fornecedores', icon: <Rocket size={20} />, roles: ['ADMIN', 'COMERCIAL'] },
                 { name: 'Kanban', path: '/kanban', icon: <LayoutGrid size={20} />, roles: ['ADMIN', 'COMERCIAL'] },
+                { name: 'Metas Mensais', path: '/metas', icon: <Target size={20} />, roles: ['ADMIN', 'COMERCIAL'] },
             ]
         },
         {
