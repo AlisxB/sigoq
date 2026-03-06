@@ -47,23 +47,49 @@ class OrcamentoViewSet(viewsets.ModelViewSet):
     def analytics(self, request):
         """
         Estatísticas de performance financeira para o Dashboard.
+        Inclui cálculo de meta mensal real.
         """
+        from django.utils import timezone
+        from comercial.models import MetaMensal
+        from django.db.models import Sum
+        
+        now = timezone.now()
         qs = self.get_queryset()
         
-        # Margem Média (Considera o que foi enviado para o cliente e o que foi fechado)
+        # 1. Margem Média
         margem = qs.filter(status__in=['ENVIADO', 'APROVADO']).aggregate(Avg('margem_contrib'))
         
-        # Mix de Categorias (Apenas o que foi efetivamente fechado/aprovado)
-        from django.db.models import Sum
+        # 2. Mix de Categorias (Aprovados)
         categorias = ItemOrcamento.objects.filter(
             kit__orcamento__in=qs.filter(status='APROVADO')
         ).values('produto__categoria__nome').annotate(
             total=Sum('quantidade')
         ).order_by('-total')
+
+        # 3. Cálculo de Meta Mensal
+        # Soma de vendas aprovadas no mês atual
+        vendas_mes = qs.filter(
+            status='APROVADO',
+            atualizado_em__month=now.month,
+            atualizado_em__year=now.year
+        ).aggregate(total=Sum('valor_total'))['total'] or 0
+
+        # Busca a meta cadastrada (Tenta meta do vendedor, se não houver, busca global)
+        meta_obj = MetaMensal.objects.filter(mes=now.month, ano=now.year, vendedor=request.user).first()
+        if not meta_obj:
+            meta_obj = MetaMensal.objects.filter(mes=now.month, ano=now.year, vendedor__isnull=True).first()
         
+        valor_meta = meta_obj.valor_meta if meta_obj else 0
+        percentual_atingimento = (float(vendas_mes) / float(valor_meta) * 100) if valor_meta > 0 else 0
+
         return Response({
             'margem_media': margem['margem_contrib__avg'] or 0,
-            'categorias': list(categorias)
+            'categorias': list(categorias),
+            'meta': {
+                'valor_venda_mes': float(vendas_mes),
+                'valor_meta_configurada': float(valor_meta),
+                'percentual_atingimento': round(percentual_atingimento, 1)
+            }
         })
 
 class KitViewSet(viewsets.ModelViewSet):

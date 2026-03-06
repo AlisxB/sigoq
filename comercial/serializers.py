@@ -1,10 +1,18 @@
 from rest_framework import serializers
-from .models import StatusOportunidade, Oportunidade
+from .models import StatusOportunidade, Oportunidade, MetaMensal
 from clientes.serializers import ClienteSerializer
 
 class StatusOportunidadeSerializer(serializers.ModelSerializer):
     class Meta:
         model = StatusOportunidade
+        fields = '__all__'
+
+class MetaMensalSerializer(serializers.ModelSerializer):
+    mes_nome = serializers.CharField(source='get_mes_display', read_only=True)
+    vendedor_nome = serializers.ReadOnlyField(source='vendedor.get_full_name')
+
+    class Meta:
+        model = MetaMensal
         fields = '__all__'
 
 class OportunidadeSerializer(serializers.ModelSerializer):

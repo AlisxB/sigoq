@@ -1,11 +1,12 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import KanbanView, OportunidadeUpdateStatusView, OportunidadePDFView
-from .api import StatusOportunidadeViewSet, OportunidadeViewSet
+from .api import StatusOportunidadeViewSet, OportunidadeViewSet, MetaMensalViewSet
 
 router = DefaultRouter()
-router.register(r'status', StatusOportunidadeViewSet)
-router.register(r'oportunidades', OportunidadeViewSet)
+router.register(r'status', StatusOportunidadeViewSet, basename='status-oportunidade')
+router.register(r'oportunidades', OportunidadeViewSet, basename='oportunidade')
+router.register(r'metas', MetaMensalViewSet, basename='metas-mensais')
 
 app_name = 'comercial'
 
