@@ -471,7 +471,7 @@ const OrcamentoEditor: React.FC = () => {
                                 <Button
                                     variant="outline-secondary"
                                     className="w-100 py-2"
-                                    onClick={() => window.open(`http://localhost:8000/orcamentos/pdf/${id}/`, '_blank')}
+                                    onClick={() => window.open(`http://127.0.0.1:8000/orcamentos/pdf/${id}/`, '_blank')}
                                     disabled={!id}
                                 >
                                     GERAR PREVIEW PDF

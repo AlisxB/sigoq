@@ -175,7 +175,7 @@ const Orcamentos: React.FC = () => {
                                                 variant="outline-info"
                                                 size="sm"
                                                 title="Gerar PDF"
-                                                onClick={() => window.open(`http://localhost:8000/orcamentos/pdf/${orc.id}/`, '_blank')}
+                                                onClick={() => window.open(`http://127.0.0.1:8000/orcamentos/pdf/${orc.id}/`, '_blank')}
                                             >
                                                 <Printer size={14} />
                                             </Button>

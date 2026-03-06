@@ -24,7 +24,8 @@ class MetaMensalViewSet(viewsets.ModelViewSet):
         if not user.is_authenticated:
             return MetaMensal.objects.none()
         
-        # Admins e Gerentes vêem todas as metas, vendedores vêem apenas as suas ou globais
+        # Admins e Gerentes vêem todas as metas. 
+        # Vendedores vêem as suas e as globais (para o dashboard).
         is_admin = user.is_superuser or (
             hasattr(user, 'perfil') and user.perfil.cargo in ['ADMIN', 'GERENTE']
         )
@@ -44,14 +45,15 @@ class OportunidadeViewSet(viewsets.ModelViewSet):
         if not user.is_authenticated:
             return Oportunidade.objects.none()
             
-        # Usuários que vêem tudo: ADMIN, GERENTE e ORCAMENTISTA
+        # RESTRIÇÃO: Apenas ADMIN e GERENTE vêem tudo.
         permite_tudo = user.is_superuser or (
             hasattr(user, 'perfil') and 
-            user.perfil.cargo in ['ADMIN', 'GERENTE', 'ORCAMENTISTA']
+            user.perfil.cargo in ['ADMIN', 'GERENTE']
         )
         
         qs = self.queryset
         if not permite_tudo:
+            # Vendedores, Orçamentistas, etc, vêem apenas seus próprios registros
             qs = qs.filter(vendedor=user)
             
         return qs.order_by('-numero')
@@ -66,17 +68,13 @@ class OportunidadeViewSet(viewsets.ModelViewSet):
     def estatisticas(self, request):
         """
         Retorna dados agregados para o Funil de Vendas (ApexCharts/Recharts).
-        Garante que TODOS os status apareçam, mesmo os zerados.
+        Respeita rigorosamente o filtro de vendedor.
         """
-        # Filtra oportunidades baseadas nas permissões do usuário
         oportunidades_qs = self.get_queryset()
-        
-        # Busca todos os status disponíveis no banco
         todos_status = StatusOportunidade.objects.all().order_by('ordem')
         
         funil = []
         for s in todos_status:
-            # Filtra as oportunidades deste status específico dentro da query permitida
             ops_do_status = oportunidades_qs.filter(status=s)
             total_valor = ops_do_status.aggregate(Sum('valor_estimado'))['valor_estimado__sum'] or 0
             quantidade = ops_do_status.count()

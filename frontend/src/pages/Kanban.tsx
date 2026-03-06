@@ -172,7 +172,7 @@ const Kanban: React.FC = () => {
                                                                                 >
                                                                                     Gerar Orçamento
                                                                                 </Dropdown.Item>
-                                                                                <Dropdown.Item className="small" onClick={() => window.open(`http://localhost:8000/comercial/api/oportunidade/${op.id}/pdf/`, '_blank')}>
+                                                                                <Dropdown.Item className="small" onClick={() => window.open(`http://127.0.0.1:8000/comercial/api/oportunidade/${op.id}/pdf/`, '_blank')}>
                                                                                     Gerar Proposta PDF
                                                                                 </Dropdown.Item>
                                                                                 <Dropdown.Item className="small">Ver Detalhes</Dropdown.Item>
