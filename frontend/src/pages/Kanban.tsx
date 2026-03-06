@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Container, Row, Col, Card, Badge, Button, Spinner, Dropdown } from 'react-bootstrap';
 import { Plus, MoreVertical, DollarSign, Calendar, User, Search, Briefcase, Building, Flag, ListTodo, Lock } from 'lucide-react';
@@ -10,6 +11,7 @@ import { Modal, Form } from 'react-bootstrap';
 import { maskCurrency, unmaskCurrency } from '../utils/masks';
 
 const Kanban: React.FC = () => {
+    const navigate = useNavigate();
     const queryClient = useQueryClient();
     const { data: statusList = [], isLoading: loadingStatus } = useQuery({
         queryKey: ['kanban-status'],
@@ -157,7 +159,7 @@ const Kanban: React.FC = () => {
                                                                     <div className="d-flex justify-content-between align-items-start mb-2">
                                                                         <div className="d-flex align-items-center">
                                                                             <span className="text-muted x-small fw-bold me-2">OP-{op.numero.toString().padStart(4, '0')}</span>
-                                                                            {isLocked && <Lock size={12} className="text-warning" title="Aguardando Orçamento" />}
+                                                                            {isLocked && <Lock size={12} className="text-warning" />}
                                                                         </div>
                                                                         <Dropdown align="end">
                                                                         <Dropdown.Toggle as="div" className="p-0 border-0 bg-transparent text-muted cursor-pointer">
