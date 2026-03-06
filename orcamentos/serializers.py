@@ -26,7 +26,7 @@ class ItemOrcamentoSerializer(serializers.ModelSerializer):
             'quantidade', 'custo_unit_snapshot', 'vlr_unit_venda', 
             'desconto_unit_valor', 'desconto_percent_item'
         ]
-        read_only_fields = ['codigo', 'descricao', 'custo_unit_snapshot', 'vlr_unit_venda']
+        read_only_fields = ['kit', 'codigo', 'descricao', 'custo_unit_snapshot', 'vlr_unit_venda']
 
 class KitSerializer(serializers.ModelSerializer):
     itens = ItemOrcamentoSerializer(many=True)
@@ -45,7 +45,7 @@ class OrcamentoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Orcamento
         fields = [
-            'id', 'numero', 'revisao', 'versao_pai', 'cliente', 'cliente_detalhe',
+            'id', 'numero', 'revisao', 'versao_pai', 'oportunidade', 'cliente', 'cliente_detalhe',
             'resp_orcam', 'vendedor', 'vendedor_nome', 'status', 'custo_total', 'valor_total', 
             'margem_contrib', 'desconto_percent', 'validade_dias', 
             'prazo_entrega', 'condicao_pagamento', 'observacoes',

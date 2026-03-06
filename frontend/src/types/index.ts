@@ -92,6 +92,7 @@ export interface Orcamento {
     numero: number;
     revisao: number;
     versao_pai: number | null;
+    oportunidade: number | null;
     cliente: number;
     cliente_detalhe: Cliente;
     resp_orcam: number | null;
@@ -140,6 +141,7 @@ export interface Oportunidade {
     cliente: number;
     cliente_detalhe?: Cliente;
     status: number;
+    status_detalhe?: StatusOportunidade;
     status_nome?: string;
     valor_estimado: string;
     margem_lucro: string;

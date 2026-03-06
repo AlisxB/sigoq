@@ -5,6 +5,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from core.models import BaseModel
 from clientes.models import Cliente
 from produtos.models import Produto
+from comercial.models import Oportunidade, StatusOportunidade
 
 class ConfiguracaoPreco(models.Model):
     """
@@ -50,6 +51,7 @@ class Orcamento(BaseModel):
     revisao = models.PositiveIntegerField(default=0, verbose_name="Revisão")
     versao_pai = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='revisoes', verbose_name="Versão Original")
     
+    oportunidade = models.ForeignKey(Oportunidade, on_delete=models.SET_NULL, null=True, blank=True, related_name='orcamentos', verbose_name="Oportunidade (CRM)")
     cliente = models.ForeignKey(Cliente, on_delete=models.PROTECT, related_name='orcamentos', verbose_name="Cliente")
     resp_orcam = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='orcamentos_tecnicos', verbose_name="Orçamentista")
     vendedor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='orcamentos_comerciais', verbose_name="Vendedor")
@@ -83,22 +85,29 @@ class Orcamento(BaseModel):
         return f"ORC-{self.numero:04d}-R{self.revisao:02d} | {self.cliente.nome_fantasia or self.cliente.razao_social}"
 
     def save(self, *args, **kwargs):
+        is_new = not self.pk
+        old_status = None
+        if not is_new:
+            old_status = Orcamento.objects.get(pk=self.pk).status
+
         if not self.numero:
             last_orc = Orcamento.all_objects.all().order_by('numero').last()
             self.numero = (last_orc.numero + 1) if last_orc else 1
             
-        # RN-01: Alerta de Margem Baixa (< 15%)
-        if self.margem_contrib < Decimal('0.1500') and not self.aprovado_gerencia:
-            if self.status not in ['REVISAO', 'REPROVADO']:
-                self.status = 'REVISAO'
-                print(f"ALERTA: Orçamento {self.numero} com margem baixa ({self.margem_contrib*100}%). Enviado para revisão.")
-                
-        # RN-07: Alteração Crítica (exemplo de lógica simplificada)
-        # Se valor total aumentou muito em relação à revisão anterior (versao_pai)
-        if self.versao_pai and self.valor_total > (self.versao_pai.valor_total * Decimal('1.10')):
-             print(f"ALERTA CRÍTICO: Orçamento {self.numero} com aumento superior a 10% em relação à R{self.versao_pai.revisao}")
-
         super().save(*args, **kwargs)
+
+        # Lógica de Auto-Release da Oportunidade no Kanban (Pós-Save para garantir ID)
+        if self.oportunidade and self.status in ['ENVIADO', 'APROVADO']:
+            # Só move se: for novo e já enviado, OU se o status mudou para enviado
+            if is_new or old_status != self.status:
+                try:
+                    next_status = StatusOportunidade.objects.get(id=4)
+                    if self.oportunidade.status != next_status:
+                        self.oportunidade.status = next_status
+                        self.oportunidade.save()
+                        print(f"AUTO-RELEASE: Oportunidade {self.oportunidade.numero} movida para {next_status.nome} via Orçamento {self.numero}.")
+                except StatusOportunidade.DoesNotExist:
+                    pass
 
     def duplicate(self):
         """

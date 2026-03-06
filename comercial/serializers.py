@@ -9,6 +9,7 @@ class StatusOportunidadeSerializer(serializers.ModelSerializer):
 
 class OportunidadeSerializer(serializers.ModelSerializer):
     cliente_detalhe = ClienteSerializer(source='cliente', read_only=True)
+    status_detalhe = StatusOportunidadeSerializer(source='status', read_only=True)
     status_nome = serializers.ReadOnlyField(source='status.nome')
     vendedor_nome = serializers.ReadOnlyField(source='vendedor.get_full_name')
 

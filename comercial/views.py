@@ -31,6 +31,14 @@ class OportunidadeUpdateStatusView(View):
             new_status_id = data.get('status_id')
             
             oportunidade = Oportunidade.all_objects.get(id=op_id)
+            
+            # Bloqueia movimentação manual se o status atual for de "notificação técnica"
+            if oportunidade.status.notifica_setor_tecnico:
+                return JsonResponse({
+                    'status': 'error', 
+                    'message': f'Esta oportunidade está travada no status {oportunidade.status.nome} aguardando liberação do setor de orçamentos.'
+                }, status=403)
+
             # Se não estiver logado ou não for admin, segue direto (dev mode)
             if request.user.is_authenticated and not request.user.is_superuser and oportunidade.vendedor != request.user:
                 return JsonResponse({'status': 'error', 'message': 'Não autorizado'}, status=403)
