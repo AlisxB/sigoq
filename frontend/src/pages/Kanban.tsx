@@ -13,17 +13,17 @@ import { maskCurrency, unmaskCurrency } from '../utils/masks';
 const Kanban: React.FC = () => {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
-    const { data: statusList = [], isLoading: loadingStatus } = useQuery({
+    const { data: statusList = [], isLoading: loadingStatus } = useQuery<StatusOportunidade[]>({
         queryKey: ['kanban-status'],
-        queryFn: comercialApi.status.list
+        queryFn: comercialApi.listStatus
     });
 
-    const { data: oportunidades = [], isLoading: loadingOps } = useQuery({
+    const { data: oportunidades = [], isLoading: loadingOps } = useQuery<Oportunidade[]>({
         queryKey: ['kanban-ops'],
-        queryFn: comercialApi.oportunidades.list
+        queryFn: comercialApi.list
     });
 
-    const { data: clientes = [] } = useQuery({
+    const { data: clientes = [] } = useQuery<Cliente[]>({
         queryKey: ['clientes'],
         queryFn: clienteApi.list
     });
@@ -46,7 +46,7 @@ const Kanban: React.FC = () => {
 
     const updateStatusMutation = useMutation({
         mutationFn: ({ id, statusId }: { id: number, statusId: number }) =>
-            comercialApi.oportunidades.updateStatus(id, statusId),
+            comercialApi.updateStatus(id, statusId),
         onMutate: async ({ id, statusId }) => {
             await queryClient.cancelQueries({ queryKey: ['kanban-ops'] });
             const previousOps = queryClient.getQueryData<Oportunidade[]>(['kanban-ops']);
@@ -70,7 +70,7 @@ const Kanban: React.FC = () => {
     });
 
     const createMutation = useMutation({
-        mutationFn: (data: Partial<Oportunidade>) => comercialApi.oportunidades.create(data),
+        mutationFn: (data: Partial<Oportunidade>) => comercialApi.create(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['kanban-ops'] });
             setShowModal(false);
@@ -113,13 +113,13 @@ const Kanban: React.FC = () => {
                     paddingBottom: '1rem',
                     minHeight: 'calc(100vh - 120px)'
                 }}>
-                    {statusList.map((status) => (
+                    {statusList.map((status: StatusOportunidade) => (
                         <div key={status.id} className="kanban-column" style={{ minWidth: '320px', maxWidth: '320px' }}>
                             <div className="d-flex justify-content-between align-items-center mb-3 px-2">
                                 <div className="d-flex align-items-center">
                                     <h6 className="fw-bold mb-0 me-2">{status.nome}</h6>
                                     <Badge pill bg="light" text="dark" className="border">
-                                        {oportunidades.filter(o => o.status === status.id).length}
+                                        {oportunidades.filter((o: Oportunidade) => o.status === status.id).length}
                                     </Badge>
                                 </div>
                                 <div style={{ width: '20px', height: '4px', backgroundColor: status.cor, borderRadius: '2px' }}></div>
@@ -134,13 +134,13 @@ const Kanban: React.FC = () => {
                                         style={{ minHeight: 'calc(100vh - 200px)', overflowY: 'auto', transition: 'background-color 0.2s ease' }}
                                     >
                                         {oportunidades
-                                            .filter(o => o.status === status.id)
-                                            .map((op, index) => {
+                                            .filter((o: Oportunidade) => o.status === status.id)
+                                            .map((op: Oportunidade, index: number) => {
                                                 const isLocked = op.status_detalhe?.notifica_setor_tecnico;
                                                 return (
-                                                    <Draggable 
-                                                        key={op.id} 
-                                                        draggableId={op.id.toString()} 
+                                                    <Draggable
+                                                        key={op.id}
+                                                        draggableId={op.id.toString()}
                                                         index={index}
                                                         isDragDisabled={isLocked}
                                                     >
@@ -162,65 +162,65 @@ const Kanban: React.FC = () => {
                                                                             {isLocked && <Lock size={12} className="text-warning" />}
                                                                         </div>
                                                                         <Dropdown align="end">
-                                                                        <Dropdown.Toggle as="div" className="p-0 border-0 bg-transparent text-muted cursor-pointer">
-                                                                            <MoreVertical size={14} />
-                                                                        </Dropdown.Toggle>
-                                                                        <Dropdown.Menu className="shadow border-0">
-                                                                            <Dropdown.Item 
-                                                                                className="small fw-bold text-primary" 
-                                                                                onClick={() => navigate(`/novo-orcamento?oportunidade=${op.id}&cliente=${op.cliente}`)}
-                                                                            >
-                                                                                Gerar Orçamento
-                                                                            </Dropdown.Item>
-                                                                            <Dropdown.Item className="small" onClick={() => window.open(`http://localhost:8000/comercial/api/oportunidade/${op.id}/pdf/`, '_blank')}>
-                                                                                Gerar Proposta PDF
-                                                                            </Dropdown.Item>
-                                                                            <Dropdown.Item className="small">Ver Detalhes</Dropdown.Item>
-                                                                            <Dropdown.Item className="small">Editar</Dropdown.Item>
-                                                                            <Dropdown.Divider />
-                                                                            <Dropdown.Item className="small text-danger">Excluir</Dropdown.Item>
-                                                                        </Dropdown.Menu>
-                                                                    </Dropdown>
-                                                                </div>
-                                                                <h6 className="fw-bold mb-2 text-dark" style={{ fontSize: '0.9rem' }}>{op.titulo}</h6>
-                                                                <p className="small text-muted mb-3 line-clamp-2" style={{ fontSize: '0.8rem' }}>{op.descricao}</p>
+                                                                            <Dropdown.Toggle as="div" className="p-0 border-0 bg-transparent text-muted cursor-pointer">
+                                                                                <MoreVertical size={14} />
+                                                                            </Dropdown.Toggle>
+                                                                            <Dropdown.Menu className="shadow border-0">
+                                                                                <Dropdown.Item
+                                                                                    className="small fw-bold text-primary"
+                                                                                    onClick={() => navigate(`/novo-orcamento?oportunidade=${op.id}&cliente=${op.cliente}`)}
+                                                                                >
+                                                                                    Gerar Orçamento
+                                                                                </Dropdown.Item>
+                                                                                <Dropdown.Item className="small" onClick={() => window.open(`http://localhost:8000/comercial/api/oportunidade/${op.id}/pdf/`, '_blank')}>
+                                                                                    Gerar Proposta PDF
+                                                                                </Dropdown.Item>
+                                                                                <Dropdown.Item className="small">Ver Detalhes</Dropdown.Item>
+                                                                                <Dropdown.Item className="small">Editar</Dropdown.Item>
+                                                                                <Dropdown.Divider />
+                                                                                <Dropdown.Item className="small text-danger">Excluir</Dropdown.Item>
+                                                                            </Dropdown.Menu>
+                                                                        </Dropdown>
+                                                                    </div>
+                                                                    <h6 className="fw-bold mb-2 text-dark" style={{ fontSize: '0.9rem' }}>{op.titulo}</h6>
+                                                                    <p className="small text-muted mb-3 line-clamp-2" style={{ fontSize: '0.8rem' }}>{op.descricao}</p>
 
-                                                                <div className="mb-3">
-                                                                    <div className="d-flex align-items-center mb-1">
-                                                                        <User size={12} className="text-primary me-2" />
-                                                                        <span className="small fw-medium text-muted" style={{ fontSize: '0.75rem' }}>{op.cliente_detalhe?.razao_social || 'Cliente não definido'}</span>
+                                                                    <div className="mb-3">
+                                                                        <div className="d-flex align-items-center mb-1">
+                                                                            <User size={12} className="text-primary me-2" />
+                                                                            <span className="small fw-medium text-muted" style={{ fontSize: '0.75rem' }}>{op.cliente_detalhe?.razao_social || 'Cliente não definido'}</span>
+                                                                        </div>
+                                                                        <div className="d-flex align-items-center mb-1">
+                                                                            <div className="bg-light rounded-circle p-1 me-2" style={{ fontSize: '10px' }}>👤</div>
+                                                                            <span className="small text-muted" style={{ fontSize: '0.7rem' }}>{op.vendedor_nome || 'Sistema'}</span>
+                                                                        </div>
+                                                                        <div className="d-flex align-items-center">
+                                                                            <DollarSign size={12} className="text-success me-2" />
+                                                                            <span className="small fw-bold text-success" style={{ fontSize: '0.85rem' }}>R$ {parseFloat(op.valor_estimado).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                                                                        </div>
                                                                     </div>
-                                                                    <div className="d-flex align-items-center mb-1">
-                                                                        <div className="bg-light rounded-circle p-1 me-2" style={{ fontSize: '10px' }}>👤</div>
-                                                                        <span className="small text-muted" style={{ fontSize: '0.7rem' }}>{op.vendedor_nome || 'Sistema'}</span>
-                                                                    </div>
-                                                                    <div className="d-flex align-items-center">
-                                                                        <DollarSign size={12} className="text-success me-2" />
-                                                                        <span className="small fw-bold text-success" style={{ fontSize: '0.85rem' }}>R$ {parseFloat(op.valor_estimado).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                                                                    </div>
-                                                                </div>
 
-                                                                <div className="d-flex justify-content-between align-items-center">
-                                                                    <div className="d-flex align-items-center">
-                                                                        <Calendar size={12} className="text-muted me-1" />
-                                                                        <span className="x-small text-muted">
-                                                                            {op.data_prevista_fechamento
-                                                                                ? new Date(op.data_prevista_fechamento).toLocaleDateString('pt-BR')
-                                                                                : op.criado_em
-                                                                                    ? new Date(op.criado_em).toLocaleDateString('pt-BR')
-                                                                                    : '--/--/--'}
-                                                                        </span>
+                                                                    <div className="d-flex justify-content-between align-items-center">
+                                                                        <div className="d-flex align-items-center">
+                                                                            <Calendar size={12} className="text-muted me-1" />
+                                                                            <span className="x-small text-muted">
+                                                                                {op.data_prevista_fechamento
+                                                                                    ? new Date(op.data_prevista_fechamento).toLocaleDateString('pt-BR')
+                                                                                    : op.criado_em
+                                                                                        ? new Date(op.criado_em).toLocaleDateString('pt-BR')
+                                                                                        : '--/--/--'}
+                                                                            </span>
+                                                                        </div>
+                                                                        <Badge bg={op.prioridade === 'ALTA' ? 'danger' : op.prioridade === 'MEDIA' ? 'warning' : 'info'} className="x-small">
+                                                                            {op.prioridade}
+                                                                        </Badge>
                                                                     </div>
-                                                                    <Badge bg={op.prioridade === 'ALTA' ? 'danger' : op.prioridade === 'MEDIA' ? 'warning' : 'info'} className="x-small">
-                                                                        {op.prioridade}
-                                                                    </Badge>
-                                                                </div>
-                                                            </Card.Body>
-                                                        </Card>
-                                                    )}
-                                                </Draggable>
-                                            );
-                                        })}
+                                                                </Card.Body>
+                                                            </Card>
+                                                        )}
+                                                    </Draggable>
+                                                );
+                                            })}
                                         {provided.placeholder}
                                     </div>
                                 )}
