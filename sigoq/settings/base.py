@@ -71,6 +71,9 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Segurança de Sessão
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 7  # 7 Dias em segundos
+
 # REST Framework
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
