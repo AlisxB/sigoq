@@ -15,6 +15,8 @@ import Categorias from './pages/Categorias'
 import Kanban from './pages/Kanban'
 import Metas from './pages/Metas'
 import ConfiguracoesPreco from './pages/ConfiguracoesPreco'
+import Error404 from './pages/Error404'
+import AccessDenied from './pages/AccessDenied'
 import { AuthProvider } from './contexts/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 
@@ -27,6 +29,8 @@ const App: React.FC = () => {
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/403" element={<AccessDenied />} />
+            <Route path="/404" element={<Error404 />} />
 
             {/* Rotas Protegidas */}
             <Route element={<ProtectedRoute />}>
@@ -57,12 +61,12 @@ const App: React.FC = () => {
                 </Route>
 
                 {/* Fallback para rotas não encontradas no dashboard */}
-                <Route path="*" element={<Navigate to="/" replace />} />
+                <Route path="*" element={<Error404 />} />
               </Route>
             </Route>
 
-            {/* Redirecionar qualquer outra coisa para o Dashboard/Login */}
-            <Route path="*" element={<Navigate to="/" replace />} />
+            {/* Redirecionar qualquer outra coisa para o 404 */}
+            <Route path="*" element={<Error404 />} />
           </Routes>
         </BrowserRouter>
       </QueryClientProvider>

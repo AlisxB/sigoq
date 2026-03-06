@@ -8,7 +8,11 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) => {
-    const { user, isAuthenticated } = useAuth();
+    const { user, isAuthenticated, isLoading } = useAuth();
+
+    if (isLoading) {
+        return null; // Or a loading spinner
+    }
 
     if (!isAuthenticated) {
         // Redirect to login if not authenticated
@@ -16,8 +20,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) => {
     }
 
     if (allowedRoles && user && !allowedRoles.includes(user.role)) {
-        // Redirect to home if user doesn't have required role
-        return <Navigate to="/" replace />;
+        // Redirect to access denied if user doesn't have required role
+        return <Navigate to="/403" replace />;
     }
 
     return <Outlet />;
