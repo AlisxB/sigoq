@@ -42,7 +42,7 @@ const MainLayout: React.FC = () => {
             items: [
                 { name: 'Clientes', path: '/clientes', icon: <Users size={20} />, roles: ['ADMIN', 'COMERCIAL'] },
                 { name: 'Fornecedores', path: '/fornecedores', icon: <Rocket size={20} />, roles: ['ADMIN', 'COMERCIAL'] },
-                { name: 'Kanban', path: '/kanban', icon: <Layers size={20} />, roles: ['ADMIN', 'COMERCIAL'] },
+                { name: 'Kanban', path: '/kanban', icon: <LayoutGrid size={20} />, roles: ['ADMIN', 'COMERCIAL'] },
             ]
         },
         {
@@ -258,7 +258,7 @@ const MainLayout: React.FC = () => {
                     </div>
                 </header>
 
-                <main style={{ flexGrow: 1, overflowY: 'auto', paddingRight: '5px' }}>
+                <main style={{ flexGrow: 1, paddingRight: '5px', height: '100%', overflow: 'hidden' }}>
                     <Outlet />
                 </main>
             </div>

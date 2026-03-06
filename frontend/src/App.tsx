@@ -11,6 +11,8 @@ import Clientes from './pages/Clientes'
 import Fornecedores from './pages/Fornecedores'
 import Produtos from './pages/Produtos'
 import Categorias from './pages/Categorias'
+import Kanban from './pages/Kanban'
+import ConfiguracoesPreco from './pages/ConfiguracoesPreco'
 import { AuthProvider } from './contexts/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 
@@ -42,12 +44,12 @@ const App: React.FC = () => {
                 <Route element={<ProtectedRoute allowedRoles={['ADMIN', 'COMERCIAL']} />}>
                   <Route path="clientes" element={<Clientes />} />
                   <Route path="fornecedores" element={<Fornecedores />} />
-                  <Route path="kanban" element={<div>Pipeline de Vendas (Em breve)</div>} />
+                  <Route path="kanban" element={<Kanban />} />
                 </Route>
 
                 {/* Sistema / Admin */}
                 <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
-                  <Route path="configuracoes" element={<div>Configurações Globais (Em breve)</div>} />
+                  <Route path="configuracoes" element={<ConfiguracoesPreco />} />
                   <Route path="usuarios" element={<div>Gestão de Equipe (Em breve)</div>} />
                 </Route>
 
