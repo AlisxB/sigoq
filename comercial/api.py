@@ -1,4 +1,7 @@
 from rest_framework import viewsets, permissions
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from django.db.models import Sum, Count
 from .models import StatusOportunidade, Oportunidade
 from .serializers import StatusOportunidadeSerializer, OportunidadeSerializer
 
@@ -32,3 +35,23 @@ class OportunidadeViewSet(viewsets.ModelViewSet):
             serializer.save(vendedor=self.request.user)
         else:
             serializer.save()
+
+    @action(detail=False, methods=['get'])
+    def estatisticas(self, request):
+        """
+        Retorna dados agregados para o Funil de Vendas (ApexCharts).
+        Respeita os filtros de segurança do get_queryset().
+        """
+        qs = self.get_queryset()
+        
+        funil = qs.values(
+            'status__id', 
+            'status__nome', 
+            'status__ordem', 
+            'status__cor'
+        ).annotate(
+            total=Sum('valor_estimado'),
+            quantidade=Count('id')
+        ).order_by('status__ordem')
+        
+        return Response(list(funil))

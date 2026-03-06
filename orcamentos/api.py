@@ -1,6 +1,7 @@
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from django.db.models import Avg, Count
 from .models import Orcamento, Kit, ItemOrcamento, ConfiguracaoPreco
 from .serializers import (
     OrcamentoSerializer, KitSerializer, ItemOrcamentoSerializer, 
@@ -41,6 +42,29 @@ class OrcamentoViewSet(viewsets.ModelViewSet):
         new_orc = orcamento.duplicate()
         serializer = self.get_serializer(new_orc)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=['get'])
+    def analytics(self, request):
+        """
+        Estatísticas de performance financeira para o Dashboard.
+        """
+        qs = self.get_queryset()
+        
+        # Margem Média (Considera o que foi enviado para o cliente e o que foi fechado)
+        margem = qs.filter(status__in=['ENVIADO', 'APROVADO']).aggregate(Avg('margem_contrib'))
+        
+        # Mix de Categorias (Apenas o que foi efetivamente fechado/aprovado)
+        from django.db.models import Sum
+        categorias = ItemOrcamento.objects.filter(
+            kit__orcamento__in=qs.filter(status='APROVADO')
+        ).values('produto__categoria__nome').annotate(
+            total=Sum('quantidade')
+        ).order_by('-total')
+        
+        return Response({
+            'margem_media': margem['margem_contrib__avg'] or 0,
+            'categorias': list(categorias)
+        })
 
 class KitViewSet(viewsets.ModelViewSet):
     queryset = Kit.objects.all()
