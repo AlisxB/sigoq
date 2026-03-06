@@ -191,8 +191,39 @@ const MainLayout: React.FC = () => {
                                     <p className="mb-0 fw-bold small text-nowrap text-truncate" style={{ color: '#2A3547' }}>{user?.first_name} {user?.last_name}</p>
                                     <p className="mb-0 text-muted" style={{ fontSize: '10px' }}>{user?.role}</p>
                                 </div>
-                                <LogOut onClick={logout} size={18} color="#5D87FF" style={{ cursor: 'pointer', flexShrink: 0 }} />
+                                <div 
+                                    onClick={logout}
+                                    title="Sair do sistema"
+                                    style={{ 
+                                        cursor: 'pointer', 
+                                        flexShrink: 0,
+                                        padding: '8px',
+                                        borderRadius: '8px',
+                                        transition: 'background-color 0.2s'
+                                    }}
+                                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(93, 135, 255, 0.1)'}
+                                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                >
+                                    <LogOut size={18} color="#5D87FF" />
+                                </div>
                             </>
+                        )}
+                        {!isExpanded && (
+                            <div 
+                                onClick={logout}
+                                title="Sair do sistema"
+                                style={{ 
+                                    cursor: 'pointer', 
+                                    flexShrink: 0,
+                                    padding: '8px',
+                                    borderRadius: '8px',
+                                    transition: 'background-color 0.2s'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(93, 135, 255, 0.1)'}
+                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                            >
+                                <LogOut size={18} color="#5D87FF" />
+                            </div>
                         )}
                     </div>
                 </div>
@@ -235,7 +266,15 @@ const MainLayout: React.FC = () => {
                             <Bell size={22} color="#5A6A83" style={{ cursor: 'pointer' }} />
                         </div>
 
-                        <div className="d-flex align-items-center gap-2 ps-2">
+                        <div 
+                            className="d-flex align-items-center gap-2 ps-2" 
+                            style={{ cursor: 'pointer' }}
+                            onClick={() => {
+                                if (window.confirm('Deseja sair do sistema?')) {
+                                    logout();
+                                }
+                            }}
+                        >
                             <div className="d-none d-lg-block text-end">
                                 <p className="mb-0 fw-bold small" style={{ color: '#2A3547' }}>{user?.first_name} {user?.last_name}</p>
                                 <p className="mb-0 text-muted" style={{ fontSize: '11px' }}>{user?.role === 'ADMIN' ? 'Administrador' : user?.role}</p>
@@ -250,11 +289,10 @@ const MainLayout: React.FC = () => {
                                 justifyContent: 'center',
                                 color: '#5D87FF',
                                 fontWeight: 'bold',
-                                cursor: 'pointer'
                             }}>
                                 {user?.first_name?.charAt(0)}{user?.last_name?.charAt(0)}
                             </div>
-                            <ChevronDown size={14} color="#5A6A83" />
+                            <LogOut size={14} color="#5A6A83" />
                         </div>
                     </div>
                 </header>

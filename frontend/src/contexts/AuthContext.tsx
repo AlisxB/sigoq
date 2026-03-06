@@ -1,53 +1,60 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { User, Role } from '../types';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { User } from '../types';
+import { usuarioApi } from '../api/usuarios';
 
 interface AuthContextType {
     user: User | null;
-    login: (role: Role) => void;
-    logout: () => void;
+    login: (username: string, password: string) => Promise<void>;
+    logout: () => Promise<void>;
     isAuthenticated: boolean;
+    isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock user data for testing
-const mockUsers: Record<Role, User> = {
-    ADMIN: {
-        id: 1,
-        username: 'admin',
-        first_name: 'Alison',
-        last_name: 'Admin',
-        role: 'ADMIN'
-    },
-    COMERCIAL: {
-        id: 2,
-        username: 'vendedor1',
-        first_name: 'João',
-        last_name: 'Vendedor',
-        role: 'COMERCIAL'
-    },
-    ORCAMENTISTA: {
-        id: 3,
-        username: 'tecnico1',
-        first_name: 'Marcos',
-        last_name: 'Técnico',
-        role: 'ORCAMENTISTA'
-    }
-};
-
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [user, setUser] = useState<User | null>(mockUsers.ADMIN); // Default to ADMIN for development
+    const [user, setUser] = useState<User | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
-    const login = (role: Role) => {
-        setUser(mockUsers[role]);
+    useEffect(() => {
+        const checkAuth = async () => {
+            try {
+                const currentUser = await usuarioApi.me();
+                setUser(currentUser);
+            } catch (err) {
+                setUser(null);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        checkAuth();
+    }, []);
+
+    const login = async (username: string, password: string) => {
+        const userData = await usuarioApi.login({ username, password });
+        setUser(userData);
     };
 
-    const logout = () => {
-        setUser(null);
+    const logout = async () => {
+        try {
+            await usuarioApi.logout();
+        } catch (err) {
+            console.error("Erro ao encerrar sessão no servidor:", err);
+        } finally {
+            setUser(null);
+            // Opcional: recarregar a página para limpar caches residuais
+            window.location.href = '/login';
+        }
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user }}>
+        <AuthContext.Provider value={{
+            user,
+            login,
+            logout,
+            isAuthenticated: !!user,
+            isLoading
+        }}>
             {children}
         </AuthContext.Provider>
     );
