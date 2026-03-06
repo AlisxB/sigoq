@@ -11,9 +11,20 @@ class OportunidadeViewSet(viewsets.ModelViewSet):
     serializer_class = OportunidadeSerializer
 
     def get_queryset(self):
-        if self.request.user.is_superuser or self.request.user.is_anonymous:
+        user = self.request.user
+        if not user.is_authenticated:
+            return Oportunidade.objects.none()
+            
+        # Usuários que vêem tudo: ADMIN, GERENTE e ORCAMENTISTA
+        permite_tudo = user.is_superuser or (
+            hasattr(user, 'perfil') and 
+            user.perfil.cargo in ['ADMIN', 'GERENTE', 'ORCAMENTISTA']
+        )
+        
+        if permite_tudo:
             return Oportunidade.all_objects.all()
-        return Oportunidade.objects.filter(vendedor=self.request.user)
+            
+        return Oportunidade.objects.filter(vendedor=user)
 
     def perform_create(self, serializer):
         if self.request.user.is_authenticated:

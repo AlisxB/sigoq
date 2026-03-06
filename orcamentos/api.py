@@ -12,12 +12,19 @@ class OrcamentoViewSet(viewsets.ModelViewSet):
     serializer_class = OrcamentoSerializer
 
     def get_queryset(self):
-        # Isolamento de vendedor via API
         user = self.request.user
-        if user.is_superuser:
-            return Orcamento.all_objects.all()
         if not user.is_authenticated:
             return Orcamento.objects.none()
+
+        # Usuários que vêem tudo: ADMIN, GERENTE e ORCAMENTISTA
+        permite_tudo = user.is_superuser or (
+            hasattr(user, 'perfil') and 
+            user.perfil.cargo in ['ADMIN', 'GERENTE', 'ORCAMENTISTA']
+        )
+        
+        if permite_tudo:
+            return Orcamento.all_objects.all()
+            
         return Orcamento.objects.filter(vendedor=user)
 
     def perform_create(self, serializer):
