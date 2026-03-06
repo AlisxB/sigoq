@@ -1,19 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Container, Row, Col, Card, Button, Form, Table, InputGroup, Badge, Spinner, ListGroup } from 'react-bootstrap';
-import { ArrowLeft, Save, Plus, Trash2, Search, Calculator, Copy, Send } from 'lucide-react';
+import { Container, Row, Col, Card, Button, Form, Table, InputGroup, Badge, Spinner, ListGroup, Modal } from 'react-bootstrap';
+import { ArrowLeft, Save, Plus, Trash2, Search, Calculator, Copy, Send, Compass, Filter } from 'lucide-react';
 import { orcamentoApi } from '../api/orcamentos';
 import { usuarioApi } from '../api/usuarios';
 import { clienteApi } from '../api/clientes';
-import { produtoApi } from '../api/produtos';
-import { Orcamento, Kit, ItemOrcamento, Cliente, Produto, ConfiguracaoPreco, User } from '../types';
+import { produtoApi, categoriaApi } from '../api/produtos';
+import { fornecedorApi } from '../api/fornecedores';
+import { Orcamento, Kit, ItemOrcamento, Cliente, Produto, ConfiguracaoPreco, User, Categoria, Fornecedor } from '../types';
 
 const OrcamentoEditor: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const location = useLocation();
     const queryClient = useQueryClient();
+
+    // Estado para o Modal de Busca
+    const [showSearchModal, setShowModal] = useState(false);
+    const [activeKitIndex, setActiveKitIndex] = useState<number | null>(null);
 
     // Captura parâmetros da URL (vindo do Kanban)
     const queryParams = new URLSearchParams(location.search);
@@ -79,10 +84,12 @@ const OrcamentoEditor: React.FC = () => {
         }
     }, [remoteOrcamento]);
 
-    const calculateTotals = () => {
+    const performCalculation = useCallback((kits: Kit[], marginStr: string, discountStr: string) => {
         if (!config || config.length === 0) return;
         const activeConfig = config[0];
-        const margin = parseFloat(localOrcamento.margem_contrib || '0.2000');
+        const margin = parseFloat(marginStr || '0.2000');
+        const discount = parseFloat(discountStr || '0') / 100;
+        
         const somaEncargos = parseFloat(activeConfig.markup_engenharia) +
             parseFloat(activeConfig.markup_capitalizacao) +
             parseFloat(activeConfig.markup_frete) +
@@ -96,7 +103,7 @@ const OrcamentoEditor: React.FC = () => {
         let totalCusto = 0;
         let totalVenda = 0;
 
-        const updatedKits = localOrcamento.kits?.map(kit => {
+        const updatedKits = kits.map(kit => {
             const updatedItens = kit.itens.map(item => {
                 const custoUnit = parseFloat(item.custo_unit_snapshot);
                 const vlrVenda = divisor > 0 ? custoUnit / divisor : custoUnit * 2;
@@ -110,45 +117,57 @@ const OrcamentoEditor: React.FC = () => {
             return { ...kit, itens: updatedItens };
         });
 
-        // Desconto global
-        const descontoGlobal = parseFloat(localOrcamento.desconto_percent || '0') / 100;
-        totalVenda = totalVenda * (1 - descontoGlobal);
+        const finalVenda = totalVenda * (1 - discount);
 
         setLocalOrcamento(prev => ({
             ...prev,
             kits: updatedKits,
             custo_total: totalCusto.toFixed(2),
-            valor_total: totalVenda.toFixed(2)
+            valor_total: finalVenda.toFixed(2)
         }));
+    }, [config]);
+
+    const calculateTotals = () => {
+        performCalculation(
+            localOrcamento.kits || [], 
+            localOrcamento.margem_contrib || '0.2000', 
+            localOrcamento.desconto_percent || '0'
+        );
     };
 
     const addKit = () => {
         const newKit: Kit = {
-            nome: `Novo Kit ${localOrcamento.kits!.length + 1}`,
+            nome: `Novo Kit ${(localOrcamento.kits?.length || 0) + 1}`,
             descricao: '',
             orcamento: id ? parseInt(id) : 0,
-            ordem: localOrcamento.kits!.length + 1,
+            ordem: (localOrcamento.kits?.length || 0) + 1,
             itens: []
         };
-        setLocalOrcamento(prev => ({ ...prev, kits: [...prev.kits!, newKit] }));
+        const updatedKits = [...(localOrcamento.kits || []), newKit];
+        setLocalOrcamento(prev => ({ ...prev, kits: updatedKits }));
     };
 
     const deleteKit = (index: number) => {
-        const updatedKits = [...localOrcamento.kits!];
-        updatedKits.splice(index, 1);
-        setLocalOrcamento(prev => ({ ...prev, kits: updatedKits }));
-        calculateTotals();
+        if (window.confirm(`Tem certeza que deseja excluir o kit "${localOrcamento.kits![index].nome}" e todos os seus materiais?`)) {
+            const updatedKits = (localOrcamento.kits || []).filter((_, i) => i !== index);
+            performCalculation(updatedKits, localOrcamento.margem_contrib || '0.2000', localOrcamento.desconto_percent || '0');
+        }
     };
 
     const deleteItem = (kitIndex: number, itemIndex: number) => {
-        const updatedKits = [...localOrcamento.kits!];
-        updatedKits[kitIndex].itens.splice(itemIndex, 1);
-        setLocalOrcamento(prev => ({ ...prev, kits: updatedKits }));
-        calculateTotals();
+        if (window.confirm("Remover este material do kit?")) {
+            const updatedKits = [...(localOrcamento.kits || [])];
+            const updatedItens = updatedKits[kitIndex].itens.filter((_, i) => i !== itemIndex);
+            updatedKits[kitIndex] = { ...updatedKits[kitIndex], itens: updatedItens };
+            performCalculation(updatedKits, localOrcamento.margem_contrib || '0.2000', localOrcamento.desconto_percent || '0');
+        }
     };
 
-    const addItemToKit = (kitIndex: number, produto: Produto) => {
-        const newItem: Partial<ItemOrcamento> = {
+    const addItemToKit = (produto: Produto) => {
+        if (activeKitIndex === null) return;
+
+        const newItem: ItemOrcamento = {
+            kit: 0,
             produto: produto.id,
             codigo: produto.codigo,
             descricao: produto.descricao,
@@ -159,10 +178,14 @@ const OrcamentoEditor: React.FC = () => {
             desconto_percent_item: '0'
         };
 
-        const updatedKits = [...localOrcamento.kits!];
-        updatedKits[kitIndex].itens.push(newItem as ItemOrcamento);
-        setLocalOrcamento(prev => ({ ...prev, kits: updatedKits }));
-        calculateTotals();
+        const updatedKits = [...(localOrcamento.kits || [])];
+        updatedKits[activeKitIndex] = {
+            ...updatedKits[activeKitIndex],
+            itens: [...updatedKits[activeKitIndex].itens, newItem]
+        };
+        
+        performCalculation(updatedKits, localOrcamento.margem_contrib || '0.2000', localOrcamento.desconto_percent || '0');
+        setShowModal(false);
     };
 
     const handleFinalize = () => {
@@ -301,8 +324,9 @@ const OrcamentoEditor: React.FC = () => {
                                             step="0.01"
                                             value={(parseFloat(localOrcamento.margem_contrib || '0') * 100).toFixed(2)}
                                             onChange={(e) => {
-                                                setLocalOrcamento({ ...localOrcamento, margem_contrib: (parseFloat(e.target.value) / 100).toString() });
-                                                setTimeout(calculateTotals, 100);
+                                                const newMargin = (parseFloat(e.target.value) / 100).toString();
+                                                setLocalOrcamento(prev => ({ ...prev, margem_contrib: newMargin }));
+                                                performCalculation(localOrcamento.kits || [], newMargin, localOrcamento.desconto_percent || '0');
                                             }}
                                             isInvalid={parseFloat(localOrcamento.margem_contrib || '0') < 0.15}
                                         />
@@ -321,9 +345,9 @@ const OrcamentoEditor: React.FC = () => {
                                     className="border-0 fw-bold text-primary p-0 shadow-none fs-6 bg-transparent"
                                     value={kit.nome}
                                     onChange={(e) => {
-                                        const updated = [...localOrcamento.kits!];
-                                        updated[kIdx].nome = e.target.value;
-                                        setLocalOrcamento({ ...localOrcamento, kits: updated });
+                                        const updatedKits = [...(localOrcamento.kits || [])];
+                                        updatedKits[kIdx] = { ...updatedKits[kIdx], nome: e.target.value };
+                                        setLocalOrcamento(prev => ({ ...prev, kits: updatedKits }));
                                     }}
                                     style={{ width: 'auto', minWidth: '200px' }}
                                 />
@@ -355,10 +379,11 @@ const OrcamentoEditor: React.FC = () => {
                                                         type="number"
                                                         value={item.quantidade}
                                                         onChange={(e) => {
-                                                            const updated = [...localOrcamento.kits!];
-                                                            updated[kIdx].itens[iIdx].quantidade = e.target.value;
-                                                            setLocalOrcamento({ ...localOrcamento, kits: updated });
-                                                            calculateTotals();
+                                                            const updatedKits = [...(localOrcamento.kits || [])];
+                                                            const updatedItens = [...updatedKits[kIdx].itens];
+                                                            updatedItens[iIdx] = { ...updatedItens[iIdx], quantidade: e.target.value };
+                                                            updatedKits[kIdx] = { ...updatedKits[kIdx], itens: updatedItens };
+                                                            performCalculation(updatedKits, localOrcamento.margem_contrib || '0.2000', localOrcamento.desconto_percent || '0');
                                                         }}
                                                     />
                                                 </td>
@@ -372,8 +397,18 @@ const OrcamentoEditor: React.FC = () => {
                                             </tr>
                                         ))}
                                         <tr>
-                                            <td colSpan={5} className="p-3 bg-light">
-                                                <ProductSearch onSelect={(p) => addItemToKit(kIdx, p)} />
+                                            <td colSpan={5} className="p-3 bg-light text-center">
+                                                <Button 
+                                                    variant="outline-primary" 
+                                                    size="sm" 
+                                                    className="d-inline-flex align-items-center"
+                                                    onClick={() => {
+                                                        setActiveKitIndex(kIdx);
+                                                        setShowModal(true);
+                                                    }}
+                                                >
+                                                    <Compass size={16} className="me-2" /> Buscar Material no Banco
+                                                </Button>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -433,6 +468,14 @@ const OrcamentoEditor: React.FC = () => {
                     </Card>
                 </Col>
             </Row>
+
+            {/* Modal de Busca de Produtos */}
+            <ProductSearchModal 
+                show={showSearchModal} 
+                onHide={() => setShowModal(false)} 
+                onSelect={addItemToKit} 
+            />
+
             <style>{`
                 .form-select, .form-control, option {
                     color: #212529 !important;
@@ -446,51 +489,115 @@ const OrcamentoEditor: React.FC = () => {
     );
 };
 
-// Componente Interno de Busca
-const ProductSearch: React.FC<{ onSelect: (p: Produto) => void }> = ({ onSelect }) => {
+// Componente Modal de Busca
+const ProductSearchModal: React.FC<{ show: boolean, onHide: () => void, onSelect: (p: Produto) => void }> = ({ show, onHide, onSelect }) => {
     const [search, setSearch] = useState('');
+    const [selCategoria, setSelCategoria] = useState<number | undefined>(undefined);
+    const [selFornecedor, setSelFornecedor] = useState<number | undefined>(undefined);
+
+    const { data: categorias = [] } = useQuery({ queryKey: ['categorias'], queryFn: categoriaApi.list, enabled: show });
+    const { data: fornecedores = [] } = useQuery({ queryKey: ['fornecedores'], queryFn: fornecedorApi.list, enabled: show });
+
     const { data: results, isLoading } = useQuery<Produto[]>({
-        queryKey: ['search-products', search],
-        queryFn: () => produtoApi.search(search),
-        enabled: search.length > 0
+        queryKey: ['search-products', search, selCategoria, selFornecedor],
+        queryFn: () => produtoApi.search(search, { categoria: selCategoria, fornecedor: selFornecedor }),
+        enabled: show && (search.length > 0 || !!selCategoria || !!selFornecedor)
     });
 
     return (
-        <div className="position-relative">
-            <InputGroup size="sm">
-                <InputGroup.Text><Search size={14} /></InputGroup.Text>
-                <Form.Control
-                    className="text-dark"
-                    placeholder="Buscar produto por nome ou código..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                />
-            </InputGroup>
-            {results && results.length > 0 && (
-                <ListGroup className="position-absolute w-100 shadow-lg z-index-1000 mt-1">
-                    {results.map(p => (
-                        <ListGroup.Item
-                            key={p.id}
-                            action
-                            onClick={() => { onSelect(p); setSearch(''); }}
-                            className="small d-flex justify-content-between text-dark"
-                        >
-                            <span>{p.codigo} - {p.descricao}</span>
-                            <span className="text-success fw-bold">R$ {p.custo_base}</span>
-                        </ListGroup.Item>
-                    ))}
-                </ListGroup>
-            )}
-            <style>{`
-                .form-select, .form-control, option {
-                    color: #212529 !important;
-                    background-color: #fff !important;
-                }
-                select.form-select option {
-                    color: #000 !important;
-                }
-            `}</style>
-        </div>
+        <Modal show={show} onHide={onHide} size="lg" centered className="modal-premium">
+            <Modal.Header closeButton className="border-0">
+                <Modal.Title className="fw-bold d-flex align-items-center">
+                    <Compass size={24} className="text-primary me-2" />
+                    Buscar Materiais
+                </Modal.Title>
+            </Modal.Header>
+            <Modal.Body className="p-4">
+                <Row className="g-3 mb-4">
+                    <Col md={12}>
+                        <InputGroup className="shadow-sm">
+                            <InputGroup.Text className="bg-white border-end-0">
+                                <Search size={20} className="text-muted" />
+                            </InputGroup.Text>
+                            <Form.Control
+                                size="lg"
+                                className="border-start-0 ps-0 text-dark"
+                                placeholder="Digite o código ou descrição do material..."
+                                autoFocus
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                            />
+                        </InputGroup>
+                    </Col>
+                    <Col md={6}>
+                        <Form.Group>
+                            <Form.Label className="small fw-bold text-muted d-flex align-items-center">
+                                <Filter size={14} className="me-1" /> Categoria
+                            </Form.Label>
+                            <Form.Select 
+                                className="text-dark" 
+                                value={selCategoria || ''} 
+                                onChange={(e) => setSelCategoria(e.target.value ? parseInt(e.target.value) : undefined)}
+                            >
+                                <option value="">Todas as Categorias</option>
+                                {categorias.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                            </Form.Select>
+                        </Form.Group>
+                    </Col>
+                    <Col md={6}>
+                        <Form.Group>
+                            <Form.Label className="small fw-bold text-muted d-flex align-items-center">
+                                <Compass size={14} className="me-1" /> Fabricante
+                            </Form.Label>
+                            <Form.Select 
+                                className="text-dark" 
+                                value={selFornecedor || ''} 
+                                onChange={(e) => setSelFornecedor(e.target.value ? parseInt(e.target.value) : undefined)}
+                            >
+                                <option value="">Todos os Fabricantes</option>
+                                {fornecedores.map(f => <option key={f.id} value={f.id}>{f.nome_fantasia || f.razao_social}</option>)}
+                            </Form.Select>
+                        </Form.Group>
+                    </Col>
+                </Row>
+
+                <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                    {isLoading ? (
+                        <div className="text-center py-5"><Spinner animation="border" variant="primary" /></div>
+                    ) : (
+                        <ListGroup variant="flush">
+                            {results && results.length > 0 ? (
+                                results.map(p => (
+                                    <ListGroup.Item
+                                        key={p.id}
+                                        action
+                                        onClick={() => { onSelect(p); setSearch(''); }}
+                                        className="d-flex justify-content-between align-items-center py-3 border-bottom text-dark"
+                                    >
+                                        <div>
+                                            <div className="fw-bold text-primary">{p.codigo}</div>
+                                            <div className="text-dark small fw-medium">{p.descricao}</div>
+                                            <div className="d-flex gap-2 mt-1">
+                                                {p.fornecedor_nome && <Badge bg="info" className="x-small">Fab: {p.fornecedor_nome}</Badge>}
+                                                {p.ncm && <Badge bg="light" text="dark" className="border font-monospace x-small">NCM: {p.ncm}</Badge>}
+                                            </div>
+                                        </div>
+                                        <div className="text-end">
+                                            <div className="fw-bold text-success">R$ {parseFloat(p.custo_base).toFixed(2)}</div>
+                                            <div className="text-muted x-small">Custo Base</div>
+                                        </div>
+                                    </ListGroup.Item>
+                                ))
+                            ) : (
+                                <div className="text-center py-5 text-muted">
+                                    {(search.length > 0 || selCategoria || selFornecedor) ? 'Nenhum material encontrado para estes filtros.' : 'Comece a digitar ou selecione um filtro para buscar...'}
+                                </div>
+                            )}
+                        </ListGroup>
+                    )}
+                </div>
+            </Modal.Body>
+        </Modal>
     );
 };
 

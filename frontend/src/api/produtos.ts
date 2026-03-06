@@ -13,13 +13,19 @@ export const produtoApi = {
     create: (data: Partial<Produto>): Promise<Produto> => api.post('produtos/api/produtos/', data).then(res => res.data),
     update: (id: string | number, data: Partial<Produto>): Promise<Produto> => api.put(`produtos/api/produtos/${id}/`, data).then(res => res.data),
     delete: (id: string | number): Promise<void> => api.delete(`produtos/api/produtos/${id}/`).then(res => res.data),
-    search: (query: string): Promise<Produto[]> => api.get(`produtos/api/produtos/?search=${query}`).then(res => {
-        const data = res.data;
-        if (data && typeof data === 'object' && !Array.isArray(data)) {
-            return Object.values(data) as Produto[];
-        }
-        return data || [];
-    }),
+    search: (query: string, filters?: { categoria?: number, fornecedor?: number }): Promise<Produto[]> => {
+        let url = `produtos/api/produtos/?search=${query}`;
+        if (filters?.categoria) url += `&categoria=${filters.categoria}`;
+        if (filters?.fornecedor) url += `&fornecedor=${filters.fornecedor}`;
+        
+        return api.get(url).then(res => {
+            const data = res.data;
+            if (data && typeof data === 'object' && !Array.isArray(data)) {
+                return Object.values(data) as Produto[];
+            }
+            return data || [];
+        });
+    },
 };
 
 export const categoriaApi = {
