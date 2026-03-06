@@ -9,4 +9,5 @@ export const orcamentoApi = {
     delete: (id: string | number): Promise<void> => api.delete(`orcamentos/api/orcamentos/${id}/`).then(res => res.data),
     getConfig: (): Promise<any[]> => api.get('orcamentos/api/config-preco/').then(res => res.data),
     updateConfig: (id: number, data: any): Promise<any> => api.patch(`orcamentos/api/config-preco/${id}/`, data).then(res => res.data),
+    createRevision: (id: string | number): Promise<Orcamento> => api.post(`orcamentos/api/orcamentos/${id}/revisao/`).then(res => res.data),
 };

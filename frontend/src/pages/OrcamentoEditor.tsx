@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Container, Row, Col, Card, Button, Form, Table, InputGroup, Badge, Spinner, ListGroup } from 'react-bootstrap';
-import { ArrowLeft, Save, Plus, Trash2, Search, Calculator } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Trash2, Search, Calculator, Copy } from 'lucide-react';
 import { orcamentoApi } from '../api/orcamentos';
 import { usuarioApi } from '../api/usuarios';
 import { clienteApi, produtoApi } from '../api/common';
@@ -46,6 +46,14 @@ const OrcamentoEditor: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['orcamentos'] });
             navigate('/');
+        },
+    });
+
+    const revisionMutation = useMutation({
+        mutationFn: () => orcamentoApi.createRevision(id!),
+        onSuccess: (newOrc) => {
+            queryClient.invalidateQueries({ queryKey: ['orcamentos'] });
+            navigate(`/orcamento/${newOrc.id}`);
         },
     });
 
@@ -109,6 +117,20 @@ const OrcamentoEditor: React.FC = () => {
         setLocalOrcamento(prev => ({ ...prev, kits: [...prev.kits!, newKit] }));
     };
 
+    const deleteKit = (index: number) => {
+        const updatedKits = [...localOrcamento.kits!];
+        updatedKits.splice(index, 1);
+        setLocalOrcamento(prev => ({ ...prev, kits: updatedKits }));
+        calculateTotals();
+    };
+
+    const deleteItem = (kitIndex: number, itemIndex: number) => {
+        const updatedKits = [...localOrcamento.kits!];
+        updatedKits[kitIndex].itens.splice(itemIndex, 1);
+        setLocalOrcamento(prev => ({ ...prev, kits: updatedKits }));
+        calculateTotals();
+    };
+
     const addItemToKit = (kitIndex: number, produto: Produto) => {
         const newItem: ItemOrcamento = {
             kit: 0, // Will be set by backend
@@ -144,15 +166,28 @@ const OrcamentoEditor: React.FC = () => {
                         <Badge bg="primary" className="ms-3">{localOrcamento.status}</Badge>
                     )}
                 </div>
-                <Button
-                    variant="success"
-                    className="d-flex align-items-center shadow-sm"
-                    onClick={() => saveMutation.mutate(localOrcamento)}
-                    disabled={saveMutation.isPending}
-                >
-                    <Save size={18} className="me-2" />
-                    {saveMutation.isPending ? 'Salvando...' : 'Salvar Proposta'}
-                </Button>
+                <div className="d-flex align-items-center">
+                    {id && (
+                        <Button
+                            variant="outline-primary"
+                            className="me-2 d-flex align-items-center"
+                            onClick={() => revisionMutation.mutate()}
+                            disabled={revisionMutation.isPending}
+                        >
+                            <Copy size={18} className="me-2" />
+                            {revisionMutation.isPending ? 'Criando...' : 'Nova Revisão'}
+                        </Button>
+                    )}
+                    <Button
+                        variant="success"
+                        className="d-flex align-items-center shadow-sm"
+                        onClick={() => saveMutation.mutate(localOrcamento)}
+                        disabled={saveMutation.isPending}
+                    >
+                        <Save size={18} className="me-2" />
+                        {saveMutation.isPending ? 'Salvando...' : 'Salvar Proposta'}
+                    </Button>
+                </div>
             </div>
 
             <Row>
@@ -238,7 +273,7 @@ const OrcamentoEditor: React.FC = () => {
                         <Card key={kIdx} className="card-premium mb-4 border-start border-primary border-4">
                             <Card.Header className="bg-white border-0 py-3 d-flex justify-content-between align-items-center">
                                 <h6 className="mb-0 fw-bold text-primary">{kit.nome}</h6>
-                                <Button variant="outline-danger" size="sm">
+                                <Button variant="outline-danger" size="sm" onClick={() => deleteKit(kIdx)}>
                                     <Trash2 size={14} />
                                 </Button>
                             </Card.Header>
@@ -250,7 +285,7 @@ const OrcamentoEditor: React.FC = () => {
                                             <th>Qtd</th>
                                             <th>Custo Unit.</th>
                                             <th>Venda Unit.</th>
-                                            <th className="text-end pe-4">Subtotal</th>
+                                            <th className="text-end pe-4">Ações</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -275,8 +310,10 @@ const OrcamentoEditor: React.FC = () => {
                                                 </td>
                                                 <td>R$ {parseFloat(item.custo_unit_snapshot).toFixed(2)}</td>
                                                 <td className="fw-bold text-success">R$ {parseFloat(item.vlr_unit_venda).toFixed(2)}</td>
-                                                <td className="text-end pe-4 fw-bold">
-                                                    R$ {(parseFloat(item.vlr_unit_venda) * parseFloat(item.quantidade)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                                <td className="text-end pe-4">
+                                                    <Button variant="link" className="text-danger p-0" onClick={() => deleteItem(kIdx, iIdx)}>
+                                                        <Trash2 size={16} />
+                                                    </Button>
                                                 </td>
                                             </tr>
                                         ))}

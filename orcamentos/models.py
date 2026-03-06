@@ -100,6 +100,37 @@ class Orcamento(BaseModel):
 
         super().save(*args, **kwargs)
 
+    def duplicate(self):
+        """
+        Cria uma nova revisão deste orçamento, duplicando kits e itens.
+        """
+        # Obter a última revisão para este número
+        last_rev = Orcamento.all_objects.filter(numero=self.numero).order_by('revisao').last()
+        new_revisao = last_rev.revisao + 1
+        
+        # Clonar o objeto principal
+        old_pk = self.pk
+        self.pk = None
+        self.revisao = new_revisao
+        self.versao_pai_id = old_pk
+        self.status = 'RASCUNHO'
+        self.save()
+        
+        # Clonar Kits e Itens
+        old_orc = Orcamento.objects.get(pk=old_pk)
+        for kit in old_orc.kits.all():
+            old_kit_pk = kit.pk
+            kit.pk = None
+            kit.orcamento = self
+            kit.save()
+            
+            for item in ItemOrcamento.objects.filter(kit_id=old_kit_pk):
+                item.pk = None
+                item.kit = kit
+                item.save()
+                
+        return self
+
 class Kit(models.Model):
     """
     Agrupador de itens dentro de um orçamento (ex: Painel Principal, Comando, Motores).

@@ -1,4 +1,6 @@
-from rest_framework import viewsets, permissions
+from rest_framework import viewsets, permissions, status
+from rest_framework.decorators import action
+from rest_framework.response import Response
 from .models import Orcamento, Kit, ItemOrcamento, ConfiguracaoPreco
 from .serializers import (
     OrcamentoSerializer, KitSerializer, ItemOrcamentoSerializer, 
@@ -24,6 +26,13 @@ class OrcamentoViewSet(viewsets.ModelViewSet):
             serializer.save(vendedor=self.request.user)
         else:
             serializer.save()
+
+    @action(detail=True, methods=['post'])
+    def revisao(self, request, pk=None):
+        orcamento = self.get_object()
+        new_orc = orcamento.duplicate()
+        serializer = self.get_serializer(new_orc)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 class KitViewSet(viewsets.ModelViewSet):
     queryset = Kit.objects.all()
