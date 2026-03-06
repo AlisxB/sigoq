@@ -30,7 +30,7 @@ const Metas: React.FC = () => {
     });
 
     const saveMutation = useMutation({
-        mutationFn: (data: Partial<MetaMensal>) => 
+        mutationFn: (data: Partial<MetaMensal>) =>
             data.id ? comercialApi.updateMeta(data.id, data) : comercialApi.createMeta(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['metas'] });
@@ -56,14 +56,14 @@ const Metas: React.FC = () => {
         const rawValue = e.target.value.replace(/\D/g, '');
         setDisplayValue(formatCurrency(rawValue));
         const decimalValue = (Number(rawValue) / 100).toString();
-        setSelectedMeta(prev => ({ ...prev, valor_meta: decimalValue }));
+        setSelectedMeta((prev: any) => ({ ...prev, valor_meta: decimalValue }));
     };
 
     const handleEdit = (meta: MetaMensal) => {
         // Verifica se a meta é de mês passado
         const metaDate = new Date(meta.ano, meta.mes - 1);
         const today = startOfMonth(new Date());
-        
+
         if (isBefore(metaDate, today)) {
             alert("Não é permitido editar metas de meses que já passaram.");
             return;
@@ -78,7 +78,7 @@ const Metas: React.FC = () => {
     const handleDelete = (id: number, mes: number, ano: number) => {
         const metaDate = new Date(ano, mes - 1);
         const today = startOfMonth(new Date());
-        
+
         if (isBefore(metaDate, today)) {
             alert("Não é permitido excluir metas de meses passados para manter o histórico íntegro.");
             return;
@@ -95,17 +95,17 @@ const Metas: React.FC = () => {
         <Container fluid className="px-1 pb-5">
             <div className="d-flex justify-content-between align-items-center mb-4 pt-2">
                 <div>
-                    <h2 className="fw-bold mb-0" style={{ color: '#2A3547', fontFamily: 'Plus Jakarta Sans', letterSpacing: '-0.5px' }}>Objetivos Comerciais</h2>
+                    <h1 className="h4 fw-extrabold mb-1" style={{ color: '#2A3547', letterSpacing: '-0.5px' }}>Objetivos Comerciais</h1>
                     <p className="text-muted small mb-0 fw-medium">Defina metas para impulsionar o faturamento.</p>
                 </div>
-                <Button 
-                    variant="primary" 
+                <Button
+                    variant="primary"
                     className="shadow-premium rounded-pill px-4 fw-bold d-flex align-items-center"
-                    onClick={() => { 
-                        setSelectedMeta({ mes: new Date().getMonth() + 1, ano: new Date().getFullYear() }); 
+                    onClick={() => {
+                        setSelectedMeta({ mes: new Date().getMonth() + 1, ano: new Date().getFullYear() });
                         setSelectedDate(new Date());
                         setDisplayValue('R$ 0,00');
-                        setShowModal(true); 
+                        setShowModal(true);
                     }}
                 >
                     <Plus size={18} className="me-2" /> NOVA META
@@ -133,8 +133,8 @@ const Metas: React.FC = () => {
                                                 <div className={`p-2 rounded-12 me-3 ${isPast ? 'bg-secondary-subtle text-secondary' : 'bg-primary-subtle text-primary'}`}>
                                                     <Calendar size={18} />
                                                 </div>
-                                                <div>
-                                                    <div className={`fw-bold h6 mb-0 ${isPast ? 'text-muted' : 'text-dark'}`}>{meta.mes_nome}</div>
+                                                <div style={{ lineHeight: '1.2' }}>
+                                                    <div className={`fw-bold mb-0 ${isPast ? 'text-muted' : 'text-dark'}`} style={{ fontSize: '0.95rem' }}>{meta.mes_nome}</div>
                                                     <div className="text-muted x-small fw-bold">ANO {meta.ano} {isPast && <span className="ms-1 text-uppercase text-secondary">(Encerrado)</span>}</div>
                                                 </div>
                                             </div>
@@ -149,7 +149,7 @@ const Metas: React.FC = () => {
                                             )}
                                         </td>
                                         <td className="text-end py-3">
-                                            <div className={`fw-extrabold h5 mb-0 ${isPast ? 'text-muted' : 'text-primary'}`}>
+                                            <div className={`fw-bold mb-0 ${isPast ? 'text-muted' : 'text-primary'}`} style={{ fontSize: '1.1rem' }}>
                                                 R$ {parseFloat(meta.valor_meta).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                                             </div>
                                         </td>
@@ -185,11 +185,11 @@ const Metas: React.FC = () => {
                 </Card.Body>
             </Card>
 
-            <Modal show={showModal} onHide={() => setShowModal(false)} centered size="md" className="modal-premium">
+            <Modal show={showModal} onHide={() => setShowModal(false)} centered size="lg" className="modal-premium">
                 <Modal.Header closeButton className="border-0 pb-0 px-4 pt-4">
                     <Modal.Title className="fw-bold d-flex align-items-center">
-                        <div className="bg-primary text-white p-2 rounded-12 me-3 shadow-sm">
-                            <Target size={24} />
+                        <div className="bg-primary text-white p-2 rounded-12 me-3 shadow-sm" style={{ width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Target size={20} />
                         </div>
                         <div style={{ fontFamily: 'Plus Jakarta Sans', letterSpacing: '-0.5px' }}>
                             {selectedMeta?.id ? 'Editar Objetivo' : 'Nova Meta Mensal'}
@@ -201,7 +201,7 @@ const Metas: React.FC = () => {
                         <Row className="g-4">
                             <Col md={12}>
                                 <Form.Group>
-                                    <Form.Label className="small fw-bold text-dark opacity-75 mb-2">Selecione o Mês e Ano (MM/AAAA)</Form.Label>
+                                    <Form.Label className="form-premium-label">Selecione o Mês e Ano (MM/AAAA)</Form.Label>
                                     <div className="datepicker-modern-container">
                                         <DatePicker
                                             selected={selectedDate}
@@ -233,13 +233,13 @@ const Metas: React.FC = () => {
 
                             <Col md={12}>
                                 <Form.Group>
-                                    <Form.Label className="small fw-bold text-dark opacity-75 mb-2">Responsável pela Meta</Form.Label>
+                                    <Form.Label className="form-premium-label">Responsável pela Meta</Form.Label>
                                     <InputGroup className="modern-input-group">
                                         <InputGroup.Text className="bg-white border-0"><UserIcon size={18} className="text-primary" /></InputGroup.Text>
-                                        <Form.Select 
+                                        <Form.Select
                                             className="border-0 ps-0 fw-medium text-dark shadow-none"
                                             value={selectedMeta?.vendedor || ''}
-                                            onChange={(e) => setSelectedMeta({...selectedMeta, vendedor: e.target.value ? parseInt(e.target.value) : undefined})}
+                                            onChange={(e) => setSelectedMeta({ ...selectedMeta, vendedor: e.target.value ? parseInt(e.target.value) : undefined })}
                                         >
                                             <option value="">Meta Global (Toda a Empresa)</option>
                                             {vendedores.map((v: User) => <option key={v.id} value={v.id}>{v.first_name} {v.last_name}</option>)}
@@ -250,13 +250,13 @@ const Metas: React.FC = () => {
 
                             <Col md={12}>
                                 <Form.Group>
-                                    <Form.Label className="small fw-bold text-dark opacity-75 mb-2">Valor do Objetivo Financeiro</Form.Label>
+                                    <Form.Label className="form-premium-label">Valor do Objetivo Financeiro</Form.Label>
                                     <InputGroup className="modern-input-group">
                                         <InputGroup.Text className="bg-primary-subtle border-0 text-primary fw-bold">R$</InputGroup.Text>
-                                        <Form.Control 
+                                        <Form.Control
                                             type="text"
-                                            size="lg"
-                                            className="border-0 ps-3 fw-extrabold text-primary shadow-none"
+                                            className="form-control-premium ps-3 fw-bold text-primary shadow-none"
+                                            style={{ fontSize: '1.25rem' }}
                                             placeholder="Ex: R$ 500.000,00"
                                             value={displayValue}
                                             onChange={handleValueChange}
@@ -270,7 +270,7 @@ const Metas: React.FC = () => {
 
                         <div className="d-grid mt-5">
                             <Button variant="primary" type="submit" className="py-3 fw-bold rounded-16 shadow-premium d-flex align-items-center justify-content-center" disabled={saveMutation.isPending}>
-                                {saveMutation.isPending ? <Spinner size="sm" className="me-2" /> : <Save className="me-2" size={20} />} 
+                                {saveMutation.isPending ? <Spinner size="sm" className="me-2" /> : <Save className="me-2" size={20} />}
                                 {selectedMeta?.id ? 'ATUALIZAR OBJETIVO' : 'ESTABELECER META'}
                             </Button>
                         </div>
