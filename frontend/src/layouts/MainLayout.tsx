@@ -31,19 +31,19 @@ const MainLayout: React.FC = () => {
     const allSections: MenuSection[] = [
         {
             title: 'HOME',
-            roles: ['ADMIN', 'COMERCIAL', 'ORCAMENTISTA'],
+            roles: ['ADMIN', 'VENDEDOR', 'ORCAMENTISTA'],
             items: [
-                { name: 'Dashboard', path: '/', icon: <LayoutDashboard size={20} />, roles: ['ADMIN', 'COMERCIAL', 'ORCAMENTISTA'] },
+                { name: 'Dashboard', path: '/', icon: <LayoutDashboard size={20} />, roles: ['ADMIN', 'VENDEDOR', 'ORCAMENTISTA'] },
             ]
         },
         {
-            title: 'COMERCIAL',
-            roles: ['ADMIN', 'COMERCIAL'],
+            title: 'VENDEDOR',
+            roles: ['ADMIN', 'VENDEDOR'],
             items: [
-                { name: 'Clientes', path: '/clientes', icon: <Users size={20} />, roles: ['ADMIN', 'COMERCIAL'] },
-                { name: 'Fornecedores', path: '/fornecedores', icon: <Rocket size={20} />, roles: ['ADMIN', 'COMERCIAL'] },
-                { name: 'Kanban', path: '/kanban', icon: <LayoutGrid size={20} />, roles: ['ADMIN', 'COMERCIAL'] },
-                { name: 'Metas Mensais', path: '/metas', icon: <Target size={20} />, roles: ['ADMIN', 'COMERCIAL'] },
+                { name: 'Clientes', path: '/clientes', icon: <Users size={20} />, roles: ['ADMIN', 'VENDEDOR'] },
+                { name: 'Fornecedores', path: '/fornecedores', icon: <Rocket size={20} />, roles: ['ADMIN', 'VENDEDOR'] },
+                { name: 'Kanban', path: '/kanban', icon: <LayoutGrid size={20} />, roles: ['ADMIN', 'VENDEDOR'] },
+                { name: 'Metas Mensais', path: '/metas', icon: <Target size={20} />, roles: ['ADMIN', 'VENDEDOR'] },
             ]
         },
         {

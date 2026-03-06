@@ -47,7 +47,7 @@ const App: React.FC = () => {
                 </Route>
 
                 {/* Comercial */}
-                <Route element={<ProtectedRoute allowedRoles={['ADMIN', 'COMERCIAL']} />}>
+                <Route element={<ProtectedRoute allowedRoles={['ADMIN', 'VENDEDOR']} />}>
                   <Route path="clientes" element={<Clientes />} />
                   <Route path="fornecedores" element={<Fornecedores />} />
                   <Route path="kanban" element={<Kanban />} />
