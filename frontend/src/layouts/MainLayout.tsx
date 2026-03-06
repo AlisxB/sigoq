@@ -6,31 +6,77 @@ import {
     Search, Bell, Moon, Sun, LayoutGrid, ChevronDown, MessageSquare,
     Calendar, Mail, User, Phone, BookOpen, Layers, Menu
 } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { Role } from '../types';
+
+interface MenuItem {
+    name: string;
+    path: string;
+    icon: React.ReactNode;
+    roles: Role[];
+}
+
+interface MenuSection {
+    title: string;
+    roles: Role[];
+    items: MenuItem[];
+}
 
 const MainLayout: React.FC = () => {
     const location = useLocation();
+    const { user, logout } = useAuth();
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
 
-    const sections = [
+    const allSections: MenuSection[] = [
         {
             title: 'HOME',
+            roles: ['ADMIN', 'COMERCIAL', 'ORCAMENTISTA'],
             items: [
-                { name: 'Dashboard', path: '/', icon: <LayoutDashboard size={20} /> },
+                { name: 'Dashboard', path: '/', icon: <LayoutDashboard size={20} />, roles: ['ADMIN', 'COMERCIAL', 'ORCAMENTISTA'] },
             ]
         },
         {
-            title: 'APPS',
+            title: 'COMERCIAL',
+            roles: ['ADMIN', 'COMERCIAL'],
             items: [
-                { name: 'Orçamentos', path: '/orcamentos', icon: <FileText size={20} /> },
-                { name: 'Clientes', path: '/clientes', icon: <Users size={20} /> },
-                { name: 'Kanban', path: '/kanban', icon: <Layers size={20} /> },
-                { name: 'Configurações', path: '/configuracoes', icon: <Settings size={20} /> },
+                { name: 'Clientes', path: '/clientes', icon: <Users size={20} />, roles: ['ADMIN', 'COMERCIAL'] },
+                { name: 'Fornecedores', path: '/fornecedores', icon: <Rocket size={20} />, roles: ['ADMIN', 'COMERCIAL'] },
+                { name: 'Kanban', path: '/kanban', icon: <Layers size={20} />, roles: ['ADMIN', 'COMERCIAL'] },
+            ]
+        },
+        {
+            title: 'ENGENHARIA',
+            roles: ['ADMIN', 'ORCAMENTISTA'],
+            items: [
+                { name: 'Orçamentos', path: '/orcamentos', icon: <FileText size={20} />, roles: ['ADMIN', 'ORCAMENTISTA'] },
+                { name: 'Produtos', path: '/produtos', icon: <BookOpen size={20} />, roles: ['ADMIN', 'ORCAMENTISTA'] },
+                { name: 'Categorias', path: '/categorias', icon: <Layers size={20} />, roles: ['ADMIN', 'ORCAMENTISTA'] },
+            ]
+        },
+        {
+            title: 'SISTEMA',
+            roles: ['ADMIN'],
+            items: [
+                { name: 'Configurações', path: '/configuracoes', icon: <Settings size={20} />, roles: ['ADMIN'] },
+                { name: 'Usuários', path: '/usuarios', icon: <User size={20} />, roles: ['ADMIN'] },
             ]
         }
     ];
 
-    // Logic for sidebar width
+    // Filter sections by user role
+    const sections = allSections
+        .filter(section => section.roles.includes(user?.role || 'ORCAMENTISTA'))
+        .map(section => ({
+            ...section,
+            items: section.items.filter(item => item.roles.includes(user?.role || 'ORCAMENTISTA'))
+        }))
+        .filter(section => section.items.length > 0);
+
+    // Promotion logic: If user is not ADMIN and has only one app section (besides HOME), 
+    // we could potentially "promote" it. For now, we'll just show/hide titles.
+    const showSectionTitles = user?.role === 'ADMIN' || sections.length > 2;
+
     const isExpanded = !isCollapsed || isHovered;
     const sidebarWidth = isExpanded ? '280px' : '90px';
 
@@ -44,7 +90,7 @@ const MainLayout: React.FC = () => {
             overflow: 'hidden',
             transition: 'grid-template-columns 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
         }}>
-            {/* Sidebar - Afastada e Arredondada */}
+            {/* Sidebar */}
             <aside
                 onMouseEnter={() => isCollapsed && setIsHovered(true)}
                 onMouseLeave={() => isCollapsed && setIsHovered(false)}
@@ -82,8 +128,10 @@ const MainLayout: React.FC = () => {
                 <div style={{ flexGrow: 1, overflowY: 'auto', overflowX: 'hidden', paddingRight: '5px' }}>
                     {sections.map(section => (
                         <div key={section.title} className="mb-4">
-                            {isExpanded ? (
+                            {isExpanded && showSectionTitles ? (
                                 <p className="text-muted fw-bold px-3 mb-3" style={{ fontSize: '11px', letterSpacing: '1px', opacity: 0.6 }}>{section.title}</p>
+                            ) : isExpanded ? (
+                                <div style={{ marginBottom: '10px' }}></div>
                             ) : (
                                 <div style={{ height: '1px', backgroundColor: '#F1F3F4', margin: '0 15px 15px 15px' }}></div>
                             )}
@@ -133,21 +181,23 @@ const MainLayout: React.FC = () => {
                         <div style={{
                             width: '38px', height: '38px', borderRadius: '50%', backgroundColor: '#5D87FF',
                             display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFF', fontWeight: 'bold', flexShrink: 0
-                        }}>A</div>
+                        }}>
+                            {user?.first_name?.charAt(0) || 'U'}
+                        </div>
                         {isExpanded && (
                             <>
                                 <div style={{ flexGrow: 1, minWidth: 0 }}>
-                                    <p className="mb-0 fw-bold small text-nowrap text-truncate" style={{ color: '#2A3547' }}>Admin</p>
-                                    <p className="mb-0 text-muted" style={{ fontSize: '10px' }}>SIGOQ Pro</p>
+                                    <p className="mb-0 fw-bold small text-nowrap text-truncate" style={{ color: '#2A3547' }}>{user?.first_name} {user?.last_name}</p>
+                                    <p className="mb-0 text-muted" style={{ fontSize: '10px' }}>{user?.role}</p>
                                 </div>
-                                <LogOut size={18} color="#5D87FF" style={{ cursor: 'pointer', flexShrink: 0 }} />
+                                <LogOut onClick={logout} size={18} color="#5D87FF" style={{ cursor: 'pointer', flexShrink: 0 }} />
                             </>
                         )}
                     </div>
                 </div>
             </aside>
 
-            {/* Main Content Area Area */}
+            {/* Main Content Area */}
             <div style={{ display: 'flex', flexDirection: 'column', padding: '15px 15px 15px 0', height: '100vh', width: '100%', overflow: 'hidden' }}>
                 <header style={{
                     marginBottom: '15px',
@@ -186,8 +236,8 @@ const MainLayout: React.FC = () => {
 
                         <div className="d-flex align-items-center gap-2 ps-2">
                             <div className="d-none d-lg-block text-end">
-                                <p className="mb-0 fw-bold small" style={{ color: '#2A3547' }}>Alison Bezerra</p>
-                                <p className="mb-0 text-muted" style={{ fontSize: '11px' }}>Administrador</p>
+                                <p className="mb-0 fw-bold small" style={{ color: '#2A3547' }}>{user?.first_name} {user?.last_name}</p>
+                                <p className="mb-0 text-muted" style={{ fontSize: '11px' }}>{user?.role === 'ADMIN' ? 'Administrador' : user?.role}</p>
                             </div>
                             <div style={{
                                 width: '40px',
@@ -200,7 +250,9 @@ const MainLayout: React.FC = () => {
                                 color: '#5D87FF',
                                 fontWeight: 'bold',
                                 cursor: 'pointer'
-                            }}>AB</div>
+                            }}>
+                                {user?.first_name?.charAt(0)}{user?.last_name?.charAt(0)}
+                            </div>
                             <ChevronDown size={14} color="#5A6A83" />
                         </div>
                     </div>
