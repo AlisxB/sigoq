@@ -65,3 +65,9 @@ export const unmaskCurrency = (text: string): string => {
     if (!value) return '0.00';
     return (parseInt(value, 10) / 100).toFixed(2);
 };
+
+export const maskCEP = (text: string): string => {
+    let value = keepOnlyNumbers(text);
+    if (value.length > 8) value = value.slice(0, 8);
+    return value.replace(/^(\d{5})(\d)/, '$1-$2');
+};

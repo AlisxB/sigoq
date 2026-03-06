@@ -6,7 +6,7 @@ import { clienteApi } from '../api/clientes';
 import { usuarioApi } from '../api/usuarios';
 import { Cliente, User } from '../types';
 import { useQuery } from '@tanstack/react-query';
-import { keepOnlyNumbers, maskCPF, maskCNPJ, maskPhone } from '../utils/masks';
+import { keepOnlyNumbers, maskCPF, maskCNPJ, maskPhone, maskCEP } from '../utils/masks';
 
 const Clientes: React.FC = () => {
     const { data: vendedores = [] } = useQuery({
@@ -130,37 +130,99 @@ const Clientes: React.FC = () => {
                     </div>
                 </Form.Group>
             </Col>
-            <Col md={12}>
+            <Col md={3}>
                 <Form.Group>
-                    <Form.Label className="form-premium-label">Endereço Completo</Form.Label>
+                    <Form.Label className="form-premium-label">CEP</Form.Label>
                     <div className="input-icon-wrapper">
                         <MapPin size={18} />
                         <Form.Control
-                            required
                             className="form-control-premium"
-                            value={data.endereco || ''}
-                            onChange={(e) => onChange('endereco', e.target.value)}
-                            placeholder="Rua, número, complemento, bairro"
+                            value={data.cep ? maskCEP(data.cep) : ''}
+                            onChange={(e) => {
+                                const val = keepOnlyNumbers(e.target.value);
+                                onChange('cep', val);
+                                if (val.length === 8) {
+                                    fetch(`https://viacep.com.br/ws/${val}/json/`)
+                                        .then(res => res.json())
+                                        .then(viaCepData => {
+                                            if (!viaCepData.erro) {
+                                                onChange('logradouro', viaCepData.logradouro);
+                                                onChange('bairro', viaCepData.bairro);
+                                                onChange('cidade', viaCepData.localidade);
+                                                onChange('estado', viaCepData.uf);
+                                            }
+                                        })
+                                        .catch(err => console.error("Erro ao buscar CEP", err));
+                                }
+                            }}
+                            placeholder="00000-000"
+                            maxLength={8}
                         />
                     </div>
                 </Form.Group>
             </Col>
-            <Col md={8}>
+            <Col md={7}>
+                <Form.Group>
+                    <Form.Label className="form-premium-label">Logradouro (Rua)</Form.Label>
+                    <div className="input-icon-wrapper">
+                        <MapPin size={18} />
+                        <Form.Control
+                            className="form-control-premium"
+                            value={data.logradouro || ''}
+                            onChange={(e) => onChange('logradouro', e.target.value)}
+                            placeholder="Rua, Avenida, etc"
+                        />
+                    </div>
+                </Form.Group>
+            </Col>
+            <Col md={2}>
+                <Form.Group>
+                    <Form.Label className="form-premium-label">Número</Form.Label>
+                    <Form.Control
+                        className="form-control-premium"
+                        value={data.numero || ''}
+                        onChange={(e) => onChange('numero', e.target.value)}
+                        placeholder="Ex: 10A"
+                    />
+                </Form.Group>
+            </Col>
+            <Col md={4}>
+                <Form.Group>
+                    <Form.Label className="form-premium-label">Complemento</Form.Label>
+                    <Form.Control
+                        className="form-control-premium"
+                        value={data.complemento || ''}
+                        onChange={(e) => onChange('complemento', e.target.value)}
+                        placeholder="Ex: Sala 2"
+                    />
+                </Form.Group>
+            </Col>
+            <Col md={4}>
+                <Form.Group>
+                    <Form.Label className="form-premium-label">Bairro</Form.Label>
+                    <Form.Control
+                        className="form-control-premium"
+                        value={data.bairro || ''}
+                        onChange={(e) => onChange('bairro', e.target.value)}
+                        placeholder="Bairro"
+                    />
+                </Form.Group>
+            </Col>
+            <Col md={4}>
                 <Form.Group>
                     <Form.Label className="form-premium-label">Cidade</Form.Label>
                     <div className="input-icon-wrapper">
                         <Map size={18} />
                         <Form.Control
-                            required
                             className="form-control-premium"
                             value={data.cidade || ''}
                             onChange={(e) => onChange('cidade', e.target.value)}
-                            placeholder="Ex: São Paulo"
+                            placeholder="Cidade"
                         />
                     </div>
                 </Form.Group>
             </Col>
-            <Col md={4}>
+            <Col md={12}>
                 <Form.Group>
                     <Form.Label className="form-premium-label">Estado (UF)</Form.Label>
                     <div className="input-icon-wrapper">
@@ -220,7 +282,7 @@ const Clientes: React.FC = () => {
             api={clienteApi}
             columns={columns}
             renderForm={renderForm}
-            initialData={{ razao_social: '', nome_fantasia: '', email: '', telefone: '', endereco: '', cidade: '', estado: '' }}
+            initialData={{ razao_social: '', nome_fantasia: '', email: '', telefone: '', cep: '', logradouro: '', numero: '', complemento: '', bairro: '', cidade: '', estado: '' }}
             queryKey="clientes"
         />
     );
