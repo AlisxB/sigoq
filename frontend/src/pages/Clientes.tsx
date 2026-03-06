@@ -1,24 +1,46 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Form, Row, Col } from 'react-bootstrap';
 import { Building, Briefcase, Hash, FileText, Mail, Phone, MapPin, Map, UserCircle, AlignLeft } from 'lucide-react';
 import GenericCRUD from '../components/GenericCRUD';
 import { clienteApi } from '../api/clientes';
 import { usuarioApi } from '../api/usuarios';
+import { useAuth } from '../contexts/AuthContext';
 import { Cliente, User } from '../types';
 import { useQuery } from '@tanstack/react-query';
 import { keepOnlyNumbers, maskCPF, maskCNPJ, maskPhone, maskCEP } from '../utils/masks';
 
 const Clientes: React.FC = () => {
+    const { user } = useAuth();
+    const isAdmin = user?.role === 'ADMIN' || user?.role === 'ORCAMENTISTA'; // Orçamentista também costuma ver dados técnicos
+
     const { data: vendedores = [] } = useQuery({
         queryKey: ['vendedores'],
-        queryFn: () => usuarioApi.list({ role: 'COMERCIAL' })
+        queryFn: () => usuarioApi.list({ role: 'VENDEDOR' }),
+        enabled: isAdmin // Só busca a lista de vendedores se for admin
     });
+
     const columns = [
         { header: 'Nome/Razão Social', accessor: (item: Cliente) => item.nome_fantasia || item.razao_social },
         { header: 'Doc (CPF/CNPJ)', accessor: (item: Cliente) => item.cnpj || item.cpf || '-' },
         { header: 'E-mail', accessor: 'email' as const },
         { header: 'Cidade/UF', accessor: (item: Cliente) => `${item.cidade}/${item.estado}` },
     ];
+
+    // Define os dados iniciais dinamicamente baseados no usuário logado
+    const initialData = useMemo(() => ({
+        razao_social: '',
+        nome_fantasia: '',
+        email: '',
+        telefone: '',
+        cep: '',
+        logradouro: '',
+        numero: '',
+        complemento: '',
+        bairro: '',
+        cidade: '',
+        estado: '',
+        vendedor: user?.role === 'VENDEDOR' ? user.id : undefined
+    }), [user]);
 
     const renderForm = (data: Partial<Cliente>, onChange: (field: keyof Cliente, value: any) => void) => (
         <Row className="g-3">
@@ -222,7 +244,7 @@ const Clientes: React.FC = () => {
                     </div>
                 </Form.Group>
             </Col>
-            <Col md={12}>
+            <Col md={12} className="mb-2">
                 <Form.Group>
                     <Form.Label className="form-premium-label">Estado (UF)</Form.Label>
                     <div className="input-icon-wrapper">
@@ -238,24 +260,29 @@ const Clientes: React.FC = () => {
                     </div>
                 </Form.Group>
             </Col>
-            <Col md={12}>
-                <Form.Group>
-                    <Form.Label className="form-premium-label">Vendedor Responsável</Form.Label>
-                    <div className="input-icon-wrapper">
-                        <UserCircle size={18} />
-                        <Form.Select
-                            className="form-select-premium"
-                            value={data.vendedor || ''}
-                            onChange={(e) => onChange('vendedor', e.target.value ? parseInt(e.target.value) : null)}
-                        >
-                            <option value="">Selecione um vendedor...</option>
-                            {vendedores.map((v: User) => (
-                                <option key={v.id} value={v.id}>{v.first_name} {v.last_name}</option>
-                            ))}
-                        </Form.Select>
-                    </div>
-                </Form.Group>
-            </Col>
+
+            {/* Campo de Vendedor Responsável: Visível apenas para Administradores */}
+            {isAdmin && (
+                <Col md={12}>
+                    <Form.Group>
+                        <Form.Label className="form-premium-label">Vendedor Responsável</Form.Label>
+                        <div className="input-icon-wrapper">
+                            <UserCircle size={18} />
+                            <Form.Select
+                                className="form-select-premium"
+                                value={data.vendedor || ''}
+                                onChange={(e) => onChange('vendedor', e.target.value ? parseInt(e.target.value) : null)}
+                            >
+                                <option value="">Selecione um vendedor...</option>
+                                {vendedores.map((v: User) => (
+                                    <option key={v.id} value={v.id}>{v.first_name} {v.last_name}</option>
+                                ))}
+                            </Form.Select>
+                        </div>
+                    </Form.Group>
+                </Col>
+            )}
+
             <Col md={12}>
                 <Form.Group>
                     <Form.Label className="form-premium-label">Observações</Form.Label>
@@ -282,7 +309,7 @@ const Clientes: React.FC = () => {
             api={clienteApi}
             columns={columns}
             renderForm={renderForm}
-            initialData={{ razao_social: '', nome_fantasia: '', email: '', telefone: '', cep: '', logradouro: '', numero: '', complemento: '', bairro: '', cidade: '', estado: '' }}
+            initialData={initialData}
             queryKey="clientes"
         />
     );
