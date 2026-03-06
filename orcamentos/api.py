@@ -11,13 +11,19 @@ class OrcamentoViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         # Isolamento de vendedor via API
-        if self.request.user.is_superuser:
+        user = self.request.user
+        if user.is_superuser:
             return Orcamento.all_objects.all()
-        return Orcamento.objects.filter(vendedor=self.request.user)
+        if not user.is_authenticated:
+            return Orcamento.objects.none()
+        return Orcamento.objects.filter(vendedor=user)
 
     def perform_create(self, serializer):
         # Auto-set vendedor no create
-        serializer.save(vendedor=self.request.user)
+        if self.request.user.is_authenticated:
+            serializer.save(vendedor=self.request.user)
+        else:
+            serializer.save()
 
 class KitViewSet(viewsets.ModelViewSet):
     queryset = Kit.objects.all()
