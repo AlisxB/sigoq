@@ -19,6 +19,7 @@ const BarChart: React.FC<BarChartProps> = ({
         chart: {
             type: 'bar',
             toolbar: { show: false },
+            zoom: { enabled: false },
             fontFamily: "'Plus Jakarta Sans', sans-serif"
         },
         plotOptions: {

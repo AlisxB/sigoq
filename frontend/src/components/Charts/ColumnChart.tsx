@@ -21,6 +21,7 @@ const ColumnChart: React.FC<ColumnChartProps> = ({
         chart: {
             type: 'bar',
             toolbar: { show: false },
+            zoom: { enabled: false },
             fontFamily: "'Plus Jakarta Sans', sans-serif"
         },
         plotOptions: {

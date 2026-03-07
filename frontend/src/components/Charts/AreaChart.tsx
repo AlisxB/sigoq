@@ -21,6 +21,7 @@ const AreaChart: React.FC<AreaChartProps> = ({
         chart: {
             type: 'area',
             toolbar: { show: false },
+            zoom: { enabled: false },
             fontFamily: "'Plus Jakarta Sans', sans-serif"
         },
         colors: colors,

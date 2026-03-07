@@ -23,6 +23,7 @@ const LineChart: React.FC<LineChartProps> = ({
         chart: {
             type: 'line',
             toolbar: { show: false },
+            zoom: { enabled: false },
             fontFamily: "'Plus Jakarta Sans', sans-serif",
             dropShadow: {
                 enabled: true,
