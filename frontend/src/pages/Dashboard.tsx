@@ -2,12 +2,13 @@ import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Row, Col, Card, Button, Spinner } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import Chart from 'react-apexcharts';
 import {
     TrendingUp, ShoppingBag, Target, Award, MoreHorizontal, Settings
 } from 'lucide-react';
 import { analyticsApi } from '../api/analytics';
 import { useAuth } from '../contexts/AuthContext';
+import RadialChart from '../components/Charts/RadialChart';
+import ColumnChart from '../components/Charts/ColumnChart';
 
 const StatCard: React.FC<{ 
     title: string, 
@@ -62,100 +63,31 @@ const Dashboard: React.FC = () => {
     const totalFunnel = funnelData?.reduce((acc, curr) => acc + parseFloat(curr.total || 0), 0) || 0;
     const margemAtual = (parseFloat(financeData?.margem_media || '0') * 100);
 
-    // Configuração do Radial Bar (Pipeline)
-    const radialOptions: any = useMemo(() => ({
-        chart: {
-            height: 380,
-            type: 'radialBar',
-            fontFamily: "'Plus Jakarta Sans', sans-serif",
-            events: {
-                dataPointSelection: (event: any, chartContext: any, config: any) => {
-                    const idx = config.dataPointIndex;
-                    setSelectedIdx(selectedIdx === idx ? null : idx);
-                }
-            }
-        },
-        plotOptions: {
-            radialBar: {
-                offsetY: 0,
-                startAngle: 0,
-                endAngle: 270,
-                hollow: {
-                    margin: 5,
-                    size: '35%',
-                    background: 'transparent',
-                    image: undefined,
-                },
-                dataLabels: {
-                    name: {
-                        show: true,
-                        fontSize: '14px',
-                        fontWeight: 600,
-                        color: '#5A6A83',
-                    },
-                    value: {
-                        show: true,
-                        fontSize: '22px',
-                        fontWeight: 800,
-                        color: '#2A3547',
-                        formatter: function (val: number, opt: any) {
-                            const idx = opt.config.series.indexOf(val);
-                            const realVal = funnelData ? parseFloat(funnelData[idx]?.total || 0) : 0;
-                            return "R$ " + (realVal / 1000).toFixed(1) + "k";
-                        }
-                    },
-                    total: {
-                        show: true,
-                        label: selectedIdx !== null && funnelData ? funnelData[selectedIdx].status__nome : 'Total Funil',
-                        formatter: function (w: any) {
-                            const val = selectedIdx !== null && funnelData ? parseFloat(funnelData[selectedIdx].total) : totalFunnel;
-                            return "R$ " + (val / 1000).toFixed(0) + "k";
-                        }
-                    }
-                }
-            }
-        },
-        colors: funnelData?.map(d => d.status__cor || '#5D87FF') || ['#5D87FF'],
-        labels: funnelData?.map(d => d.status__nome) || [],
-        legend: {
-            show: true,
-            floating: true,
-            fontSize: '12px',
-            position: 'left',
-            offsetX: 0,
-            offsetY: 15,
-            labels: { useSeriesColors: true },
-            markers: { size: 0 },
-            formatter: function (seriesName: string, opts: any) {
-                return seriesName + ":  " + opts.w.globals.series[opts.seriesIndex] + "%";
-            },
-            itemMargin: { vertical: 3 }
-        },
-    }), [funnelData, selectedIdx, totalFunnel]);
-
     const radialSeries = useMemo(() => {
         if (!funnelData || totalFunnel === 0) return [];
         return funnelData.map(d => Math.round((parseFloat(d.total) / totalFunnel) * 100));
     }, [funnelData, totalFunnel]);
 
-    const categoryChartOptions: any = useMemo(() => ({
-        chart: { type: 'bar', toolbar: { show: false }, fontFamily: "'Plus Jakarta Sans', sans-serif" },
-        plotOptions: {
-            bar: { borderRadius: 6, horizontal: false, columnWidth: '35%', distributed: true }
-        },
-        colors: ['#5D87FF', '#49BEFF', '#13DEB9', '#FFAE1F', '#FA896B'],
-        dataLabels: { enabled: false },
-        xaxis: {
-            categories: financeData?.categorias.map((c: any) => c.produto__categoria__nome) || [],
-            labels: { style: { fontWeight: 600, colors: '#5A6A83' } },
-            axisBorder: { show: false },
-            axisLine: { show: false }
-        },
-        yaxis: { labels: { show: false } },
-        grid: { borderColor: 'rgba(0,0,0,0.05)', strokeDashArray: 4, vertical: false },
-        legend: { show: false },
-        tooltip: { theme: 'dark' }
-    }), [financeData]);
+    const radialLabels = useMemo(() => funnelData?.map(d => d.status__nome) || [], [funnelData]);
+    const radialColors = useMemo(() => funnelData?.map(d => d.status__cor || '#5D87FF') || [], [funnelData]);
+
+    const centerValue = useMemo(() => {
+        const val = selectedIdx !== null && funnelData ? parseFloat(funnelData[selectedIdx].total) : totalFunnel;
+        return "R$ " + (val / 1000).toFixed(0) + "k";
+    }, [selectedIdx, funnelData, totalFunnel]);
+
+    const centerLabel = useMemo(() => {
+        return selectedIdx !== null && funnelData ? funnelData[selectedIdx].status__nome : 'Total Funil';
+    }, [selectedIdx, funnelData]);
+
+    const categoryCategories = useMemo(() => 
+        financeData?.categorias.map((c: any) => c.produto__categoria__nome) || [], 
+    [financeData]);
+
+    const categorySeries = useMemo(() => [{
+        name: 'Orçamentos',
+        data: financeData?.categorias.map((c: any) => c.total) || []
+    }], [financeData]);
 
     if (isLoadingFunnel || isLoadingFinance) return <div className="d-flex justify-content-center py-5"><Spinner animation="border" variant="primary" /></div>;
 
@@ -224,12 +156,13 @@ const Dashboard: React.FC = () => {
                         </div>
                         <p className="text-muted small mb-4">Anéis representam o percentual financeiro de cada etapa sobre o total do funil.</p>
                         <div className="d-flex justify-content-center align-items-center" style={{ height: '350px' }}>
-                            <Chart
-                                options={radialOptions}
+                            <RadialChart
                                 series={radialSeries}
-                                type="radialBar"
-                                height={400}
-                                width="100%"
+                                labels={radialLabels}
+                                colors={radialColors}
+                                centerLabel={centerLabel}
+                                centerValue={centerValue}
+                                onSelection={setSelectedIdx}
                             />
                         </div>
                     </Card>
@@ -243,12 +176,10 @@ const Dashboard: React.FC = () => {
                         </div>
                         <p className="text-muted small mb-4">Volume total de itens convertidos em vendas para cada categoria técnica.</p>
                         <div className="d-flex align-items-center justify-content-center" style={{ height: '320px' }}>
-                            <Chart
-                                options={categoryChartOptions}
-                                series={[{ name: 'Orçamentos', data: financeData?.categorias.map((c: any) => c.total) || [] }]}
-                                type="bar"
+                            <ColumnChart
+                                series={categorySeries}
+                                categories={categoryCategories}
                                 height={350}
-                                width="100%"
                             />
                         </div>
                     </Card>

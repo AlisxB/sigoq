@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Container, Row, Col, Card, Form, Button, Spinner, Table, Alert, InputGroup, Badge } from 'react-bootstrap';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { Save, Info, CheckCircle, Percent, PieChart as PieChartIcon } from 'lucide-react';
 import { orcamentoApi } from '../api/orcamentos';
 import { ConfiguracaoPreco } from '../types';
+import DonutChart from '../components/Charts/DonutChart';
 
 const CONFIG_FIELDS = [
     { key: 'markup_engenharia', label: 'Engenharia', color: '#5D87FF' },
@@ -43,6 +43,29 @@ const ConfiguracoesPreco: React.FC = () => {
         if (activeConfig) setLocalData(activeConfig);
     }, [activeConfig]);
 
+    const totalMarkups = useMemo(() => {
+        if (!localData) return 0;
+        return CONFIG_FIELDS.filter(f => f.key !== 'margem_contribuicao_padrao')
+            .reduce((acc, f) => acc + parseFloat(localData[f.key as keyof ConfiguracaoPreco] as string || '0'), 0);
+    }, [localData]);
+
+    const marginTarget = useMemo(() => parseFloat(localData?.margem_contribuicao_padrao || '0'), [localData]);
+    const totalDivisor = 1 - (totalMarkups + marginTarget);
+
+    // Dados para o Gráfico de Relação
+    const chartLabels = useMemo(() => 
+        CONFIG_FIELDS.filter(f => parseFloat(localData?.[f.key as keyof ConfiguracaoPreco] as string || '0') > 0).map(f => f.label),
+    [localData]);
+
+    const chartSeries = useMemo(() => 
+        CONFIG_FIELDS.filter(f => parseFloat(localData?.[f.key as keyof ConfiguracaoPreco] as string || '0') > 0)
+            .map(f => parseFloat(((parseFloat(localData?.[f.key as keyof ConfiguracaoPreco] as string || '0') * 100).toFixed(2)))),
+    [localData]);
+
+    const chartColors = useMemo(() => 
+        CONFIG_FIELDS.filter(f => parseFloat(localData?.[f.key as keyof ConfiguracaoPreco] as string || '0') > 0).map(f => f.color),
+    [localData]);
+
     if (isLoading || !localData) return <div className="text-center p-5"><Spinner animation="border" /></div>;
 
     const handlePercentChange = (field: keyof ConfiguracaoPreco, displayValue: string) => {
@@ -50,19 +73,6 @@ const ConfiguracoesPreco: React.FC = () => {
         const decimalValue = (floatVal / 100).toString();
         setLocalData(prev => prev ? { ...prev, [field]: decimalValue } : null);
     };
-
-    const totalMarkups = CONFIG_FIELDS.filter(f => f.key !== 'margem_contribuicao_padrao')
-        .reduce((acc, f) => acc + parseFloat(localData[f.key as keyof ConfiguracaoPreco] as string || '0'), 0);
-
-    const marginTarget = parseFloat(localData.margem_contribuicao_padrao || '0');
-    const totalDivisor = 1 - (totalMarkups + marginTarget);
-
-    // Dados para o Gráfico de Relação
-    const chartData = CONFIG_FIELDS.map(f => ({
-        name: f.label,
-        value: parseFloat(localData[f.key as keyof ConfiguracaoPreco] as string || '0'),
-        color: f.color
-    })).filter(d => d.value > 0);
 
     return (
         <Container fluid className="px-1 py-2 pb-5">
@@ -161,35 +171,21 @@ const ConfiguracoesPreco: React.FC = () => {
                 </Col>
 
                 <Col lg={5}>
-                    {/* Gráfico de Relação Restaurado */}
+                    {/* Gráfico de Relação Restaurado e Reutilizável */}
                     <Card className="card-premium mb-4 border-0 shadow-sm" style={{ borderRadius: '24px' }}>
                         <Card.Body className="p-4">
                             <h5 className="fw-bold mb-1 d-flex align-items-center gap-2">
                                 <PieChartIcon size={20} className="text-primary" /> Relação de Markups
                             </h5>
                             <p className="text-muted small mb-4">Composição percentual do Markup total.</p>
-                            <div style={{ width: '100%', height: 350 }}>
-                                <ResponsiveContainer>
-                                    <PieChart>
-                                        <Pie
-                                            data={chartData}
-                                            innerRadius={80}
-                                            outerRadius={110}
-                                            paddingAngle={5}
-                                            dataKey="value"
-                                            stroke="none"
-                                        >
-                                            {chartData.map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={entry.color} />
-                                            ))}
-                                        </Pie>
-                                        <Tooltip 
-                                            formatter={(value: any) => `${(parseFloat(value) * 100).toFixed(2)}%`}
-                                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                                        />
-                                        <Legend verticalAlign="bottom" height={36}/>
-                                    </PieChart>
-                                </ResponsiveContainer>
+                            <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '350px' }}>
+                                <DonutChart 
+                                    series={chartSeries}
+                                    labels={chartLabels}
+                                    colors={chartColors}
+                                    height={380}
+                                    title="Markups"
+                                />
                             </div>
                         </Card.Body>
                     </Card>
@@ -220,7 +216,6 @@ const ConfiguracoesPreco: React.FC = () => {
                 .bg-primary-subtle { background-color: rgba(93, 135, 255, 0.1) !important; }
                 .text-primary { color: #5D87FF !important; }
                 .letter-spacing-1 { letter-spacing: 1px; }
-                .recharts-legend-item-text { font-family: 'Plus Jakarta Sans' !important; font-size: 12px !important; font-weight: 600 !important; color: #5A6A83 !important; }
             `}</style>
         </Container>
     );
