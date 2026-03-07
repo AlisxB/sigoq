@@ -1,0 +1,53 @@
+version: "3.9"
+
+services:
+  db_prod:
+    image: postgres:15-alpine
+    container_name: sigoq_db_prod
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sigoq}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sigoq_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-sigoq_db}
+    volumes:
+      - sigoq_pgdata_prod:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5433:5432" # Bind ao localhost para segurança total
+
+  redis_prod:
+    image: redis:7-alpine
+    container_name: sigoq_redis_prod
+    restart: always
+    # Redis geralmente não precisa de porta exposta para o host, 
+    # a comunicação é interna entre os containers.
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sigoq_backend_prod
+    restart: always
+    command: gunicorn sigoq.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120
+    environment:
+      - DJANGO_SETTINGS_MODULE=sigoq.settings.production
+    env_file:
+      - .env
+    ports:
+      - "127.0.0.1:8001:8000" # Acessível apenas pelo Nginx Global da VPS
+    depends_on:
+      - db_prod
+      - redis_prod
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: sigoq_frontend_prod
+    restart: always
+    ports:
+      - "127.0.0.1:8002:80" # Acessível apenas pelo Nginx Global da VPS
+    depends_on:
+      - backend
+
+volumes:
+  sigoq_pgdata_prod:
