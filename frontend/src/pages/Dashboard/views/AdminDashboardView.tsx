@@ -1,11 +1,11 @@
 import React, { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Row, Col, Card, Button, Spinner, Table, Badge, Dropdown } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import {
     TrendingUp, ShoppingBag, Award, MoreHorizontal,
     DollarSign, BarChart3, PieChart, Users, AlertTriangle, ArrowRight,
-    ExternalLink, Briefcase, Filter, Calendar
+    ExternalLink, Briefcase, Filter, Calendar, RefreshCw, Clock
 } from 'lucide-react';
 import { analyticsApi } from '../../../api/analytics';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -17,21 +17,33 @@ import StatCard from '../components/StatCard';
 
 const AdminDashboardView: React.FC = () => {
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
     const { user } = useAuth();
     const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
     const [evolutionPeriod, setEvolutionPeriod] = useState<'dia' | 'mes' | 'ano'>('mes');
+    const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
-    const { data: funnelData, isLoading: isLoadingFunnel } = useQuery({
+    const { data: funnelData, isFetching: isFetchingFunnel } = useQuery({
         queryKey: ['analytics-funnel'],
         queryFn: analyticsApi.getFunnel,
         staleTime: 1000 * 60 * 5,
+        refetchInterval: 1000 * 60 * 5, // Auto-refresh a cada 5 min
     });
 
-    const { data: financeData, isLoading: isLoadingFinance } = useQuery({
+    const { data: financeData, isLoading: isLoadingFinance, isFetching: isFetchingFinance } = useQuery({
         queryKey: ['analytics-finance', evolutionPeriod],
         queryFn: () => analyticsApi.getFinance({ periodo: evolutionPeriod }),
         staleTime: 1000 * 60 * 5,
+        refetchInterval: 1000 * 60 * 5, // Auto-refresh a cada 5 min
     });
+
+    const isRefreshing = isFetchingFunnel || isFetchingFinance;
+
+    const handleManualRefresh = () => {
+        queryClient.invalidateQueries({ queryKey: ['analytics-funnel'] });
+        queryClient.invalidateQueries({ queryKey: ['analytics-finance'] });
+        setLastUpdated(new Date());
+    };
 
     const totalFunnel = funnelData?.reduce((acc, curr) => acc + parseFloat(curr.total || 0), 0) || 0;
 
@@ -85,10 +97,28 @@ const AdminDashboardView: React.FC = () => {
         };
     }, [financeData]);
 
-    if (isLoadingFunnel || isLoadingFinance) return <div className="d-flex justify-content-center py-5"><Spinner animation="border" variant="primary" /></div>;
+    if (isLoadingFinance) return <div className="d-flex justify-content-center py-5"><Spinner animation="border" variant="primary" /></div>;
 
     return (
         <div style={{ padding: '0 5px' }}>
+            {/* Header com Sincronização */}
+            <div className="d-flex justify-content-end align-items-center mb-3 gap-3 px-2">
+                <div className="text-muted x-small fw-medium d-flex align-items-center opacity-75">
+                    <Clock size={12} className="me-1" /> 
+                    Dados de {lastUpdated.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                </div>
+                <Button 
+                    variant="white" 
+                    size="sm" 
+                    className={`rounded-circle p-2 shadow-sm border bg-white ${isRefreshing ? 'refresh-spin' : ''}`}
+                    onClick={handleManualRefresh}
+                    disabled={isRefreshing}
+                    title="Sincronizar dados agora"
+                >
+                    <RefreshCw size={16} className="text-primary" />
+                </Button>
+            </div>
+
             {/* TOP BAR: Welcome & Meta */}
             <Row className="mb-4 g-4">
                 <Col xl={4} lg={6}>
@@ -344,6 +374,14 @@ const AdminDashboardView: React.FC = () => {
                 .rounded-8 { border-radius: 8px !important; }
                 .x-small { font-size: 0.7rem; }
                 .italic { font-style: italic; }
+                
+                @keyframes spin {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                }
+                .refresh-spin {
+                    animation: spin 1s linear infinite;
+                }
             `}</style>
         </div>
     );

@@ -1,11 +1,11 @@
 import React, { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Row, Col, Card, Button, Spinner } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import {
     TrendingUp, ShoppingBag, Target, Award,
     DollarSign, PieChart, Briefcase, ArrowRight,
-    Search
+    RefreshCw, Clock
 } from 'lucide-react';
 import { analyticsApi } from '../../../api/analytics';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -15,20 +15,32 @@ import StatCard from '../components/StatCard';
 
 const SalesDashboardView: React.FC = () => {
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
     const { user } = useAuth();
     const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
+    const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
-    const { data: funnelData, isLoading: isLoadingFunnel } = useQuery({
+    const { data: funnelData, isFetching: isFetchingFunnel } = useQuery({
         queryKey: ['analytics-funnel-personal'],
         queryFn: analyticsApi.getFunnel,
         staleTime: 1000 * 60 * 5,
+        refetchInterval: 1000 * 60 * 5,
     });
 
-    const { data: financeData, isLoading: isLoadingFinance } = useQuery({
+    const { data: financeData, isLoading: isLoadingFinance, isFetching: isFetchingFinance } = useQuery({
         queryKey: ['analytics-finance-personal'],
-        queryFn: analyticsApi.getFinance,
+        queryFn: () => analyticsApi.getFinance(),
         staleTime: 1000 * 60 * 5,
+        refetchInterval: 1000 * 60 * 5,
     });
+
+    const isRefreshing = isFetchingFunnel || isFetchingFinance;
+
+    const handleManualRefresh = () => {
+        queryClient.invalidateQueries({ queryKey: ['analytics-funnel-personal'] });
+        queryClient.invalidateQueries({ queryKey: ['analytics-finance-personal'] });
+        setLastUpdated(new Date());
+    };
 
     const totalFunnel = funnelData?.reduce((acc, curr) => acc + parseFloat(curr.total || 0), 0) || 0;
 
@@ -58,10 +70,27 @@ const SalesDashboardView: React.FC = () => {
         };
     }, [financeData]);
 
-    if (isLoadingFunnel || isLoadingFinance) return <div className="d-flex justify-content-center py-5"><Spinner animation="border" variant="primary" /></div>;
+    if (isLoadingFinance) return <div className="d-flex justify-content-center py-5"><Spinner animation="border" variant="primary" /></div>;
 
     return (
         <div style={{ padding: '0 5px' }}>
+            <div className="d-flex justify-content-end align-items-center mb-3 gap-3 px-2">
+                <div className="text-muted x-small fw-medium d-flex align-items-center opacity-75">
+                    <Clock size={12} className="me-1" /> 
+                    Dados de {lastUpdated.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                </div>
+                <Button 
+                    variant="white" 
+                    size="sm" 
+                    className={`rounded-circle p-2 shadow-sm border bg-white ${isRefreshing ? 'refresh-spin' : ''}`}
+                    onClick={handleManualRefresh}
+                    disabled={isRefreshing}
+                    title="Sincronizar meus dados"
+                >
+                    <RefreshCw size={16} className="text-primary" />
+                </Button>
+            </div>
+
             <Row className="mb-4 g-4">
                 <Col lg={6}>
                     <Card className="h-100 border-0 shadow-sm" style={{ backgroundColor: '#FFFFFF', borderRadius: '24px', overflow: 'hidden', border: '1px solid rgba(0,0,0,0.05)' }}>
@@ -180,6 +209,16 @@ const SalesDashboardView: React.FC = () => {
                     </Card>
                 </Col>
             </Row>
+
+            <style>{`
+                @keyframes spin {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                }
+                .refresh-spin {
+                    animation: spin 1s linear infinite;
+                }
+            `}</style>
         </div>
     );
 };

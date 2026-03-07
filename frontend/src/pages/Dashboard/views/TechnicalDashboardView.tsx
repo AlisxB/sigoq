@@ -1,10 +1,10 @@
-import React, { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useMemo, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Row, Col, Card, Button, Spinner, Table, Badge } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import {
     FileText, Compass, Clock, CheckCircle,
-    PlayCircle, Edit, Layers
+    PlayCircle, Edit, Layers, RefreshCw
 } from 'lucide-react';
 import { analyticsApi } from '../../../api/analytics';
 import { orcamentoApi } from '../../../api/orcamentos';
@@ -14,18 +14,30 @@ import StatCard from '../components/StatCard';
 
 const TechnicalDashboardView: React.FC = () => {
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
     const { user } = useAuth();
+    const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
-    const { data: analyticsData, isLoading: isLoadingAnalytics } = useQuery({
+    const { data: analyticsData, isLoading: isLoadingAnalytics, isFetching: isFetchingAnalytics } = useQuery({
         queryKey: ['analytics-finance-tech'],
         queryFn: analyticsApi.getFinance,
         staleTime: 1000 * 60 * 5,
+        refetchInterval: 1000 * 60 * 5,
     });
 
-    const { data: orcamentos = [], isLoading: isLoadingOrcs } = useQuery({
+    const { data: orcamentos = [], isLoading: isLoadingOrcs, isFetching: isFetchingOrcs } = useQuery({
         queryKey: ['orcamentos-tech-queue'],
         queryFn: orcamentoApi.list,
+        refetchInterval: 1000 * 60 * 5,
     });
+
+    const isRefreshing = isFetchingAnalytics || isFetchingOrcs;
+
+    const handleManualRefresh = () => {
+        queryClient.invalidateQueries({ queryKey: ['analytics-finance-tech'] });
+        queryClient.invalidateQueries({ queryKey: ['orcamentos-tech-queue'] });
+        setLastUpdated(new Date());
+    };
 
     const categoryMix = useMemo(() => {
         if (!analyticsData || !analyticsData.charts) return { series: [], categories: [] };
@@ -43,6 +55,23 @@ const TechnicalDashboardView: React.FC = () => {
 
     return (
         <div style={{ padding: '0 5px' }}>
+            <div className="d-flex justify-content-end align-items-center mb-3 gap-3 px-2">
+                <div className="text-muted x-small fw-medium d-flex align-items-center opacity-75">
+                    <Clock size={12} className="me-1" /> 
+                    Fila atualizada às {lastUpdated.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                </div>
+                <Button 
+                    variant="white" 
+                    size="sm" 
+                    className={`rounded-circle p-2 shadow-sm border bg-white ${isRefreshing ? 'refresh-spin' : ''}`}
+                    onClick={handleManualRefresh}
+                    disabled={isRefreshing}
+                    title="Atualizar fila de trabalho"
+                >
+                    <RefreshCw size={16} className="text-primary" />
+                </Button>
+            </div>
+
             <Row className="mb-4 g-4">
                 <Col lg={6}>
                     <Card className="h-100 border-0 shadow-sm" style={{ backgroundColor: '#FFFFFF', borderRadius: '24px', overflow: 'hidden', border: '1px solid rgba(0,0,0,0.05)' }}>
@@ -159,6 +188,16 @@ const TechnicalDashboardView: React.FC = () => {
                     </Card>
                 </Col>
             </Row>
+
+            <style>{`
+                @keyframes spin {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                }
+                .refresh-spin {
+                    animation: spin 1s linear infinite;
+                }
+            `}</style>
         </div>
     );
 };
