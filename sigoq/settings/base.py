@@ -73,6 +73,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Segurança de Sessão
 SESSION_COOKIE_AGE = 60 * 60 * 24 * 7  # 7 Dias em segundos
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False # Garante que o login sobreviva ao fechar aba/refresh
+SESSION_COOKIE_DOMAIN = None           # Garante que funcione em localhost sem problemas de domínio
+SESSION_COOKIE_NAME = 'sigoq_sessionid' # Nome personalizado para evitar conflitos
 
 # REST Framework
 REST_FRAMEWORK = {

@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.middleware.csrf import rotate_token
-from rest_framework import viewsets, status, permissions
+from rest_framework import viewsets, status, permissions, authentication
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from .serializers import UserSerializer
@@ -28,12 +28,12 @@ class UserViewSet(viewsets.ModelViewSet):
 class AuthViewSet(viewsets.ViewSet):
     """
     ViewSet para autenticação de usuários.
-    Isento de CSRF no login para permitir acesso cross-origin inicial.
     """
     permission_classes = [permissions.AllowAny]
-    authentication_classes = [] # Bypassa o check de CSRF do SessionAuthentication do DRF
+    # Reabilitamos a SessionAuthentication para que o endpoint /me consiga ler o cookie
+    authentication_classes = [authentication.SessionAuthentication]
 
-    @method_decorator(csrf_exempt)
+    @method_decorator(csrf_exempt) # Login precisa ser isento de CSRF no primeiro acesso
     @action(detail=False, methods=['post'])
     def login(self, request):
         username = request.data.get('username')
@@ -42,13 +42,11 @@ class AuthViewSet(viewsets.ViewSet):
         
         if user:
             auth_login(request, user)
-            rotate_token(request) # Importante: Gera novo token CSRF para a nova sessão
+            rotate_token(request) # Gera novo token CSRF para a nova sessão
             serializer = UserSerializer(user, context={'request': request})
-            response = Response(serializer.data)
-            return response
+            return Response(serializer.data)
         return Response({'detail': 'Credenciais inválidas'}, status=status.HTTP_401_UNAUTHORIZED)
 
-    @method_decorator(csrf_exempt)
     @action(detail=False, methods=['post'])
     def logout(self, request):
         auth_logout(request)
@@ -56,6 +54,7 @@ class AuthViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['get'])
     def me(self, request):
+        # Agora o request.user será preenchido corretamente via cookie de sessão
         if request.user.is_authenticated:
             serializer = UserSerializer(request.user, context={'request': request})
             return Response(serializer.data)
