@@ -8,6 +8,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { Role } from '../types';
+import ConfirmModal from '../components/ConfirmModal';
+import LogoutModal from '../components/LogoutModal';
 
 interface MenuItem {
     name: string;
@@ -27,6 +29,7 @@ const MainLayout: React.FC = () => {
     const { user, logout } = useAuth();
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
 
     const allSections: MenuSection[] = [
         {
@@ -65,7 +68,6 @@ const MainLayout: React.FC = () => {
         }
     ];
 
-    // Filter sections by user role
     const sections = allSections
         .filter(section => section.roles.includes(user?.role || 'ORCAMENTISTA'))
         .map(section => ({
@@ -74,12 +76,13 @@ const MainLayout: React.FC = () => {
         }))
         .filter(section => section.items.length > 0);
 
-    // Promotion logic: If user is not ADMIN and has only one app section (besides HOME), 
-    // we could potentially "promote" it. For now, we'll just show/hide titles.
     const showSectionTitles = user?.role === 'ADMIN' || sections.length > 2;
-
     const isExpanded = !isCollapsed || isHovered;
     const sidebarWidth = isExpanded ? '280px' : '90px';
+
+    const handleLogoutClick = () => {
+        setShowLogoutModal(true);
+    };
 
     return (
         <div style={{
@@ -192,7 +195,7 @@ const MainLayout: React.FC = () => {
                                     <p className="mb-0 text-muted" style={{ fontSize: '10px' }}>{user?.role}</p>
                                 </div>
                                 <div 
-                                    onClick={logout}
+                                    onClick={handleLogoutClick}
                                     title="Sair do sistema"
                                     style={{ 
                                         cursor: 'pointer', 
@@ -210,7 +213,7 @@ const MainLayout: React.FC = () => {
                         )}
                         {!isExpanded && (
                             <div 
-                                onClick={logout}
+                                onClick={handleLogoutClick}
                                 title="Sair do sistema"
                                 style={{ 
                                     cursor: 'pointer', 
@@ -269,11 +272,7 @@ const MainLayout: React.FC = () => {
                         <div 
                             className="d-flex align-items-center gap-2 ps-2" 
                             style={{ cursor: 'pointer' }}
-                            onClick={() => {
-                                if (window.confirm('Deseja sair do sistema?')) {
-                                    logout();
-                                }
-                            }}
+                            onClick={handleLogoutClick}
                         >
                             <div className="d-none d-lg-block text-end">
                                 <p className="mb-0 fw-bold small" style={{ color: '#2A3547' }}>{user?.first_name} {user?.last_name}</p>
@@ -301,6 +300,13 @@ const MainLayout: React.FC = () => {
                     <Outlet />
                 </main>
             </div>
+
+            {/* Logout Confirmation Modal */}
+            <LogoutModal 
+                show={showLogoutModal}
+                onConfirm={logout}
+                onCancel={() => setShowLogoutModal(false)}
+            />
         </div>
     );
 };
