@@ -24,7 +24,7 @@ interface ProductSearchModalProps {
 
 const ProductSearchModal: React.FC<ProductSearchModalProps> = ({ show, onHide, onSelect }) => {
     const [search, setSearch] = useState('');
-    const debouncedSearch = useDebounce(search, 500);
+    const debouncedSearch = useDebounce(search, 600);
 
     const [selCategoria, setSelCategoria] = useState<number | undefined>(undefined);
     const [selFornecedor, setSelFornecedor] = useState<number | undefined>(undefined);
@@ -33,20 +33,23 @@ const ProductSearchModal: React.FC<ProductSearchModalProps> = ({ show, onHide, o
         queryKey: ['categorias'],
         queryFn: categoriaApi.list,
         enabled: show,
-        staleTime: 1000 * 60 * 30
+        staleTime: 1000 * 60 * 60 // 1 hora de cache para categorias
     });
 
     const { data: fornecedores = [] } = useQuery({
         queryKey: ['fornecedores'],
         queryFn: fornecedorApi.list,
         enabled: show,
-        staleTime: 1000 * 60 * 30
+        staleTime: 1000 * 60 * 60 // 1 hora de cache para fornecedores
     });
+
+    const isSearchValid = debouncedSearch.length >= 2 || !!selCategoria || !!selFornecedor;
 
     const { data: results, isLoading } = useQuery<Produto[]>({
         queryKey: ['search-products', debouncedSearch, selCategoria, selFornecedor],
         queryFn: () => produtoApi.search(debouncedSearch, { categoria: selCategoria, fornecedor: selFornecedor }),
-        enabled: show && (debouncedSearch.length > 0 || !!selCategoria || !!selFornecedor)
+        enabled: show && isSearchValid,
+        staleTime: 1000 * 60 * 5, // 5 minutos de cache para resultados de busca
     });
 
     return (
