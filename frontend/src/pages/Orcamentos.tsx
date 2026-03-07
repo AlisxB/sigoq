@@ -12,6 +12,7 @@ const Orcamentos: React.FC = () => {
     const queryClient = useQueryClient();
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
+    const [priorityFilter, setPriorityFilter] = useState('');
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [selectedOrcamento, setSelectedOrcamento] = useState<Orcamento | null>(null);
 
@@ -64,7 +65,8 @@ const Orcamentos: React.FC = () => {
         const matchesSearch = orc.numero.toString().includes(searchTerm) ||
             orc.cliente_detalhe?.razao_social.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesStatus = statusFilter ? orc.status === statusFilter : true;
-        return matchesSearch && matchesStatus;
+        const matchesPriority = priorityFilter ? orc.prioridade === priorityFilter : true;
+        return matchesSearch && matchesStatus && matchesPriority;
     });
 
     const handleDeleteClick = (orc: Orcamento) => {
@@ -90,7 +92,7 @@ const Orcamentos: React.FC = () => {
             <Card className="card-premium border-0 shadow-sm mb-4">
                 <Card.Body className="p-4">
                     <Row className="g-3 align-items-end">
-                        <Col md={5}>
+                        <Col md={4}>
                             <Form.Label className="small fw-bold text-muted">Pesquisar Orçamento</Form.Label>
                             <InputGroup className="shadow-sm rounded-12 overflow-hidden border">
                                 <InputGroup.Text className="bg-white border-0 ps-3">
@@ -98,14 +100,14 @@ const Orcamentos: React.FC = () => {
                                 </InputGroup.Text>
                                 <Form.Control
                                     className="border-0 shadow-none py-2"
-                                    placeholder="Digite o número do orçamento ou nome do cliente..."
+                                    placeholder="Número ou cliente..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                 />
                             </InputGroup>
                         </Col>
                         <Col md={3}>
-                            <Form.Label className="small fw-bold text-muted">Filtrar por Status</Form.Label>
+                            <Form.Label className="small fw-bold text-muted">Status</Form.Label>
                             <InputGroup className="shadow-sm rounded-12 overflow-hidden border">
                                 <InputGroup.Text className="bg-white border-0 ps-3">
                                     <Activity size={18} className="text-muted" />
@@ -125,9 +127,27 @@ const Orcamentos: React.FC = () => {
                                 </Form.Select>
                             </InputGroup>
                         </Col>
-                        <Col md={4} className="text-end">
-                            <Button variant="light" className="text-muted fw-bold" onClick={() => { setSearchTerm(''); setStatusFilter(''); }}>
-                                Limpar Filtros
+                        <Col md={3}>
+                            <Form.Label className="small fw-bold text-muted">Prioridade</Form.Label>
+                            <InputGroup className="shadow-sm rounded-12 overflow-hidden border">
+                                <InputGroup.Text className="bg-white border-0 ps-3">
+                                    <Filter size={18} className="text-muted" />
+                                </InputGroup.Text>
+                                <Form.Select
+                                    className="border-0 shadow-none py-2 ps-0"
+                                    value={priorityFilter}
+                                    onChange={(e) => setPriorityFilter(e.target.value)}
+                                >
+                                    <option value="">Todas</option>
+                                    <option value="ALTA">Alta</option>
+                                    <option value="MEDIA">Média</option>
+                                    <option value="BAIXA">Baixa</option>
+                                </Form.Select>
+                            </InputGroup>
+                        </Col>
+                        <Col md={2} className="text-end">
+                            <Button variant="light" className="text-muted fw-bold w-100" onClick={() => { setSearchTerm(''); setStatusFilter(''); setPriorityFilter(''); }}>
+                                Limpar
                             </Button>
                         </Col>
                     </Row>
