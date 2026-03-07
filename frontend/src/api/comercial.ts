@@ -12,7 +12,7 @@ export const comercialApi = {
     }),
     get: (id: string | number): Promise<Oportunidade> => api.get(`comercial/api/oportunidade/${id}/`).then(res => res.data),
     create: (data: Partial<Oportunidade>): Promise<Oportunidade> => api.post('comercial/api/oportunidade/', data).then(res => res.data),
-    update: (id: string | number, data: Partial<Oportunidade>): Promise<Oportunidade> => api.put(`comercial/api/oportunidade/${id}/`, data).then(res => res.data),
+    update: (id: string | number, data: Partial<Oportunidade>): Promise<Oportunidade> => api.patch(`comercial/api/oportunidade/${id}/`, data).then(res => res.data),
     delete: (id: string | number): Promise<void> => api.delete(`comercial/api/oportunidade/${id}/`).then(res => res.data),
     updateStatus: (id: number, statusId: number): Promise<any> => api.post('comercial/api/oportunidade/update-status/', { id, status_id: statusId }),
 

@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
-import { Container, Row, Col, Card, Badge, Button, Spinner, Dropdown, InputGroup } from 'react-bootstrap';
+import { Container, Row, Col, Card, Badge, Button, Spinner, Dropdown, InputGroup, Alert } from 'react-bootstrap';
 import { 
     Plus, MoreVertical, DollarSign, Calendar, User, Search, 
-    Briefcase, Building, Flag, ListTodo, Lock, Paperclip 
+    Briefcase, Building, Flag, ListTodo, Lock, Paperclip, 
+    AlertCircle, MessageSquare
 } from 'lucide-react';
 import { comercialApi } from '../api/comercial';
 import { clienteApi } from '../api/clientes';
@@ -15,6 +16,15 @@ import { Modal, Form } from 'react-bootstrap';
 import { maskCurrency, unmaskCurrency } from '../utils/masks';
 import OpportunityFileManager from '../components/OpportunityFileManager';
 
+const LOSS_REASONS = [
+    { value: 'PRECO', label: 'Preço Elevado' },
+    { value: 'PRAZO', label: 'Prazo de Entrega' },
+    { value: 'TECNICO', label: 'Especificação Técnica' },
+    { value: 'CONCORRENCIA', label: 'Perdeu para Concorrência' },
+    { value: 'CANCELADO', label: 'Projeto Cancelado pelo Cliente' },
+    { value: 'OUTRO', label: 'Outro Motivo' },
+];
+
 const Kanban: React.FC = () => {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
@@ -23,6 +33,10 @@ const Kanban: React.FC = () => {
     // Estados para o Gerenciador de Arquivos
     const [fileManagerShow, setFileManagerShow] = useState(false);
     const [selectedOpForFiles, setSelectedOpForFiles] = useState<{id: number, titulo: string} | null>(null);
+
+    // Estados para Validação de Perda
+    const [showLossModal, setShowLossModal] = useState(false);
+    const [lossData, setLossData] = useState({ opId: 0, statusId: 0, motivo: '', detalhes: '' });
 
     const { data: statusList = [], isLoading: loadingStatus } = useQuery<StatusOportunidade[]>({
         queryKey: ['kanban-status'],
@@ -56,8 +70,8 @@ const Kanban: React.FC = () => {
     }, [statusList, formData.status]);
 
     const updateStatusMutation = useMutation({
-        mutationFn: ({ id, statusId }: { id: number, statusId: number }) =>
-            comercialApi.updateStatus(id, statusId),
+        mutationFn: ({ id, statusId, extraData }: { id: number, statusId: number, extraData?: any }) =>
+            comercialApi.update(id, { status: statusId, ...extraData }),
         onMutate: async ({ id, statusId }) => {
             await queryClient.cancelQueries({ queryKey: ['kanban-ops'] });
             const previousOps = queryClient.getQueryData<Oportunidade[]>(['kanban-ops']);
@@ -87,7 +101,6 @@ const Kanban: React.FC = () => {
             setShowModal(false);
             setFormData({ titulo: '', valor_estimado: '0.00', prioridade: 'MEDIA', fonte: 'SITE' });
             
-            // Abrir o gerenciador de arquivos para que o comercial anexe os documentos imediatamente
             setSelectedOpForFiles({ id: newOp.id, titulo: newOp.titulo });
             setFileManagerShow(true);
         }
@@ -101,8 +114,36 @@ const Kanban: React.FC = () => {
 
         const opId = parseInt(draggableId);
         const newStatusId = parseInt(destination.droppableId);
+        
+        // Verifica se o destino é o status "Perdido"
+        const targetStatus = statusList.find(s => s.id === newStatusId);
+        const isLost = targetStatus?.nome.toLowerCase().includes('perdido') || targetStatus?.id === 6;
 
-        updateStatusMutation.mutate({ id: opId, statusId: newStatusId });
+        if (isLost) {
+            // Intercepta e abre o modal de validação
+            setLossData({ opId, statusId: newStatusId, motivo: '', detalhes: '' });
+            setShowLossModal(true);
+        } else {
+            // Movimentação normal
+            updateStatusMutation.mutate({ id: opId, statusId: newStatusId });
+        }
+    };
+
+    const handleConfirmLoss = () => {
+        if (!lossData.motivo) {
+            alert("Por favor, selecione o motivo da perda.");
+            return;
+        }
+        
+        updateStatusMutation.mutate({ 
+            id: lossData.opId, 
+            statusId: lossData.statusId,
+            extraData: {
+                motivo_perda: lossData.motivo,
+                detalhes_perda: lossData.detalhes
+            }
+        });
+        setShowLossModal(false);
     };
 
     if (loadingStatus || loadingOps) return <div className="text-center p-5"><Spinner animation="border" /></div>;
@@ -272,6 +313,7 @@ const Kanban: React.FC = () => {
                 </div>
             </DragDropContext>
 
+            {/* Modal de Nova Oportunidade */}
             <Modal show={showModal} onHide={() => setShowModal(false)} centered size="lg" className="modal-premium">
                 <Modal.Header closeButton className="border-0">
                     <Modal.Title className="fw-bold">Nova Oportunidade</Modal.Title>
@@ -378,6 +420,63 @@ const Kanban: React.FC = () => {
                         disabled={createMutation.isPending}
                     >
                         {createMutation.isPending ? 'Criando...' : 'Criar Oportunidade'}
+                    </Button>
+                </Modal.Footer>
+            </Modal>
+
+            {/* Modal de Validação de Perda */}
+            <Modal show={showLossModal} onHide={() => setShowLossModal(false)} centered className="modal-premium">
+                <Modal.Header closeButton className="border-0 px-4 pt-4">
+                    <Modal.Title className="fw-bold d-flex align-items-center text-danger">
+                        <AlertCircle size={24} className="me-2" /> Validar Perda de Negócio
+                    </Modal.Title>
+                </Modal.Header>
+                <Modal.Body className="px-4 pb-4">
+                    <Alert variant="danger" className="border-0 rounded-12 small fw-medium mb-4">
+                        Para mover este card para "Perdido", é obrigatório registrar o motivo técnico ou comercial da perda.
+                    </Alert>
+                    
+                    <Form.Group className="mb-3">
+                        <Form.Label className="form-premium-label">Motivo da Perda</Form.Label>
+                        <InputGroup className="rounded-12 overflow-hidden border">
+                            <InputGroup.Text className="bg-light border-0"><Flag size={18} className="text-muted" /></InputGroup.Text>
+                            <Form.Select 
+                                className="border-0 shadow-none py-2"
+                                value={lossData.motivo}
+                                onChange={e => setLossData({ ...lossData, motivo: e.target.value })}
+                                required
+                            >
+                                <option value="">Selecione o motivo...</option>
+                                {LOSS_REASONS.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                            </Form.Select>
+                        </InputGroup>
+                    </Form.Group>
+
+                    <Form.Group>
+                        <Form.Label className="form-premium-label">Detalhes Adicionais</Form.Label>
+                        <InputGroup className="rounded-12 overflow-hidden border">
+                            <InputGroup.Text className="bg-light border-0 align-items-start pt-2"><MessageSquare size={18} className="text-muted" /></InputGroup.Text>
+                            <Form.Control 
+                                as="textarea" 
+                                rows={3}
+                                className="border-0 shadow-none py-2"
+                                placeholder="Descreva os detalhes da negociação ou por que o cliente declinou..."
+                                value={lossData.detalhes}
+                                onChange={e => setLossData({ ...lossData, detalhes: e.target.value })}
+                                required
+                            />
+                        </InputGroup>
+                    </Form.Group>
+                </Modal.Body>
+                <Modal.Footer className="border-0 px-4 pb-4 pt-0">
+                    <Button variant="light" className="rounded-pill px-4 fw-bold" onClick={() => setShowLossModal(false)}>Cancelar</Button>
+                    <Button 
+                        variant="danger" 
+                        className="rounded-pill px-4 fw-bold shadow-sm"
+                        onClick={handleConfirmLoss}
+                        disabled={!lossData.motivo || !lossData.detalhes}
+                    >
+                        Confirmar Perda
                     </Button>
                 </Modal.Footer>
             </Modal>
