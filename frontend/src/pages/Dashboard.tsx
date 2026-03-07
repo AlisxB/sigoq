@@ -68,6 +68,8 @@ const Dashboard: React.FC = () => {
         staleTime: 1000 * 60 * 5,
     });
 
+    console.log('Finance Data:', financeData?.kpis);
+
     const totalFunnel = funnelData?.reduce((acc, curr) => acc + parseFloat(curr.total || 0), 0) || 0;
 
     // Memoized Chart Data
@@ -187,7 +189,7 @@ const Dashboard: React.FC = () => {
                 <Col xl={2} lg={3} md={6}>
                     <StatCard 
                         title="Pipeline Ativo" 
-                        value={`R$ ${( (financeData?.kpis?.pipeline_ativo_valor || 0) / 1000000).toFixed(1)}M`} 
+                        value={`R$ ${( (financeData?.kpis?.pipeline_ativo_valor || 0) / 1000).toFixed(1)}k`} 
                         subtitle="Potencial de fechamento"
                         icon={<ShoppingBag size={22} color="white" />} 
                         bgColor="#2A3547" 

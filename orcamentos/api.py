@@ -65,13 +65,14 @@ class OrcamentoViewSet(viewsets.ModelViewSet):
             margem_data = qs_all.filter(status__in=['ENVIADO', 'APROVADO']).aggregate(avg=Avg('margem_contrib'))
             margem_media = float(margem_data.get('avg') or 0)
             
-            # Faturamento Mês Atual vs Meta
-            vendas_mes_data = qs_all.filter(
-                status='APROVADO',
+            # Faturamento Mês Atual (Soma do valor estimado das Oportunidades Ganhas no mês)
+            # Filtramos diretamente em Oportunidade para evitar duplicidade de orçamentos/revisões
+            vendas_mes_qs = Oportunidade.objects.filter(
+                status_id=5, # Status 'GANHO'
                 atualizado_em__month=now.month,
                 atualizado_em__year=now.year
-            ).aggregate(total=Sum('valor_total'))
-            vendas_mes = float(vendas_mes_data.get('total') or 0)
+            )
+            vendas_mes = float(vendas_mes_qs.aggregate(total=Sum('valor_estimado'))['total'] or 0)
 
             meta_obj = MetaMensal.objects.filter(mes=now.month, ano=now.year, vendedor=request.user).first()
             if not meta_obj:
