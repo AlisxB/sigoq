@@ -26,6 +26,9 @@ if not db_config:
 else:
     DATABASES = {'default': db_config}
 
+# Confiança no Proxy Reverso
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 # Segurança Máxima de Cookies (Exige HTTPS)
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
@@ -42,6 +45,6 @@ SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 
 # CORS e CSRF
-CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', '').split(',')
-CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',')
+CORS_ALLOWED_ORIGINS = [origin for origin in os.environ.get('CORS_ALLOWED_ORIGINS', '').split(',') if origin]
+CSRF_TRUSTED_ORIGINS = [origin for origin in os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',') if origin]
 CORS_ALLOW_CREDENTIALS = True
