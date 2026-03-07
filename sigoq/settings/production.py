@@ -11,12 +11,20 @@ ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',')
 
 # Banco de Dados Profissional (PostgreSQL)
 import dj_database_url
-DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL'),
-        conn_max_age=600
-    )
-}
+db_config = dj_database_url.config(conn_max_age=600)
+
+if not db_config:
+    if os.environ.get('REQUIRE_POSTGRES', 'False') == 'True':
+        raise Exception("DATABASE_URL não configurada. O PostgreSQL é obrigatório em produção.")
+    # Fallback apenas para scripts de build que não acessam o banco
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+else:
+    DATABASES = {'default': db_config}
 
 # Segurança Máxima de Cookies (Exige HTTPS)
 SESSION_COOKIE_SECURE = True
