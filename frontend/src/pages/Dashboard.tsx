@@ -155,11 +155,12 @@ const Dashboard: React.FC = () => {
                             <Button variant="link" className="p-0 text-muted"><MoreHorizontal size={20} /></Button>
                         </div>
                         <p className="text-muted small mb-4">Anéis representam o percentual financeiro de cada etapa sobre o total do funil.</p>
-                        <div className="d-flex justify-content-center align-items-center" style={{ height: '350px' }}>
+                        <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '450px' }}>
                             <RadialChart
                                 series={radialSeries}
                                 labels={radialLabels}
                                 colors={radialColors}
+                                height={480}
                                 centerLabel={centerLabel}
                                 centerValue={centerValue}
                                 onSelection={setSelectedIdx}

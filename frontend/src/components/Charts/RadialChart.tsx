@@ -26,6 +26,10 @@ const RadialChart: React.FC<RadialChartProps> = ({
             type: 'radialBar',
             fontFamily: "'Plus Jakarta Sans', sans-serif",
             toolbar: { show: false },
+            offsetY: 0,
+            sparkline: {
+                enabled: false // Mantemos falso para as legendas aparecerem corretamente
+            },
             events: {
                 dataPointSelection: (_event, _chartContext, config) => {
                     if (onSelection) {
@@ -36,13 +40,18 @@ const RadialChart: React.FC<RadialChartProps> = ({
         },
         plotOptions: {
             radialBar: {
-                offsetY: 0,
                 startAngle: 0,
-                endAngle: 270,
+                endAngle: 360,
+                offsetY: 0,
                 hollow: {
-                    margin: 5,
-                    size: '35%',
+                    margin: 0,
+                    size: '40%',
                     background: 'transparent',
+                },
+                track: {
+                    background: '#F2F6FA',
+                    strokeWidth: '100%',
+                    margin: 5, 
                 },
                 dataLabels: {
                     name: {
@@ -50,17 +59,22 @@ const RadialChart: React.FC<RadialChartProps> = ({
                         fontSize: '14px',
                         fontWeight: 600,
                         color: '#5A6A83',
+                        offsetY: -10
                     },
                     value: {
                         show: true,
                         fontSize: '22px',
                         fontWeight: 800,
                         color: '#2A3547',
+                        offsetY: 10,
                         formatter: (val: number) => `${val}%`
                     },
                     total: {
                         show: true,
                         label: centerLabel,
+                        color: '#5A6A83',
+                        fontSize: '14px',
+                        fontWeight: 600,
                         formatter: () => centerValue || ''
                     }
                 }
@@ -70,35 +84,44 @@ const RadialChart: React.FC<RadialChartProps> = ({
         labels: labels,
         legend: {
             show: true,
-            floating: true,
-            fontSize: '12px',
             position: 'left',
-            offsetX: 0,
-            offsetY: 15,
-            labels: { useSeriesColors: true },
-            markers: { size: 0 },
-            formatter: (seriesName, opts) => {
-                return seriesName + ":  " + opts.w.globals.series[opts.seriesIndex] + "%";
+            horizontalAlign: 'center',
+            fontSize: '14px',
+            fontFamily: "'Plus Jakarta Sans', sans-serif",
+            fontWeight: 600,
+            offsetX: -10,
+            offsetY: 0,
+            labels: {
+                colors: '#5A6A83',
+                useSeriesColors: false
             },
-            itemMargin: { vertical: 3 }
+            markers: {
+                radius: 12,
+                offsetX: -5
+            },
+            itemMargin: {
+                horizontal: 0,
+                vertical: 8
+            },
+            formatter: (seriesName, opts) => {
+                return `${seriesName}: ${opts.w.globals.series[opts.seriesIndex]}%`;
+            }
         },
         stroke: {
             lineCap: 'round'
-        },
-        tooltip: {
-            enabled: true,
-            theme: 'dark'
         }
     }), [colors, labels, centerLabel, centerValue, onSelection]);
 
     return (
-        <Chart
-            options={options}
-            series={series}
-            type="radialBar"
-            height={height}
-            width="100%"
-        />
+        <div style={{ width: '100%', height: '100%' }}>
+            <Chart
+                options={options}
+                series={series}
+                type="radialBar"
+                height={height}
+                width="100%"
+            />
+        </div>
     );
 };
 
