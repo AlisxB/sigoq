@@ -4,10 +4,10 @@ import { Fornecedor } from '../types';
 export const fornecedorApi = {
     list: (): Promise<Fornecedor[]> => api.get('fornecedores/api/fornecedores/').then(res => {
         const data = res.data;
-        if (data && typeof data === 'object' && !Array.isArray(data)) {
-            return Object.values(data) as Fornecedor[];
-        }
-        return data || [];
+        if (data && data.results && Array.isArray(data.results)) return data.results;
+        if (Array.isArray(data)) return data;
+        if (data && typeof data === 'object') return Object.values(data);
+        return [];
     }),
     get: (id: string | number): Promise<Fornecedor> => api.get(`fornecedores/api/fornecedores/${id}/`).then(res => res.data),
     create: (data: Partial<Fornecedor>): Promise<Fornecedor> => api.post('fornecedores/api/fornecedores/', data).then(res => res.data),

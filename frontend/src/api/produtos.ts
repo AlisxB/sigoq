@@ -4,10 +4,10 @@ import { Produto, Categoria } from '../types';
 export const produtoApi = {
     list: (): Promise<Produto[]> => api.get('produtos/api/produtos/').then(res => {
         const data = res.data;
-        if (data && typeof data === 'object' && !Array.isArray(data)) {
-            return Object.values(data) as Produto[];
-        }
-        return data || [];
+        if (data && data.results && Array.isArray(data.results)) return data.results;
+        if (Array.isArray(data)) return data;
+        if (data && typeof data === 'object') return Object.values(data);
+        return [];
     }),
     get: (id: string | number): Promise<Produto> => api.get(`produtos/api/produtos/${id}/`).then(res => res.data),
     create: (data: Partial<Produto>): Promise<Produto> => api.post('produtos/api/produtos/', data).then(res => res.data),
@@ -20,10 +20,10 @@ export const produtoApi = {
         
         return api.get(url).then(res => {
             const data = res.data;
-            if (data && typeof data === 'object' && !Array.isArray(data)) {
-                return Object.values(data) as Produto[];
-            }
-            return data || [];
+            if (data && data.results && Array.isArray(data.results)) return data.results;
+            if (Array.isArray(data)) return data;
+            if (data && typeof data === 'object') return Object.values(data);
+            return [];
         });
     },
 };
@@ -31,10 +31,10 @@ export const produtoApi = {
 export const categoriaApi = {
     list: (): Promise<Categoria[]> => api.get('produtos/api/categorias/').then(res => {
         const data = res.data;
-        if (data && typeof data === 'object' && !Array.isArray(data)) {
-            return Object.values(data) as Categoria[];
-        }
-        return data || [];
+        if (data && data.results && Array.isArray(data.results)) return data.results;
+        if (Array.isArray(data)) return data;
+        if (data && typeof data === 'object') return Object.values(data);
+        return [];
     }),
     get: (id: string | number): Promise<Categoria> => api.get(`produtos/api/categorias/${id}/`).then(res => res.data),
     create: (data: Partial<Categoria>): Promise<Categoria> => api.post('produtos/api/categorias/', data).then(res => res.data),

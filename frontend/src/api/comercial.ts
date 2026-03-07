@@ -5,10 +5,10 @@ export const comercialApi = {
     // Oportunidades
     list: (): Promise<Oportunidade[]> => api.get('comercial/api/oportunidades/').then(res => {
         const data = res.data;
-        if (data && typeof data === 'object' && !Array.isArray(data)) {
-            return Object.values(data) as Oportunidade[];
-        }
-        return data || [];
+        if (data && data.results && Array.isArray(data.results)) return data.results;
+        if (Array.isArray(data)) return data;
+        if (data && typeof data === 'object') return Object.values(data);
+        return [];
     }),
     get: (id: string | number): Promise<Oportunidade> => api.get(`comercial/api/oportunidades/${id}/`).then(res => res.data),
     create: (data: Partial<Oportunidade>): Promise<Oportunidade> => api.post('comercial/api/oportunidades/', data).then(res => res.data),
@@ -19,19 +19,19 @@ export const comercialApi = {
     // Status
     listStatus: (): Promise<StatusOportunidade[]> => api.get('comercial/api/status/').then(res => {
         const data = res.data;
-        if (data && typeof data === 'object' && !Array.isArray(data)) {
-            return Object.values(data) as StatusOportunidade[];
-        }
-        return data || [];
+        if (data && data.results && Array.isArray(data.results)) return data.results;
+        if (Array.isArray(data)) return data;
+        if (data && typeof data === 'object') return Object.values(data);
+        return [];
     }),
 
     // Metas Mensais
     listMetas: (): Promise<MetaMensal[]> => api.get('comercial/api/metas/').then(res => {
         const data = res.data;
-        if (data && typeof data === 'object' && !Array.isArray(data)) {
-            return Object.values(data) as MetaMensal[];
-        }
-        return data || [];
+        if (data && data.results && Array.isArray(data.results)) return data.results;
+        if (Array.isArray(data)) return data;
+        if (data && typeof data === 'object') return Object.values(data);
+        return [];
     }),
     createMeta: (data: Partial<MetaMensal>): Promise<MetaMensal> => api.post('comercial/api/metas/', data).then(res => res.data),
     updateMeta: (id: number, data: Partial<MetaMensal>): Promise<MetaMensal> => api.put(`comercial/api/metas/${id}/`, data).then(res => res.data),
