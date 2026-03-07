@@ -123,6 +123,36 @@ class OportunidadeViewSet(viewsets.ModelViewSet):
         serializer = ArquivoOportunidadeSerializer(arquivos, many=True)
         return Response(serializer.data)
 
+    @action(detail=True, methods=['get'], url_path='download_zip')
+    def download_zip(self, request, pk=None):
+        """
+        Gera e retorna um ZIP com os arquivos da oportunidade.
+        Suporta o parâmetro query '?path=folder/subfolder/' para baixar apenas uma pasta.
+        """
+        import os
+        from django.http import HttpResponse
+        
+        oportunidade = self.get_object()
+        sub_path = request.query_params.get('path')
+        
+        zip_buffer = FileManagementService.generate_zip(oportunidade, sub_path)
+        
+        if not zip_buffer:
+            return Response(
+                {'detail': 'Nenhum arquivo encontrado para gerar o ZIP.'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+            
+        zip_filename = f"OP_{oportunidade.numero:04d}_Arquivos.zip"
+        if sub_path:
+            # Pega o nome da última pasta do path para nomear o zip
+            folder_name = os.path.basename(sub_path.strip('/'))
+            zip_filename = f"OP_{oportunidade.numero:04d}_{folder_name}.zip"
+            
+        response = HttpResponse(zip_buffer, content_type='application/zip')
+        response['Content-Disposition'] = f'attachment; filename="{zip_filename}"'
+        return response
+
 class ArquivoOportunidadeViewSet(viewsets.ModelViewSet):
     queryset = ArquivoOportunidade.objects.all()
     serializer_class = ArquivoOportunidadeSerializer

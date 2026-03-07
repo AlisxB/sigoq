@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Modal, Button, Spinner, Card, Alert } from 'react-bootstrap';
+import { Modal, Button, Spinner, Card, Alert, Tooltip, OverlayTrigger } from 'react-bootstrap';
 import { 
     File, Folder, FolderPlus, Upload, Trash2, Download, 
     FileText, Image as ImageIcon, FileArchive, ChevronRight, ChevronDown,
-    HardDrive, Package
+    HardDrive, Package, FolderDown, FileDown
 } from 'lucide-react';
 import { comercialApi } from '../api/comercial';
 import { ArquivoOportunidade } from '../types';
@@ -19,7 +19,8 @@ interface FileManagerProps {
 interface FileNode {
     name: string;
     type: 'file' | 'folder';
-    fullPath: string;
+    fullPath: string; // Ex: root/PastaA/Sub
+    relativeDirPath: string; // Ex: PastaA/Sub/ (O que usamos na query do backend)
     fileData?: ArquivoOportunidade;
     children?: Record<string, FileNode>;
 }
@@ -95,21 +96,26 @@ const OpportunityFileManager: React.FC<FileManagerProps> = ({
     };
 
     const buildTree = (): FileNode => {
-        const root: FileNode = { name: 'Arquivos da OP', type: 'folder', fullPath: 'root', children: {} };
+        const root: FileNode = { 
+            name: 'Arquivos da OP', type: 'folder', fullPath: 'root', relativeDirPath: '', children: {} 
+        };
         
         files.forEach(file => {
             const pathParts = file.caminho_relativo.split('/').filter(p => p !== '');
             let currentNode = root;
             let currentFullPath = 'root';
+            let currentRelativeDirPath = '';
 
             pathParts.forEach(part => {
                 currentFullPath += `/${part}`;
+                currentRelativeDirPath += `${part}/`;
                 if (!currentNode.children) currentNode.children = {};
                 if (!currentNode.children[part]) {
                     currentNode.children[part] = { 
                         name: part, 
                         type: 'folder', 
                         fullPath: currentFullPath,
+                        relativeDirPath: currentRelativeDirPath,
                         children: {} 
                     };
                 }
@@ -121,6 +127,7 @@ const OpportunityFileManager: React.FC<FileManagerProps> = ({
                 name: file.nome_original,
                 type: 'file',
                 fullPath: `${currentFullPath}/${file.nome_original}`,
+                relativeDirPath: currentRelativeDirPath,
                 fileData: file
             };
         });
@@ -165,7 +172,7 @@ const OpportunityFileManager: React.FC<FileManagerProps> = ({
             <div key={node.fullPath}>
                 {node.fullPath !== 'root' && (
                     <div 
-                        className={`d-flex align-items-center py-2 px-2 rounded-2 hover-bg-light cursor-pointer`}
+                        className={`d-flex align-items-center py-2 px-2 rounded-2 hover-bg-light cursor-pointer group`}
                         style={{ marginLeft: `${level * 20}px` }}
                         onClick={() => node.type === 'folder' && toggleFolder(node.fullPath)}
                     >
@@ -184,25 +191,36 @@ const OpportunityFileManager: React.FC<FileManagerProps> = ({
                         <div className="flex-grow-1 text-truncate" style={{ fontSize: '0.9rem', fontWeight: node.type === 'folder' ? 600 : 400 }}>
                             {node.name}
                         </div>
-                        {node.type === 'file' && node.fileData && (
-                            <div className="d-flex align-items-center gap-2 opacity-hover">
-                                <span className="x-small text-muted me-2">{formatSize(node.fileData.tamanho)}</span>
+                        
+                        <div className="d-flex align-items-center gap-2 opacity-hover">
+                            {node.type === 'folder' ? (
                                 <Button 
                                     variant="link" size="sm" className="p-0 text-muted" 
-                                    onClick={(e) => { e.stopPropagation(); window.open(`http://localhost:8000${node.fileData?.arquivo}`, '_blank'); }}
+                                    title="Baixar pasta como ZIP"
+                                    onClick={(e) => { e.stopPropagation(); window.open(comercialApi.getZipUrl(oportunidadeId, node.relativeDirPath), '_blank'); }}
                                 >
-                                    <Download size={14} />
+                                    <FolderDown size={14} />
                                 </Button>
-                                {!readonly && (
+                            ) : (
+                                <>
+                                    <span className="x-small text-muted me-2">{formatSize(node.fileData?.tamanho || 0)}</span>
                                     <Button 
-                                        variant="link" size="sm" className="p-0 text-danger"
-                                        onClick={(e) => { e.stopPropagation(); handleDelete(node.fileData!.id); }}
+                                        variant="link" size="sm" className="p-0 text-muted" 
+                                        onClick={(e) => { e.stopPropagation(); window.open(`http://localhost:8000${node.fileData?.arquivo}`, '_blank'); }}
                                     >
-                                        <Trash2 size={14} />
+                                        <Download size={14} />
                                     </Button>
-                                )}
-                            </div>
-                        )}
+                                    {!readonly && (
+                                        <Button 
+                                            variant="link" size="sm" className="p-0 text-danger"
+                                            onClick={(e) => { e.stopPropagation(); handleDelete(node.fileData!.id); }}
+                                        >
+                                            <Trash2 size={14} />
+                                        </Button>
+                                    )}
+                                </>
+                            )}
+                        </div>
                     </div>
                 )}
                 
@@ -214,15 +232,27 @@ const OpportunityFileManager: React.FC<FileManagerProps> = ({
     return (
         <Modal show={show} onHide={onHide} size="lg" centered scrollable className="modal-premium">
             <Modal.Header closeButton className="border-0 px-4 pt-4">
-                <Modal.Title className="fw-bold">
-                    <div className="d-flex align-items-center">
-                        <div className="icon-box bg-primary-subtle text-primary me-3">
-                            <HardDrive size={20} />
+                <Modal.Title className="fw-bold w-100">
+                    <div className="d-flex align-items-center justify-content-between">
+                        <div className="d-flex align-items-center">
+                            <div className="icon-box bg-primary-subtle text-primary me-3">
+                                <HardDrive size={20} />
+                            </div>
+                            <div>
+                                <div className="h5 mb-0">{readonly ? 'Visualizar Arquivos' : 'Arquivos Técnicos'}</div>
+                                <div className="text-muted small fw-normal">OP-{oportunidadeId.toString().padStart(4, '0')} | {oportunidadeTitulo}</div>
+                            </div>
                         </div>
-                        <div>
-                            <div className="h5 mb-0">{readonly ? 'Visualizar Arquivos' : 'Arquivos Técnicos'}</div>
-                            <div className="text-muted small fw-normal">OP-{oportunidadeId.toString().padStart(4, '0')} | {oportunidadeTitulo}</div>
-                        </div>
+                        {files.length > 0 && (
+                            <Button 
+                                variant="outline-primary" 
+                                size="sm" 
+                                className="rounded-pill px-3 fw-bold d-flex align-items-center gap-2"
+                                onClick={() => window.open(comercialApi.getZipUrl(oportunidadeId), '_blank')}
+                            >
+                                <FileDown size={16} /> Baixar Tudo (ZIP)
+                            </Button>
+                        )}
                     </div>
                 </Modal.Title>
             </Modal.Header>

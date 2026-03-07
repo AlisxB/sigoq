@@ -40,41 +40,36 @@ class FileManagementService:
         return created_files
 
     @staticmethod
-    def handle_zip_extraction(oportunidade, zip_file, base_relative_path, user=None):
+    def generate_zip(oportunidade, sub_path=None):
         """
-        Extrai o conteúdo de um arquivo ZIP e cria registros individuais.
+        Gera um buffer de bytes contendo um arquivo ZIP com os arquivos da oportunidade.
+        Se sub_path for fornecido, filtra apenas os arquivos daquela pasta (e subpastas).
         """
-        extracted_objects = []
+        buffer = io.BytesIO()
+        arquivos = oportunidade.arquivos.all()
         
-        with zipfile.ZipFile(zip_file, 'r') as z:
-            for member in z.infolist():
-                if member.is_dir():
+        if sub_path:
+            # Normaliza o path para garantir que termine com / para o filtro
+            search_path = sub_path if sub_path.endswith('/') else f"{sub_path}/"
+            arquivos = arquivos.filter(caminho_relativo__startswith=search_path)
+
+        if not arquivos.exists():
+            return None
+
+        with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED) as z:
+            for arquiv_obj in arquivos:
+                if not arquiv_obj.arquivo:
                     continue
                 
-                # Obtém o conteúdo do arquivo
-                with z.open(member) as f:
-                    content = f.read()
-                    
-                # Prepara o nome e o caminho relativo
-                filename = os.path.basename(member.filename)
-                # O member.filename já contém a estrutura de pastas interna do ZIP
-                internal_path = os.path.dirname(member.filename)
-                
-                # Combina o caminho base do upload com o caminho interno do ZIP
-                full_relative_path = os.path.join(base_relative_path, internal_path)
-                if full_relative_path and not full_relative_path.endswith('/'):
-                    full_relative_path += '/'
-                
-                # Cria o arquivo no Django
-                django_file = ContentFile(content, name=filename)
-                
-                arquivo_obj = ArquivoOportunidade.objects.create(
-                    oportunidade=oportunidade,
-                    arquivo=django_file,
-                    nome_original=filename,
-                    caminho_relativo=full_relative_path,
-                    enviado_por=user
-                )
-                extracted_objects.append(arquivo_obj)
-                
-        return extracted_objects
+                # O caminho dentro do ZIP deve ser a estrutura original
+                # Remove o prefixo da pasta superior se estivermos baixando uma pasta específica
+                arcname = os.path.join(arquiv_obj.caminho_relativo, arquiv_obj.nome_original)
+                if sub_path:
+                    # Ex: se sub_path é "PastaA/" e o arquivo é "PastaA/Sub/doc.pdf"
+                    # o arcname deve virar "Sub/doc.pdf"
+                    arcname = os.path.relpath(arcname, sub_path)
+
+                z.writestr(arcname, arquiv_obj.arquivo.read())
+        
+        buffer.seek(0)
+        return buffer

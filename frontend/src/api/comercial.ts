@@ -33,6 +33,12 @@ export const comercialApi = {
     deleteArquivo: (arquivoId: number): Promise<void> => 
         api.delete(`comercial/api/arquivos/${arquivoId}/`).then(res => res.data),
 
+    getZipUrl: (oportunidadeId: number, path?: string): string => {
+        let url = `http://localhost:8000/comercial/api/oportunidade/${oportunidadeId}/download_zip/`;
+        if (path) url += `?path=${encodeURIComponent(path)}`;
+        return url;
+    },
+
     // Status
     listStatus: (): Promise<StatusOportunidade[]> => api.get('comercial/api/status/').then(res => {
         const data = res.data;
