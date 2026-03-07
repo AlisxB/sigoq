@@ -62,6 +62,15 @@ class Oportunidade(BaseModel):
         ('OUTRO', 'Outro'),
     ]
 
+    MOTIVO_PERDA_CHOICES = [
+        ('PRECO', 'Preço Elevado'),
+        ('PRAZO', 'Prazo de Entrega'),
+        ('TECNICO', 'Especificação Técnica'),
+        ('CONCORRENCIA', 'Perdeu para Concorrência'),
+        ('CANCELADO', 'Projeto Cancelado pelo Cliente'),
+        ('OUTRO', 'Outro Motivo'),
+    ]
+
     numero = models.PositiveIntegerField(unique=True, editable=False, verbose_name="Nº Oportunidade")
     titulo = models.CharField(max_length=300, verbose_name="Título")
     descricao = models.TextField(blank=True, verbose_name="Descrição")
@@ -74,6 +83,10 @@ class Oportunidade(BaseModel):
     fonte = models.CharField(max_length=20, choices=FONTE_CHOICES, default='SITE', verbose_name="Fonte")
     prioridade = models.CharField(max_length=10, choices=PRIORIDADE_CHOICES, default='MEDIA', verbose_name="Prioridade")
     vendedor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='oportunidades', verbose_name="Vendedor")
+    
+    # Novos campos para validação de perda
+    motivo_perda = models.CharField(max_length=20, choices=MOTIVO_PERDA_CHOICES, blank=True, null=True, verbose_name="Motivo da Perda")
+    detalhes_perda = models.TextField(blank=True, null=True, verbose_name="Detalhes da Perda")
 
     class Meta:
         verbose_name = "Oportunidade"
