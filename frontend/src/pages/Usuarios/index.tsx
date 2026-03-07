@@ -5,12 +5,14 @@ import { Plus, Search, Users } from 'lucide-react';
 import { usuarioApi } from '../../api/usuarios';
 import UserCard from './components/UserCard';
 import UserFormModal from './components/UserFormModal';
+import ConfirmModal from '../../components/ConfirmModal';
 import { User } from '../../types';
 
 const Usuarios: React.FC = () => {
     const queryClient = useQueryClient();
     const [search, setSearch] = useState('');
-    const [showModal, setShowModal] = useState(false);
+    const [showFormModal, setShowFormModal] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
     const { data: users = [], isLoading } = useQuery<User[]>({
@@ -24,11 +26,8 @@ const Usuarios: React.FC = () => {
             : usuarioApi.create(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['usuarios'] });
-            setShowModal(false);
+            setShowFormModal(false);
             setSelectedUser(null);
-        },
-        onError: (err: any) => {
-            alert(`Erro ao salvar: ${err.response?.data ? JSON.stringify(err.response.data) : err.message}`);
         }
     });
 
@@ -36,6 +35,8 @@ const Usuarios: React.FC = () => {
         mutationFn: (id: number) => usuarioApi.delete(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['usuarios'] });
+            setShowDeleteModal(false);
+            setSelectedUser(null);
         }
     });
 
@@ -47,12 +48,17 @@ const Usuarios: React.FC = () => {
 
     const handleEdit = (user: User) => {
         setSelectedUser(user);
-        setShowModal(true);
+        setShowFormModal(true);
     };
 
-    const handleDelete = (user: User) => {
-        if (window.confirm(`Deseja realmente remover o acesso de ${user.full_name}?`)) {
-            deleteMutation.mutate(user.id);
+    const handleDeleteClick = (user: User) => {
+        setSelectedUser(user);
+        setShowDeleteModal(true);
+    };
+
+    const handleConfirmDelete = () => {
+        if (selectedUser) {
+            deleteMutation.mutate(selectedUser.id);
         }
     };
 
@@ -61,13 +67,13 @@ const Usuarios: React.FC = () => {
             await usuarioApi.resetPassword(user.id);
             alert(`Uma nova senha temporária foi gerada para ${user.username}.`);
         } catch (err) {
-            alert('Erro ao resetar senha. Verifique as permissões.');
+            alert('Erro ao resetar senha.');
         }
     };
 
     const handleAdd = () => {
         setSelectedUser(null);
-        setShowModal(true);
+        setShowFormModal(true);
     };
 
     if (isLoading) return (
@@ -79,7 +85,6 @@ const Usuarios: React.FC = () => {
 
     return (
         <div className="pb-5">
-            {/* Header Section */}
             <div className="d-flex justify-content-between align-items-center mb-5">
                 <div>
                     <h1 className="h3 fw-extrabold mb-1" style={{ color: '#2A3547', letterSpacing: '-0.5px' }}>
@@ -92,7 +97,6 @@ const Usuarios: React.FC = () => {
                 </Button>
             </div>
 
-            {/* Search & Stats Bar */}
             <Row className="mb-4 align-items-center">
                 <Col md={6}>
                     <InputGroup className="shadow-sm border-0" style={{ borderRadius: '10px', overflow: 'hidden' }}>
@@ -117,7 +121,6 @@ const Usuarios: React.FC = () => {
                 </Col>
             </Row>
 
-            {/* User Grid */}
             {filteredUsers.length > 0 ? (
                 <Row rowCols={1} rowColsMd={2} rowColsLg={3} className="g-4">
                     {filteredUsers.map(user => (
@@ -125,7 +128,7 @@ const Usuarios: React.FC = () => {
                             <UserCard 
                                 user={user}
                                 onEdit={handleEdit}
-                                onDelete={handleDelete}
+                                onDelete={handleDeleteClick}
                                 onResetPassword={handleResetPassword}
                             />
                         </Col>
@@ -139,13 +142,22 @@ const Usuarios: React.FC = () => {
                 </div>
             )}
 
-            {/* Form Modal */}
             <UserFormModal 
-                show={showModal}
-                onHide={() => setShowModal(false)}
+                show={showFormModal}
+                onHide={() => setShowFormModal(false)}
                 user={selectedUser}
                 onSave={(data) => saveMutation.mutate(data)}
                 isSaving={saveMutation.isPending}
+            />
+
+            <ConfirmModal 
+                show={showDeleteModal}
+                title="Remover Usuário"
+                message={`Deseja realmente remover ${selectedUser?.full_name}? Este usuário perderá o acesso ao sistema imediatamente.`}
+                onConfirm={handleConfirmDelete}
+                onCancel={() => setShowDeleteModal(false)}
+                confirmLabel="Remover"
+                cancelLabel="Cancelar"
             />
         </div>
     );

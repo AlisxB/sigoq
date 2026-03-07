@@ -1,45 +1,46 @@
 import React, { useState } from 'react';
-import { Table, Button, Card, Form, Modal, Spinner } from 'react-bootstrap';
-import { Plus, Edit2, Trash2, Search, X } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-
-interface Column<T> {
-    header: string;
-    accessor: keyof T | ((item: T) => React.ReactNode);
-}
+import { Table, Button, Modal, Form, Card, Spinner } from 'react-bootstrap';
+import { Plus, Edit, Trash2, Search } from 'lucide-react';
+import ConfirmModal from './ConfirmModal';
 
 interface GenericCRUDProps<T> {
     title: string;
     entityName: string;
+    queryKey: string;
     api: {
         list: () => Promise<T[]>;
-        create: (data: Partial<T>) => Promise<T>;
-        update: (id: number | string, data: Partial<T>) => Promise<T>;
+        create: (item: Partial<T>) => Promise<T>;
+        update: (id: number | string, item: Partial<T>) => Promise<T>;
         delete: (id: number | string) => Promise<void>;
     };
-    columns: Column<T>[];
-    renderForm: (data: Partial<T>, onChange: (field: keyof T, value: any) => void) => React.ReactNode;
+    columns: {
+        header: string;
+        accessor: keyof T | ((item: T) => React.ReactNode);
+    }[];
     initialData: Partial<T>;
-    queryKey: string;
-    renderFilters?: () => React.ReactNode;
+    renderForm: (formData: Partial<T>, handleChange: (field: keyof T, value: any) => void) => React.ReactNode;
     filterFn?: (item: T) => boolean;
+    renderFilters?: () => React.ReactNode;
 }
 
-const GenericCRUD = <T extends { id: number | string }>({
+const GenericCRUD = <T extends { id?: number | string }>({
     title,
     entityName,
+    queryKey,
     api,
     columns,
-    renderForm,
     initialData,
-    queryKey,
-    renderFilters,
-    filterFn
+    renderForm,
+    filterFn,
+    renderFilters
 }: GenericCRUDProps<T>) => {
     const queryClient = useQueryClient();
     const [searchTerm, setSearchTerm] = useState('');
     const [showModal, setShowModal] = useState(false);
-    const [editingItem, setEditingItem] = useState<Partial<T> | null>(null);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [editingItem, setEditingItem] = useState<T | null>(null);
+    const [itemToDelete, setItemToDelete] = useState<number | string | null>(null);
     const [formData, setFormData] = useState<Partial<T>>(initialData);
 
     const { data: items = [], isLoading } = useQuery({
@@ -67,6 +68,8 @@ const GenericCRUD = <T extends { id: number | string }>({
         mutationFn: api.delete,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: [queryKey] });
+            setShowDeleteModal(false);
+            setItemToDelete(null);
         }
     });
 
@@ -100,10 +103,9 @@ const GenericCRUD = <T extends { id: number | string }>({
         }
     };
 
-    const confirmDelete = (id: number | string) => {
-        if (window.confirm(`Tem certeza que deseja excluir este ${entityName}?`)) {
-            deleteMutation.mutate(id);
-        }
+    const handleDeleteClick = (id: number | string) => {
+        setItemToDelete(id);
+        setShowDeleteModal(true);
     };
 
     const filteredItems = items.filter(item => {
@@ -155,20 +157,16 @@ const GenericCRUD = <T extends { id: number | string }>({
                             <thead className="bg-light">
                                 <tr>
                                     {columns.map((col, idx) => (
-                                        <th key={idx} className="border-0 px-4 py-3" style={{ fontSize: '13px', color: '#5A6A83', fontWeight: '600' }}>
-                                            {col.header}
-                                        </th>
+                                        <th key={idx} className="border-0 px-4 py-3 text-muted small fw-bold uppercase">{col.header}</th>
                                     ))}
-                                    <th className="border-0 px-4 py-3 text-end" style={{ fontSize: '13px', color: '#5A6A83', fontWeight: '600' }}>
-                                        Ações
-                                    </th>
+                                    <th className="border-0 px-4 py-3 text-end text-muted small fw-bold">AÇÕES</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {isLoading ? (
                                     <tr>
                                         <td colSpan={columns.length + 1} className="text-center py-5">
-                                            <Spinner animation="border" variant="primary" size="sm" />
+                                            <Spinner animation="border" variant="primary" />
                                         </td>
                                     </tr>
                                 ) : filteredItems.length === 0 ? (
@@ -178,22 +176,34 @@ const GenericCRUD = <T extends { id: number | string }>({
                                         </td>
                                     </tr>
                                 ) : (
-                                    filteredItems.map(item => (
+                                    filteredItems.map((item) => (
                                         <tr key={item.id}>
                                             {columns.map((col, idx) => (
-                                                <td key={idx} className="px-4 py-3" style={{ fontSize: '14px', color: '#2A3547' }}>
-                                                    {typeof col.accessor === 'function' ? col.accessor(item) : (item[col.accessor] as any)}
+                                                <td key={idx} className="px-4 py-3 border-0 fw-medium">
+                                                    {typeof col.accessor === 'function'
+                                                        ? col.accessor(item)
+                                                        : (item[col.accessor] as any)}
                                                 </td>
                                             ))}
-                                            <td className="px-4 py-3 text-end">
-                                                <div className="d-flex justify-content-end gap-2">
-                                                    <Button variant="light" size="sm" onClick={() => handleOpen(item as T)} style={{ borderRadius: '8px', color: '#5D87FF' }}>
-                                                        <Edit2 size={16} />
-                                                    </Button>
-                                                    <Button variant="light" size="sm" onClick={() => confirmDelete(item.id)} style={{ borderRadius: '8px', color: '#FA896B' }}>
-                                                        <Trash2 size={16} />
-                                                    </Button>
-                                                </div>
+                                            <td className="px-4 py-3 border-0 text-end">
+                                                <Button
+                                                    variant="light"
+                                                    size="sm"
+                                                    className="me-2 text-primary"
+                                                    style={{ borderRadius: '8px' }}
+                                                    onClick={() => handleOpen(item)}
+                                                >
+                                                    <Edit size={16} />
+                                                </Button>
+                                                <Button
+                                                    variant="light"
+                                                    size="sm"
+                                                    className="text-danger"
+                                                    style={{ borderRadius: '8px' }}
+                                                    onClick={() => item.id && handleDeleteClick(item.id)}
+                                                >
+                                                    <Trash2 size={16} />
+                                                </Button>
                                             </td>
                                         </tr>
                                     ))
@@ -204,7 +214,7 @@ const GenericCRUD = <T extends { id: number | string }>({
                 </Card.Body>
             </Card>
 
-            <Modal show={showModal} onHide={handleClose} centered size="lg" className="modal-premium">
+            <Modal show={showModal} onHide={handleClose} centered size="lg">
                 <Modal.Header closeButton className="border-0 p-4">
                     <Modal.Title className="fw-bold">{editingItem ? `Editar ${entityName}` : `Novo ${entityName}`}</Modal.Title>
                 </Modal.Header>
@@ -212,22 +222,31 @@ const GenericCRUD = <T extends { id: number | string }>({
                     <Modal.Body className="p-4 pt-0">
                         {renderForm(formData, handleChange)}
                     </Modal.Body>
-                    <Modal.Footer className="border-0 p-4 pt-0">
-                        <Button variant="light" onClick={handleClose} className="btn-premium-secondary">
+                    <Modal.Footer className="border-0 p-4">
+                        <Button variant="light" onClick={handleClose} style={{ borderRadius: '10px' }}>
                             Cancelar
                         </Button>
                         <Button
+                            variant="primary"
                             type="submit"
+                            style={{ borderRadius: '10px' }}
                             disabled={createMutation.isPending || updateMutation.isPending}
-                            className="btn-premium-primary"
                         >
-                            {(createMutation.isPending || updateMutation.isPending) ? (
-                                <Spinner animation="border" size="sm" />
-                            ) : 'Salvar Alterações'}
+                            {editingItem ? 'Salvar Alterações' : 'Criar Registro'}
                         </Button>
                     </Modal.Footer>
                 </Form>
             </Modal>
+
+            <ConfirmModal
+                show={showDeleteModal}
+                title={`Excluir ${entityName}`}
+                message={`Tem certeza que deseja excluir este ${entityName.toLowerCase()}? Esta ação não pode ser desfeita.`}
+                onConfirm={() => itemToDelete && deleteMutation.mutate(itemToDelete)}
+                onCancel={() => setShowDeleteModal(false)}
+                confirmLabel="Excluir"
+                cancelLabel="Cancelar"
+            />
         </div>
     );
 };

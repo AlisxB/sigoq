@@ -9,12 +9,14 @@ import "react-datepicker/dist/react-datepicker.css";
 import { comercialApi } from '../api/comercial';
 import { usuarioApi } from '../api/usuarios';
 import { MetaMensal, User } from '../types';
+import ConfirmModal from '../components/ConfirmModal';
 
 registerLocale('pt-BR', ptBR);
 
 const Metas: React.FC = () => {
     const queryClient = useQueryClient();
     const [showModal, setShowModal] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [selectedMeta, setSelectedMeta] = useState<Partial<MetaMensal> | null>(null);
     const [displayValue, setDisplayValue] = useState('');
     const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
@@ -42,7 +44,11 @@ const Metas: React.FC = () => {
 
     const deleteMutation = useMutation({
         mutationFn: (id: number) => comercialApi.deleteMeta(id),
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['metas'] })
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['metas'] });
+            setShowDeleteModal(false);
+            setSelectedMeta(null);
+        }
     });
 
     const formatCurrency = (value: string) => {
@@ -60,7 +66,6 @@ const Metas: React.FC = () => {
     };
 
     const handleEdit = (meta: MetaMensal) => {
-        // Verifica se a meta é de mês passado
         const metaDate = new Date(meta.ano, meta.mes - 1);
         const today = startOfMonth(new Date());
 
@@ -75,8 +80,8 @@ const Metas: React.FC = () => {
         setShowModal(true);
     };
 
-    const handleDelete = (id: number, mes: number, ano: number) => {
-        const metaDate = new Date(ano, mes - 1);
+    const handleDeleteClick = (meta: MetaMensal) => {
+        const metaDate = new Date(meta.ano, meta.mes - 1);
         const today = startOfMonth(new Date());
 
         if (isBefore(metaDate, today)) {
@@ -84,9 +89,8 @@ const Metas: React.FC = () => {
             return;
         }
 
-        if (window.confirm('Excluir esta meta mensal?')) {
-            deleteMutation.mutate(id);
-        }
+        setSelectedMeta(meta);
+        setShowDeleteModal(true);
     };
 
     if (isLoading) return <div className="text-center py-5"><Spinner animation="border" variant="primary" /></div>;
@@ -160,7 +164,7 @@ const Metas: React.FC = () => {
                                                         <Button variant="light" className="btn-icon rounded-circle" onClick={() => handleEdit(meta)}>
                                                             <Edit size={16} className="text-primary" />
                                                         </Button>
-                                                        <Button variant="light" className="btn-icon rounded-circle" onClick={() => handleDelete(meta.id!, meta.mes, meta.ano)}>
+                                                        <Button variant="light" className="btn-icon rounded-circle" onClick={() => handleDeleteClick(meta)}>
                                                             <Trash2 size={16} className="text-danger" />
                                                         </Button>
                                                     </>
@@ -218,7 +222,7 @@ const Metas: React.FC = () => {
                                             dateFormat="MM/yyyy"
                                             showMonthYearPicker
                                             locale="pt-BR"
-                                            minDate={startOfMonth(new Date())} // Bloqueia meses passados
+                                            minDate={startOfMonth(new Date())}
                                             className="form-control modern-input"
                                             placeholderText="Selecione MM/AAAA"
                                             required
@@ -278,6 +282,16 @@ const Metas: React.FC = () => {
                 </Modal.Body>
             </Modal>
 
+            <ConfirmModal
+                show={showDeleteModal}
+                title="Excluir Meta"
+                message={`Deseja realmente excluir a meta de ${selectedMeta?.mes_nome}/${selectedMeta?.ano}? Esta ação removerá o objetivo do dashboard.`}
+                onConfirm={() => selectedMeta?.id && deleteMutation.mutate(selectedMeta.id as number)}
+                onCancel={() => setShowDeleteModal(false)}
+                confirmLabel="Excluir"
+                cancelLabel="Cancelar"
+            />
+
             <style>{`
                 .rounded-12 { border-radius: 12px !important; }
                 .rounded-16 { border-radius: 16px !important; }
@@ -301,14 +315,13 @@ const Metas: React.FC = () => {
                 .datepicker-modern-container .form-control { padding-left: 45px !important; height: 50px; }
                 .datepicker-icon { position: absolute; left: 15px; top: 25px; transform: translateY(-50%); z-index: 10; pointer-events: none; }
                 
-                /* Ajustes Críticos para o Grid de Meses */
                 .react-datepicker { 
                     font-family: 'Plus Jakarta Sans', sans-serif; 
                     border-radius: 20px; 
                     border: none; 
                     box-shadow: 0 15px 40px rgba(0,0,0,0.15); 
                     padding: 15px;
-                    width: 300px; /* Força largura mínima para o grid */
+                    width: 300px;
                 }
                 .react-datepicker__header { background-color: #fff; border-bottom: none; padding-top: 10px; }
                 .react-datepicker__current-month { color: #2A3547; font-weight: 800; font-size: 16px; margin-bottom: 15px; }
@@ -317,7 +330,7 @@ const Metas: React.FC = () => {
                 
                 .react-datepicker__month-text { 
                     display: inline-block !important;
-                    width: 28% !important; /* Garante 3 meses por linha */
+                    width: 28% !important;
                     padding: 12px 0 !important; 
                     margin: 6px 2.5% !important; 
                     font-weight: 600; 

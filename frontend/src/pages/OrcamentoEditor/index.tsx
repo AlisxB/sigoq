@@ -14,15 +14,23 @@ import BasicInfoCard from './components/BasicInfoCard';
 import KitSection from './components/KitSection';
 import PricingSummary from './components/PricingSummary';
 import ProductSearchModal from './components/ProductSearchModal';
+import ConfirmModal from '../../../components/ConfirmModal';
 
 const OrcamentoEditor: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const location = useLocation();
     const queryClient = useQueryClient();
 
     const [showSearchModal, setShowModal] = useState(false);
     const [activeKitIndex, setActiveKitIndex] = useState<number | null>(null);
+    
+    // Estados de Confirmação
+    const [confirmAction, setConfirmAction] = useState<{
+        show: boolean;
+        title: string;
+        message: string;
+        onConfirm: () => void;
+    }>({ show: false, title: '', message: '', onConfirm: () => {} });
 
     const { data: config } = useQuery({
         queryKey: ['config-preco'],
@@ -63,6 +71,30 @@ const OrcamentoEditor: React.FC = () => {
         onSuccess: (newOrc) => navigate(`/orcamento/${newOrc.id}`)
     });
 
+    const handleDeleteKit = (idx: number) => {
+        setConfirmAction({
+            show: true,
+            title: 'Excluir Kit',
+            message: `Deseja realmente remover o kit "${localOrcamento.kits?.[idx]?.nome}"? Todos os itens vinculados a ele serão excluídos.`,
+            onConfirm: () => {
+                deleteKit(idx);
+                setConfirmAction(prev => ({ ...prev, show: false }));
+            }
+        });
+    };
+
+    const handleFinalize = () => {
+        setConfirmAction({
+            show: true,
+            title: 'Finalizar Orçamento',
+            message: 'Deseja finalizar esta proposta e enviar para revisão/cliente? Após o envio, o orçamento será bloqueado para edições simples.',
+            onConfirm: () => {
+                saveMutation.mutate({ ...localOrcamento, status: 'ENVIADO' });
+                setConfirmAction(prev => ({ ...prev, show: false }));
+            }
+        });
+    };
+
     if (isFetching) return <div className="text-center py-5"><Spinner animation="border" /></div>;
 
     return (
@@ -71,7 +103,7 @@ const OrcamentoEditor: React.FC = () => {
                 id={id} 
                 orcamento={localOrcamento}
                 onSave={() => saveMutation.mutate(localOrcamento)}
-                onFinalize={() => saveMutation.mutate({ ...localOrcamento, status: 'ENVIADO' })}
+                onFinalize={handleFinalize}
                 onCreateRevision={() => revisionMutation.mutate()}
                 isSaving={saveMutation.isPending}
                 isCreatingRevision={revisionMutation.isPending}
@@ -92,7 +124,7 @@ const OrcamentoEditor: React.FC = () => {
                             kit={kit}
                             index={idx}
                             onUpdateName={updateKitName}
-                            onDeleteKit={deleteKit}
+                            onDeleteKit={handleDeleteKit}
                             onDeleteItem={deleteItem}
                             onUpdateQuantity={updateItemQuantity}
                             onSearchMaterial={(kIdx) => {
@@ -120,6 +152,16 @@ const OrcamentoEditor: React.FC = () => {
                 show={showSearchModal}
                 onHide={() => setShowModal(false)}
                 onSelect={(p) => activeKitIndex !== null && addItemToKit(activeKitIndex, p)}
+            />
+
+            <ConfirmModal 
+                show={confirmAction.show}
+                title={confirmAction.title}
+                message={confirmAction.message}
+                onConfirm={confirmAction.onConfirm}
+                onCancel={() => setConfirmAction(prev => ({ ...prev, show: false }))}
+                confirmLabel="Confirmar"
+                cancelLabel="Cancelar"
             />
         </div>
     );

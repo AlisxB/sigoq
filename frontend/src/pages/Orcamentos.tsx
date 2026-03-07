@@ -5,12 +5,15 @@ import { Container, Card, Table, Button, Badge, Spinner, Form, Row, Col, InputGr
 import { Plus, Search, Filter, Eye, Edit, Printer, Copy, Trash2, FileText } from 'lucide-react';
 import { orcamentoApi } from '../api/orcamentos';
 import { Orcamento } from '../types';
+import ConfirmModal from '../components/ConfirmModal';
 
 const Orcamentos: React.FC = () => {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [selectedOrcamento, setSelectedOrcamento] = useState<Orcamento | null>(null);
 
     const { data: orcamentos = [], isLoading } = useQuery<Orcamento[]>({
         queryKey: ['orcamentos'],
@@ -29,6 +32,8 @@ const Orcamentos: React.FC = () => {
         mutationFn: (id: number) => orcamentoApi.delete(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['orcamentos'] });
+            setShowDeleteModal(false);
+            setSelectedOrcamento(null);
         },
     });
 
@@ -51,6 +56,11 @@ const Orcamentos: React.FC = () => {
         const matchesStatus = statusFilter ? orc.status === statusFilter : true;
         return matchesSearch && matchesStatus;
     });
+
+    const handleDeleteClick = (orc: Orcamento) => {
+        setSelectedOrcamento(orc);
+        setShowDeleteModal(true);
+    };
 
     if (isLoading) return (
         <Container className="d-flex justify-content-center align-items-center" style={{ minHeight: '400px' }}>
@@ -180,11 +190,7 @@ const Orcamentos: React.FC = () => {
                                                 variant="outline-danger"
                                                 size="sm"
                                                 title="Excluir"
-                                                onClick={() => {
-                                                    if (window.confirm('Tem certeza que deseja excluir este orçamento?')) {
-                                                        deleteMutation.mutate(orc.id);
-                                                    }
-                                                }}
+                                                onClick={() => handleDeleteClick(orc)}
                                             >
                                                 <Trash2 size={14} />
                                             </Button>
@@ -202,6 +208,17 @@ const Orcamentos: React.FC = () => {
                     </tbody>
                 </Table>
             </Card>
+
+            <ConfirmModal 
+                show={showDeleteModal}
+                title="Excluir Orçamento"
+                message={`Deseja realmente excluir o orçamento ORC-${selectedOrcamento?.numero.toString().padStart(4, '0')}? Esta ação removerá permanentemente todos os kits e itens vinculados.`}
+                onConfirm={() => selectedOrcamento && deleteMutation.mutate(selectedOrcamento.id)}
+                onCancel={() => setShowDeleteModal(false)}
+                confirmLabel="Excluir"
+                cancelLabel="Cancelar"
+            />
+
             <style>{`
                 .x-small { font-size: 0.75rem; }
                 .table-modern th { 
