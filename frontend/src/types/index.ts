@@ -102,6 +102,7 @@ export interface Orcamento {
     resp_orcam: number | null;
     vendedor: number | null;
     vendedor_nome?: string;
+    prioridade?: 'BAIXA' | 'MEDIA' | 'ALTA';
     status: OrcamentoStatus;
     custo_total: string;
     valor_total: string;

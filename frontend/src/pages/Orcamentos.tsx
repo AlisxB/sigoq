@@ -50,6 +50,16 @@ const Orcamentos: React.FC = () => {
         return <Badge bg={variants[status] || 'secondary'}>{status}</Badge>;
     };
 
+    const getPriorityBadge = (priority?: string) => {
+        if (!priority) return <span className="text-muted small">---</span>;
+        const variants: Record<string, string> = {
+            'ALTA': 'danger',
+            'MEDIA': 'warning',
+            'BAIXA': 'info',
+        };
+        return <Badge pill bg={variants[priority] || 'secondary'} className="x-small">{priority}</Badge>;
+    };
+
     const filteredOrcamentos = orcamentos.filter(orc => {
         const matchesSearch = orc.numero.toString().includes(searchTerm) ||
             orc.cliente_detalhe?.razao_social.toLowerCase().includes(searchTerm.toLowerCase());
@@ -131,6 +141,7 @@ const Orcamentos: React.FC = () => {
                             <th className="ps-4">Nº Orçamento</th>
                             <th>Cliente</th>
                             <th>Vendedor</th>
+                            <th>Prioridade</th>
                             <th>Status</th>
                             <th>Valor Total</th>
                             <th className="text-end pe-4">AÇÕES</th>
@@ -163,6 +174,7 @@ const Orcamentos: React.FC = () => {
                                             <span className="fw-medium text-dark">{orc.vendedor_nome}</span>
                                         </div>
                                     </td>
+                                    <td>{getPriorityBadge(orc.prioridade)}</td>
                                     <td>{getStatusBadge(orc.status)}</td>
                                     <td className="fw-bold text-primary">
                                         R$ {parseFloat(orc.valor_total).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
@@ -212,7 +224,7 @@ const Orcamentos: React.FC = () => {
                             ))
                         ) : (
                             <tr>
-                                <td colSpan={6} className="text-center py-5 text-muted">
+                                <td colSpan={7} className="text-center py-5 text-muted">
                                     Nenhum orçamento encontrado para os critérios de busca.
                                 </td>
                             </tr>
