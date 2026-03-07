@@ -106,22 +106,40 @@ class OrcamentoViewSet(viewsets.ModelViewSet):
             pipeline_ativo = float(pipeline_ativo_qs.aggregate(total=Sum('valor_estimado'))['total'] or 0)
 
             # --- 2. GRÁFICOS DE TENDÊNCIA E MIX ---
-            # Evolução Mensal (Últimos 6 meses)
-            seis_meses_atras = now - timezone.timedelta(days=180)
-            evolucao = qs_all.filter(
-                status='APROVADO', 
-                atualizado_em__gte=seis_meses_atras
-            ).annotate(month=TruncMonth('atualizado_em')) \
-             .values('month') \
-             .annotate(total=Sum('valor_total')) \
-             .order_by('month')
-            
+            periodo = request.query_params.get('periodo', 'mes') # dia, mes, ano
+
+            from django.db.models.functions import TruncDay, TruncMonth, TruncYear
+
+            evolucao_qs = qs_all.filter(status='APROVADO')
+
+            if periodo == 'dia':
+                # Dias do mês vigente
+                evolucao_qs = evolucao_qs.filter(atualizado_em__month=now.month, atualizado_em__year=now.year)
+                trunc_fn = TruncDay('atualizado_em')
+                date_format = '%d/%m'
+            elif periodo == 'ano':
+                # Últimos 10 anos
+                dez_anos_atras = now.year - 10
+                evolucao_qs = evolucao_qs.filter(atualizado_em__year__gte=dez_anos_atras)
+                trunc_fn = TruncYear('atualizado_em')
+                date_format = '%Y'
+            else:
+                # Meses do ano vigente (default)
+                evolucao_qs = evolucao_qs.filter(atualizado_em__year=now.year)
+                trunc_fn = TruncMonth('atualizado_em')
+                date_format = '%b/%y'
+
+            evolucao = evolucao_qs.annotate(period=trunc_fn) \
+                .values('period') \
+                .annotate(total=Sum('valor_total')) \
+                .order_by('period')
+
             evolucao_list = [{
-                'mes': e['month'].strftime('%b/%y'),
+                'label': e['period'].strftime(date_format),
                 'total': float(e['total'])
             } for e in evolucao]
 
-            # Mix por Categoria
+            # Mix por Categoria (Baseado em orçamentos ENVIADOS e APROVADOS)
             categorias_raw = ItemOrcamento.objects.filter(
                 kit__orcamento__in=qs_all.filter(status__in=['APROVADO', 'ENVIADO'])
             ).values('produto__categoria__nome').annotate(

@@ -199,7 +199,7 @@ export interface AnalyticsData {
         em_revisao: number;
     };
     charts: {
-        evolucao_mensal: { mes: string; total: number }[];
+        evolucao_mensal: { label: string; total: number }[];
         mix_categorias: { label: string; value: number }[];
         origem_leads: { label: string; value: number }[];
         motivos_perda: { label: string; value: number }[];

@@ -1,11 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Row, Col, Card, Button, Spinner, Table, Badge } from 'react-bootstrap';
+import { Row, Col, Card, Button, Spinner, Table, Badge, Dropdown } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import {
     TrendingUp, ShoppingBag, Award, MoreHorizontal,
     DollarSign, BarChart3, PieChart, Users, AlertTriangle, ArrowRight,
-    ExternalLink, Briefcase
+    ExternalLink, Briefcase, Filter, Calendar
 } from 'lucide-react';
 import { analyticsApi } from '../../../api/analytics';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -19,6 +19,7 @@ const AdminDashboardView: React.FC = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
+    const [evolutionPeriod, setEvolutionPeriod] = useState<'dia' | 'mes' | 'ano'>('mes');
 
     const { data: funnelData, isLoading: isLoadingFunnel } = useQuery({
         queryKey: ['analytics-funnel'],
@@ -27,8 +28,8 @@ const AdminDashboardView: React.FC = () => {
     });
 
     const { data: financeData, isLoading: isLoadingFinance } = useQuery({
-        queryKey: ['analytics-finance'],
-        queryFn: analyticsApi.getFinance,
+        queryKey: ['analytics-finance', evolutionPeriod],
+        queryFn: () => analyticsApi.getFinance({ periodo: evolutionPeriod }),
         staleTime: 1000 * 60 * 5,
     });
 
@@ -56,7 +57,7 @@ const AdminDashboardView: React.FC = () => {
         if (!financeData || !financeData.charts) return { series: [], categories: [] };
         return {
             series: [{ name: 'Faturamento', data: financeData.charts.evolucao_mensal.map(e => e.total) }],
-            categories: financeData.charts.evolucao_mensal.map(e => e.mes)
+            categories: financeData.charts.evolucao_mensal.map(e => e.label)
         };
     }, [financeData]);
 
@@ -166,9 +167,25 @@ const AdminDashboardView: React.FC = () => {
                         <div className="d-flex justify-content-between align-items-center mb-4">
                             <div>
                                 <h3 className="h5 fw-bold mb-0">Evolução de Faturamento</h3>
-                                <p className="text-muted small mb-0">Desempenho de vendas aprovadas nos últimos 6 meses.</p>
+                                <p className="text-muted small mb-0">Visualização por {evolutionPeriod === 'dia' ? 'Dia' : evolutionPeriod === 'mes' ? 'Mês' : 'Ano'}.</p>
                             </div>
-                            <Button variant="light" size="sm" className="rounded-8 border"><BarChart3 size={16} /></Button>
+                            <Dropdown align="end">
+                                <Dropdown.Toggle as={Button} variant="light" size="sm" className="rounded-8 border d-flex align-items-center p-2">
+                                    <Filter size={18} className="text-muted" />
+                                </Dropdown.Toggle>
+                                <Dropdown.Menu className="shadow border-0 rounded-12">
+                                    <Dropdown.Header className="x-small fw-bold">PERÍODO</Dropdown.Header>
+                                    <Dropdown.Item onClick={() => setEvolutionPeriod('dia')} className="small fw-medium d-flex align-items-center gap-2">
+                                        <Calendar size={14} /> Dia (Mês Vigente)
+                                    </Dropdown.Item>
+                                    <Dropdown.Item onClick={() => setEvolutionPeriod('mes')} className="small fw-medium d-flex align-items-center gap-2">
+                                        <Calendar size={14} /> Mês (Ano Vigente)
+                                    </Dropdown.Item>
+                                    <Dropdown.Item onClick={() => setEvolutionPeriod('ano')} className="small fw-medium d-flex align-items-center gap-2">
+                                        <Calendar size={14} /> Ano (Últimos 10 anos)
+                                    </Dropdown.Item>
+                                </Dropdown.Menu>
+                            </Dropdown>
                         </div>
                         <div style={{ height: '350px' }}>
                             <AreaChart 
