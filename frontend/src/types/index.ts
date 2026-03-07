@@ -158,6 +158,8 @@ export interface Oportunidade {
     vendedor_nome?: string;
     criado_em?: string;
     total_arquivos?: number;
+    motivo_perda?: string;
+    detalhes_perda?: string;
 }
 
 export interface ArquivoOportunidade {

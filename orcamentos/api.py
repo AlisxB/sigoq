@@ -57,7 +57,15 @@ class OrcamentoViewSet(viewsets.ModelViewSet):
         from comercial.models import MetaMensal, Oportunidade
         
         try:
+            user = request.user
             now = timezone.now()
+            
+            # Verificação de privilégios para visão global
+            is_privileged = user.is_superuser or user.is_staff or (
+                hasattr(user, 'perfil') and 
+                user.perfil.cargo in ['ADMIN', 'GERENTE', 'ORCAMENTISTA']
+            )
+            
             qs_all = self.get_queryset() # Respeita isolamento se não for admin
             
             # --- 1. MÉTRICAS DE TOPO (KPIs) ---
@@ -72,6 +80,9 @@ class OrcamentoViewSet(viewsets.ModelViewSet):
                 atualizado_em__month=now.month,
                 atualizado_em__year=now.year
             )
+            if not is_privileged:
+                vendas_mes_qs = vendas_mes_qs.filter(vendedor=user)
+                
             vendas_mes = float(vendas_mes_qs.aggregate(total=Sum('valor_estimado'))['total'] or 0)
 
             meta_obj = MetaMensal.objects.filter(mes=now.month, ano=now.year, vendedor=request.user).first()
@@ -86,10 +97,13 @@ class OrcamentoViewSet(viewsets.ModelViewSet):
             ticket_medio = float(ticket_data.get('avg') or 0)
             total_aprovados = ticket_data.get('count') or 0
 
-            # Valor do Pipeline Ativo (Tudo que não está aprovado/reprovado/cancelado)
-            pipeline_ativo = float(qs_all.filter(
-                status__in=['RASCUNHO', 'ELABORACAO', 'REVISAO', 'ENVIADO']
-            ).aggregate(total=Sum('valor_total'))['total'] or 0)
+            # Valor do Pipeline Ativo (Soma das Oportunidades que não estão Ganhas/Perdidas)
+            pipeline_ativo_qs = Oportunidade.objects.exclude(status_id__in=[5, 6])
+            # Se não for admin/gerente/orçamentista, vê apenas suas próprias OPs
+            if not is_privileged:
+                pipeline_ativo_qs = pipeline_ativo_qs.filter(vendedor=request.user)
+            
+            pipeline_ativo = float(pipeline_ativo_qs.aggregate(total=Sum('valor_estimado'))['total'] or 0)
 
             # --- 2. GRÁFICOS DE TENDÊNCIA E MIX ---
             # Evolução Mensal (Últimos 6 meses)
@@ -109,7 +123,7 @@ class OrcamentoViewSet(viewsets.ModelViewSet):
 
             # Mix por Categoria
             categorias_raw = ItemOrcamento.objects.filter(
-                kit__orcamento__in=qs_all.filter(status='APROVADO')
+                kit__orcamento__in=qs_all.filter(status__in=['APROVADO', 'ENVIADO'])
             ).values('produto__categoria__nome').annotate(
                 total=Sum('quantidade')
             ).order_by('-total')[:5]
@@ -130,17 +144,21 @@ class OrcamentoViewSet(viewsets.ModelViewSet):
                 'value': item['count']
             } for item in origens_raw]
 
-            # Motivos de Perda
-            motivos_raw = qs_all.filter(status='REPROVADO').exclude(motivo_rejeicao='') \
-                .values('motivo_rejeicao').annotate(count=Count('id')).order_by('-count')[:5]
+            # Motivos de Perda (Baseado nas Oportunidades Perdidas)
+            motivos_dict = dict(Oportunidade.MOTIVO_PERDA_CHOICES)
+            motivos_raw = Oportunidade.objects.filter(
+                id__in=qs_all.values_list('oportunidade_id', flat=True),
+                status_id=6 # Status 'PERDIDO'
+            ).exclude(motivo_perda__isnull=True).exclude(motivo_perda='') \
+             .values('motivo_perda').annotate(count=Count('id')).order_by('-count')[:5]
             
             motivos_perda = [{
-                'label': item['motivo_rejeicao'][:30],
+                'label': motivos_dict.get(item['motivo_perda'], item['motivo_perda']),
                 'value': item['count']
             } for item in motivos_raw]
 
             # Ranking de Clientes (Pareto - Top 10)
-            ranking_clientes = qs_all.filter(status='APROVADO') \
+            ranking_clientes = qs_all.filter(status__in=['APROVADO', 'ENVIADO']) \
                 .values('cliente__razao_social', 'cliente__nome_fantasia') \
                 .annotate(total=Sum('valor_total')) \
                 .order_by('-total')[:10]
