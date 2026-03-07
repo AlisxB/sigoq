@@ -15,6 +15,7 @@ import KitSection from './components/KitSection';
 import PricingSummary from './components/PricingSummary';
 import ProductSearchModal from './components/ProductSearchModal';
 import ConfirmModal from '../../components/ConfirmModal';
+import OpportunityFileManager from '../../components/OpportunityFileManager';
 
 const OrcamentoEditor: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -22,6 +23,7 @@ const OrcamentoEditor: React.FC = () => {
     const queryClient = useQueryClient();
 
     const [showSearchModal, setShowModal] = useState(false);
+    const [fileManagerShow, setFileManagerShow] = useState(false);
     const [activeKitIndex, setActiveKitIndex] = useState<number | null>(null);
     
     // Estados de Confirmação
@@ -98,70 +100,88 @@ const OrcamentoEditor: React.FC = () => {
     if (isFetching) return <div className="text-center py-5"><Spinner animation="border" /></div>;
 
     return (
-        <div className="pb-5">
-            <EditorHeader 
-                id={id} 
+        <div className="p-4" style={{ backgroundColor: '#F2F6FA', minHeight: '100vh' }}>
+            <EditorHeader
+                id={id}
                 orcamento={localOrcamento}
                 onSave={() => saveMutation.mutate(localOrcamento)}
                 onFinalize={handleFinalize}
                 onCreateRevision={() => revisionMutation.mutate()}
+                onOpenFiles={() => setFileManagerShow(true)}
                 isSaving={saveMutation.isPending}
                 isCreatingRevision={revisionMutation.isPending}
             />
 
             <Row>
                 <Col lg={8}>
-                    <BasicInfoCard 
+                    <BasicInfoCard
                         orcamento={localOrcamento}
                         clientes={clientes}
                         vendedores={vendedores}
                         onUpdate={updateBasicInfo}
                     />
 
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                        <h5 className="fw-bold mb-0">Estrutura de Kits</h5>
+                        <Button variant="primary" size="sm" onClick={addKit} className="rounded-pill px-3">
+                            <Plus size={16} className="me-1" /> Adicionar Kit
+                        </Button>
+                    </div>
+
                     {localOrcamento.kits?.map((kit, idx) => (
-                        <KitSection 
+                        <KitSection
                             key={idx}
                             kit={kit}
                             index={idx}
-                            onUpdateName={updateKitName}
-                            onDeleteKit={handleDeleteKit}
-                            onDeleteItem={deleteItem}
-                            onUpdateQuantity={updateItemQuantity}
-                            onSearchMaterial={(kIdx) => {
-                                setActiveKitIndex(kIdx);
+                            onUpdateName={(name) => updateKitName(idx, name)}
+                            onDelete={() => handleDeleteKit(idx)}
+                            onAddItem={() => {
+                                setActiveKitIndex(idx);
                                 setShowModal(true);
                             }}
+                            onDeleteItem={(itemIdx) => deleteItem(idx, itemIdx)}
+                            onUpdateQuantity={(itemIdx, qty) => updateItemQuantity(idx, itemIdx, qty)}
                         />
                     ))}
-
-                    <Button variant="outline-primary" className="w-100 border-dashed py-3 mb-4 shadow-sm fw-bold" onClick={addKit}>
-                        <Plus size={18} className="me-2" /> Adicionar Novo Kit de Materiais
-                    </Button>
                 </Col>
 
                 <Col lg={4}>
-                    <PricingSummary 
-                        id={id}
+                    <PricingSummary
                         orcamento={localOrcamento}
+                        config={config?.[0]}
                         onRecalculate={recalculate}
                     />
                 </Col>
             </Row>
 
-            <ProductSearchModal 
+            <ProductSearchModal
                 show={showSearchModal}
                 onHide={() => setShowModal(false)}
-                onSelect={(p) => activeKitIndex !== null && addItemToKit(activeKitIndex, p)}
+                onSelect={(produto) => {
+                    if (activeKitIndex !== null) {
+                        addItemToKit(activeKitIndex, produto);
+                        setShowModal(false);
+                    }
+                }}
             />
 
-            <ConfirmModal 
+            {/* Gerenciador de Arquivos */}
+            {localOrcamento.oportunidade && (
+                <OpportunityFileManager 
+                    show={fileManagerShow}
+                    onHide={() => setFileManagerShow(false)}
+                    oportunidadeId={localOrcamento.oportunidade}
+                    oportunidadeTitulo={localOrcamento.cliente_detalhe?.razao_social || 'Oportunidade'}
+                    readonly={true}
+                />
+            )}
+
+            <ConfirmModal
                 show={confirmAction.show}
                 title={confirmAction.title}
                 message={confirmAction.message}
                 onConfirm={confirmAction.onConfirm}
                 onCancel={() => setConfirmAction(prev => ({ ...prev, show: false }))}
-                confirmLabel="Confirmar"
-                cancelLabel="Cancelar"
             />
         </div>
     );

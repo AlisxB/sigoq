@@ -3,18 +3,26 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Container, Row, Col, Card, Badge, Button, Spinner, Dropdown, InputGroup } from 'react-bootstrap';
-import { Plus, MoreVertical, DollarSign, Calendar, User, Search, Briefcase, Building, Flag, ListTodo, Lock } from 'lucide-react';
+import { 
+    Plus, MoreVertical, DollarSign, Calendar, User, Search, 
+    Briefcase, Building, Flag, ListTodo, Lock, Paperclip 
+} from 'lucide-react';
 import { comercialApi } from '../api/comercial';
 import { clienteApi } from '../api/clientes';
 import { useAuth } from '../contexts/AuthContext';
 import { Oportunidade, StatusOportunidade, Cliente } from '../types';
 import { Modal, Form } from 'react-bootstrap';
 import { maskCurrency, unmaskCurrency } from '../utils/masks';
+import OpportunityFileManager from '../components/OpportunityFileManager';
 
 const Kanban: React.FC = () => {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const { user: currentUser } = useAuth();
+
+    // Estados para o Gerenciador de Arquivos
+    const [fileManagerShow, setFileManagerShow] = useState(false);
+    const [selectedOpForFiles, setSelectedOpForFiles] = useState<{id: number, titulo: string} | null>(null);
 
     const { data: statusList = [], isLoading: loadingStatus } = useQuery<StatusOportunidade[]>({
         queryKey: ['kanban-status'],
@@ -74,10 +82,14 @@ const Kanban: React.FC = () => {
 
     const createMutation = useMutation({
         mutationFn: (data: Partial<Oportunidade>) => comercialApi.create(data),
-        onSuccess: () => {
+        onSuccess: (newOp) => {
             queryClient.invalidateQueries({ queryKey: ['kanban-ops'] });
             setShowModal(false);
             setFormData({ titulo: '', valor_estimado: '0.00', prioridade: 'MEDIA', fonte: 'SITE' });
+            
+            // Abrir o gerenciador de arquivos para que o comercial anexe os documentos imediatamente
+            setSelectedOpForFiles({ id: newOp.id, titulo: newOp.titulo });
+            setFileManagerShow(true);
         }
     });
 
@@ -182,6 +194,15 @@ const Kanban: React.FC = () => {
                                                                                     onClick={() => navigate(`/novo-orcamento?oportunidade=${op.id}&cliente=${op.cliente}`)}
                                                                                 >
                                                                                     Gerar Orçamento
+                                                                                </Dropdown.Item>
+                                                                                <Dropdown.Item
+                                                                                    className="small d-flex align-items-center gap-2"
+                                                                                    onClick={() => {
+                                                                                        setSelectedOpForFiles({ id: op.id, titulo: op.titulo });
+                                                                                        setFileManagerShow(true);
+                                                                                    }}
+                                                                                >
+                                                                                    <Paperclip size={14} /> Arquivos ({op.total_arquivos || 0})
                                                                                 </Dropdown.Item>
                                                                                 <Dropdown.Item className="small" onClick={() => window.open(`http://localhost:8000/comercial/api/oportunidade/${op.id}/pdf/`, '_blank')}>
                                                                                     Gerar Proposta PDF
@@ -360,6 +381,21 @@ const Kanban: React.FC = () => {
                     </Button>
                 </Modal.Footer>
             </Modal>
+
+            {/* Gerenciador de Arquivos */}
+            {selectedOpForFiles && (
+                <OpportunityFileManager 
+                    show={fileManagerShow}
+                    onHide={() => {
+                        setFileManagerShow(false);
+                        setSelectedOpForFiles(null);
+                        queryClient.invalidateQueries({ queryKey: ['kanban-ops'] });
+                    }}
+                    oportunidadeId={selectedOpForFiles.id}
+                    oportunidadeTitulo={selectedOpForFiles.titulo}
+                />
+            )}
+
             <style>{`
                 .rounded-12 { border-radius: 12px !important; }
                 .kanban-wrapper::-webkit-scrollbar {

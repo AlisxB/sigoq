@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button, Badge } from 'react-bootstrap';
-import { ArrowLeft, Save, Copy, Send } from 'lucide-react';
+import { ArrowLeft, Save, Copy, Send, Paperclip } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Orcamento } from '../../../types';
 
@@ -10,12 +10,13 @@ interface EditorHeaderProps {
     onSave: () => void;
     onFinalize: () => void;
     onCreateRevision: () => void;
+    onOpenFiles: () => void;
     isSaving: boolean;
     isCreatingRevision: boolean;
 }
 
 const EditorHeader: React.FC<EditorHeaderProps> = ({
-    id, orcamento, onSave, onFinalize, onCreateRevision, isSaving, isCreatingRevision
+    id, orcamento, onSave, onFinalize, onCreateRevision, onOpenFiles, isSaving, isCreatingRevision
 }) => {
     const navigate = useNavigate();
 
@@ -33,6 +34,16 @@ const EditorHeader: React.FC<EditorHeaderProps> = ({
                 )}
             </div>
             <div className="d-flex align-items-center gap-2">
+                {orcamento.oportunidade && (
+                    <Button
+                        variant="light"
+                        className="d-flex align-items-center text-primary fw-bold"
+                        onClick={onOpenFiles}
+                    >
+                        <Paperclip size={18} className="me-2" />
+                        Anexos Técnicos ({orcamento.total_arquivos || 0})
+                    </Button>
+                )}
                 {id && (
                     <>
                         <Button

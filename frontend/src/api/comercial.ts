@@ -1,5 +1,5 @@
 import api from './client';
-import { Oportunidade, StatusOportunidade, MetaMensal } from '../types';
+import { Oportunidade, StatusOportunidade, MetaMensal, ArquivoOportunidade } from '../types';
 
 export const comercialApi = {
     // Oportunidades
@@ -15,6 +15,23 @@ export const comercialApi = {
     update: (id: string | number, data: Partial<Oportunidade>): Promise<Oportunidade> => api.put(`comercial/api/oportunidades/${id}/`, data).then(res => res.data),
     delete: (id: string | number): Promise<void> => api.delete(`comercial/api/oportunidades/${id}/`).then(res => res.data),
     updateStatus: (id: number, statusId: number): Promise<any> => api.post('comercial/api/oportunidade/update-status/', { id, status_id: statusId }),
+
+    // Arquivos
+    listArquivos: (oportunidadeId: number): Promise<ArquivoOportunidade[]> => 
+        api.get(`comercial/api/oportunidades/${oportunidadeId}/arquivos/`).then(res => res.data),
+    
+    uploadArquivos: (oportunidadeId: number, files: File[], paths: string[]): Promise<ArquivoOportunidade[]> => {
+        const formData = new FormData();
+        files.forEach(file => formData.append('files', file));
+        paths.forEach(path => formData.append('paths[]', path));
+        
+        return api.post(`comercial/api/oportunidades/${oportunidadeId}/upload_arquivos/`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        }).then(res => res.data);
+    },
+    
+    deleteArquivo: (arquivoId: number): Promise<void> => 
+        api.delete(`comercial/api/arquivos/${arquivoId}/`).then(res => res.data),
 
     // Status
     listStatus: (): Promise<StatusOportunidade[]> => api.get('comercial/api/status/').then(res => {

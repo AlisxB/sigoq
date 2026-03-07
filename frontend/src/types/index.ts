@@ -157,6 +157,20 @@ export interface Oportunidade {
     vendedor: number | null;
     vendedor_nome?: string;
     criado_em?: string;
+    total_arquivos?: number;
+}
+
+export interface ArquivoOportunidade {
+    id: number;
+    oportunidade: number;
+    arquivo: string;
+    nome_original: string;
+    caminho_relativo: string;
+    extensao: string;
+    tamanho: number;
+    criado_em: string;
+    enviado_por?: number;
+    enviado_por_nome?: string;
 }
 
 export interface MetaMensal {

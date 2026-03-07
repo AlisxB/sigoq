@@ -128,3 +128,32 @@ class Oportunidade(BaseModel):
             # Perdido (ID 6 no sistema padrão)
             elif self.status.id == 6:
                 Orcamento.objects.filter(oportunidade_id=self.id).update(status='REPROVADO')
+
+def upload_path_oportunidade(instance, filename):
+    return f'oportunidades/OP_{instance.oportunidade.numero:04d}/{filename}'
+
+class ArquivoOportunidade(models.Model):
+    oportunidade = models.ForeignKey(Oportunidade, on_delete=models.CASCADE, related_name='arquivos')
+    arquivo = models.FileField(upload_to=upload_path_oportunidade)
+    nome_original = models.CharField(max_length=255)
+    caminho_relativo = models.CharField(max_length=500, default="", help_text="Preserva a estrutura de pastas original")
+    extensao = models.CharField(max_length=15, blank=True)
+    tamanho = models.BigIntegerField(default=0, help_text="Tamanho em bytes")
+    criado_em = models.DateTimeField(auto_now_add=True)
+    enviado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Arquivo da Oportunidade"
+        verbose_name_plural = "Arquivos da Oportunidade"
+        ordering = ['caminho_relativo', 'nome_original']
+
+    def __str__(self):
+        return f"{self.caminho_relativo}{self.nome_original}"
+
+    def save(self, *args, **kwargs):
+        if not self.extensao and self.arquivo:
+            import os
+            self.extensao = os.path.splitext(self.arquivo.name)[1].lower()
+        if not self.tamanho and self.arquivo:
+            self.tamanho = self.arquivo.size
+        super().save(*args, **kwargs)
