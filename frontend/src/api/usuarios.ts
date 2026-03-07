@@ -11,6 +11,7 @@ export const usuarioApi = {
     login: (credentials: any): Promise<User> => api.post('usuarios/api/auth/login/', credentials).then(res => res.data),
     logout: (): Promise<void> => api.post('usuarios/api/auth/logout/').then(res => res.data),
     me: (): Promise<User> => api.get('usuarios/api/auth/me/').then(res => res.data),
+    changePassword: (data: any): Promise<any> => api.post('usuarios/api/auth/change_password/', data).then(res => res.data),
     
     resetPassword: (id: string | number): Promise<any> => api.post(`usuarios/api/users/${id}/reset_password/`).then(res => res.data),
 };

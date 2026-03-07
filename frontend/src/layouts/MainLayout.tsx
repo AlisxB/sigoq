@@ -174,13 +174,20 @@ const MainLayout: React.FC = () => {
                 </div>
 
                 {/* User Card - Bottom */}
-                <div style={{
-                    backgroundColor: 'rgba(93, 135, 255, 0.08)',
-                    borderRadius: '20px',
-                    padding: isExpanded ? '15px' : '10px',
-                    display: 'flex',
-                    justifyContent: isExpanded ? 'flex-start' : 'center'
-                }}>
+                <Link 
+                    to="/perfil"
+                    className="text-decoration-none"
+                    style={{
+                        backgroundColor: 'rgba(93, 135, 255, 0.08)',
+                        borderRadius: '20px',
+                        padding: isExpanded ? '15px' : '10px',
+                        display: 'flex',
+                        justifyContent: isExpanded ? 'flex-start' : 'center',
+                        transition: 'background-color 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(93, 135, 255, 0.15)'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(93, 135, 255, 0.08)'}
+                >
                     <div className={`d-flex align-items-center ${isExpanded ? 'gap-3 w-100' : 'justify-content-center'}`}>
                         <div style={{
                             width: '38px', height: '38px', borderRadius: '50%', backgroundColor: '#5D87FF',
@@ -195,7 +202,7 @@ const MainLayout: React.FC = () => {
                                     <p className="mb-0 text-muted" style={{ fontSize: '10px' }}>{user?.role}</p>
                                 </div>
                                 <div 
-                                    onClick={handleLogoutClick}
+                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleLogoutClick(); }}
                                     title="Sair do sistema"
                                     style={{ 
                                         cursor: 'pointer', 
@@ -204,7 +211,7 @@ const MainLayout: React.FC = () => {
                                         borderRadius: '8px',
                                         transition: 'background-color 0.2s'
                                     }}
-                                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(93, 135, 255, 0.1)'}
+                                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(93, 135, 255, 0.2)'}
                                     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                                 >
                                     <LogOut size={18} color="#5D87FF" />
@@ -213,7 +220,7 @@ const MainLayout: React.FC = () => {
                         )}
                         {!isExpanded && (
                             <div 
-                                onClick={handleLogoutClick}
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleLogoutClick(); }}
                                 title="Sair do sistema"
                                 style={{ 
                                     cursor: 'pointer', 
@@ -222,14 +229,14 @@ const MainLayout: React.FC = () => {
                                     borderRadius: '8px',
                                     transition: 'background-color 0.2s'
                                 }}
-                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(93, 135, 255, 0.1)'}
+                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(93, 135, 255, 0.2)'}
                                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                             >
                                 <LogOut size={18} color="#5D87FF" />
                             </div>
                         )}
                     </div>
-                </div>
+                </Link>
             </aside>
 
             {/* Main Content Area */}
@@ -269,10 +276,10 @@ const MainLayout: React.FC = () => {
                             <Bell size={22} color="#5A6A83" style={{ cursor: 'pointer' }} />
                         </div>
 
-                        <div 
-                            className="d-flex align-items-center gap-2 ps-2" 
+                        <Link 
+                            to="/perfil"
+                            className="d-flex align-items-center gap-2 ps-2 text-decoration-none" 
                             style={{ cursor: 'pointer' }}
-                            onClick={handleLogoutClick}
                         >
                             <div className="d-none d-lg-block text-end">
                                 <p className="mb-0 fw-bold small" style={{ color: '#2A3547' }}>{user?.first_name} {user?.last_name}</p>
@@ -288,9 +295,20 @@ const MainLayout: React.FC = () => {
                                 justifyContent: 'center',
                                 color: '#5D87FF',
                                 fontWeight: 'bold',
+                                overflow: 'hidden'
                             }}>
-                                {user?.first_name?.charAt(0)}{user?.last_name?.charAt(0)}
+                                {user?.avatar_url ? (
+                                    <img src={user.avatar_url} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                ) : (
+                                    `${user?.first_name?.charAt(0)}${user?.last_name?.charAt(0)}`
+                                )}
                             </div>
+                        </Link>
+                        <div 
+                            className="p-2 cursor-pointer" 
+                            onClick={handleLogoutClick}
+                            title="Sair do sistema"
+                        >
                             <LogOut size={14} color="#5A6A83" />
                         </div>
                     </div>

@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import MainLayout from './layouts/MainLayout'
 import Dashboard from './pages/Dashboard'
+import Perfil from './pages/Perfil'
 import OrcamentoEditor from './pages/OrcamentoEditor'
 import Orcamentos from './pages/Orcamentos'
 import Login from './pages/Login'
@@ -37,6 +38,7 @@ const App: React.FC = () => {
             <Route element={<ProtectedRoute />}>
               <Route path="/" element={<MainLayout />}>
                 <Route index element={<Dashboard />} />
+                <Route path="perfil" element={<Perfil />} />
 
                 {/* Engenharia / Orçamentos */}
                 <Route element={<ProtectedRoute allowedRoles={['ADMIN', 'ORCAMENTISTA']} />}>

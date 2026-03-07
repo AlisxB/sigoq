@@ -8,6 +8,8 @@ export interface User {
     full_name?: string;
     email?: string;
     role: Role;
+    celular?: string;
+    avatar_url?: string;
 }
 
 export interface Cliente {

@@ -71,3 +71,19 @@ class AuthViewSet(viewsets.ViewSet):
             serializer = UserSerializer(request.user, context={'request': request})
             return Response(serializer.data)
         return Response({'detail': 'Não autenticado'}, status=status.HTTP_401_UNAUTHORIZED)
+
+    @action(detail=False, methods=['post'])
+    def change_password(self, request):
+        if not request.user.is_authenticated:
+            return Response({'detail': 'Não autenticado'}, status=status.HTTP_401_UNAUTHORIZED)
+            
+        old_password = request.data.get('old_password')
+        new_password = request.data.get('new_password')
+        
+        if not request.user.check_password(old_password):
+            return Response({'detail': 'Senha atual incorreta'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        request.user.set_password(new_password)
+        request.user.save()
+        auth_login(request, request.user) # Re-login para manter a sessão
+        return Response({'detail': 'Senha alterada com sucesso'})
