@@ -122,9 +122,9 @@ const OrcamentoEditor: React.FC = () => {
                     />
 
                     <div className="d-flex justify-content-between align-items-center mb-3">
-                        <h5 className="fw-bold mb-0">Estrutura de Kits</h5>
-                        <Button variant="primary" size="sm" onClick={addKit} className="rounded-pill px-3">
-                            <Plus size={16} className="me-1" /> Adicionar Kit
+                        <h5 className="fw-bold mb-0" style={{ color: 'var(--text-primary)' }}>Estrutura de Kits</h5>
+                        <Button variant="primary" size="sm" onClick={addKit} className="rounded-pill px-4 fw-bold shadow-sm">
+                            <Plus size={16} className="me-1" /> ADICIONAR CONJUNTO
                         </Button>
                     </div>
 

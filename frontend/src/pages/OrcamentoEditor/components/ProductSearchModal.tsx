@@ -51,26 +51,29 @@ const ProductSearchModal: React.FC<ProductSearchModalProps> = ({ show, onHide, o
 
     return (
         <Modal show={show} onHide={onHide} size="lg" centered className="modal-premium">
-            <Modal.Header closeButton className="border-0">
-                <Modal.Title className="fw-bold d-flex align-items-center">
-                    <Compass size={24} className="text-primary me-2" />
-                    Buscar Materiais
+            <Modal.Header closeButton className="border-0 px-4 pt-4">
+                <Modal.Title className="fw-bold d-flex align-items-center" style={{ color: 'var(--text-primary)' }}>
+                    <div className="bg-primary-light p-2 rounded-12 me-3 text-primary">
+                        <Compass size={24} />
+                    </div>
+                    Catálogo de Materiais
                 </Modal.Title>
             </Modal.Header>
             <Modal.Body className="p-4">
                 <Row className="g-3 mb-4">
                     <Col md={12}>
-                        <InputGroup className="shadow-sm">
-                            <InputGroup.Text className="bg-white border-end-0">
+                        <InputGroup className="shadow-sm rounded-12 overflow-hidden border">
+                            <InputGroup.Text className="bg-white border-0 ps-3">
                                 <Search size={20} className="text-muted" />
                             </InputGroup.Text>
                             <Form.Control
                                 size="lg"
-                                className="border-start-0 ps-0 text-dark"
-                                placeholder="Digite o código ou descrição do material..."
+                                className="border-0 shadow-none ps-0 text-dark"
+                                placeholder="Código ou descrição..."
                                 autoFocus
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
+                                style={{ fontSize: '1rem' }}
                             />
                         </InputGroup>
                     </Col>
@@ -79,10 +82,10 @@ const ProductSearchModal: React.FC<ProductSearchModalProps> = ({ show, onHide, o
                             <Form.Label className="small fw-bold text-muted d-flex align-items-center">
                                 <Filter size={14} className="me-1" /> Categoria
                             </Form.Label>
-                            <InputGroup>
-                                <InputGroup.Text className="bg-light border-end-0"><Layers size={18} className="text-muted" /></InputGroup.Text>
+                            <InputGroup className="rounded-12 overflow-hidden border">
+                                <InputGroup.Text className="bg-light border-0"><Layers size={18} className="text-muted" /></InputGroup.Text>
                                 <Form.Select
-                                    className="text-dark border-start-0"
+                                    className="text-dark border-0 shadow-none bg-light"
                                     value={selCategoria || ''}
                                     onChange={(e) => setSelCategoria(e.target.value ? parseInt(e.target.value) : undefined)}
                                 >
@@ -97,10 +100,10 @@ const ProductSearchModal: React.FC<ProductSearchModalProps> = ({ show, onHide, o
                             <Form.Label className="small fw-bold text-muted d-flex align-items-center">
                                 <Compass size={14} className="me-1" /> Fabricante
                             </Form.Label>
-                            <InputGroup>
-                                <InputGroup.Text className="bg-light border-end-0"><Compass size={18} className="text-muted" /></InputGroup.Text>
+                            <InputGroup className="rounded-12 overflow-hidden border">
+                                <InputGroup.Text className="bg-light border-0"><Compass size={18} className="text-muted" /></InputGroup.Text>
                                 <Form.Select
-                                    className="text-dark border-start-0"
+                                    className="text-dark border-0 shadow-none bg-light"
                                     value={selFornecedor || ''}
                                     onChange={(e) => setSelFornecedor(e.target.value ? parseInt(e.target.value) : undefined)}
                                 >
@@ -112,7 +115,7 @@ const ProductSearchModal: React.FC<ProductSearchModalProps> = ({ show, onHide, o
                     </Col>
                 </Row>
 
-                <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                <div className="rounded-12 border overflow-hidden shadow-inner bg-white" style={{ maxHeight: '400px', overflowY: 'auto' }}>
                     {isLoading ? (
                         <div className="text-center py-5"><Spinner animation="border" variant="primary" /></div>
                     ) : (
@@ -123,31 +126,41 @@ const ProductSearchModal: React.FC<ProductSearchModalProps> = ({ show, onHide, o
                                         key={p.id}
                                         action
                                         onClick={() => { onSelect(p); setSearch(''); }}
-                                        className="d-flex justify-content-between align-items-center py-3 border-bottom text-dark"
+                                        className="d-flex justify-content-between align-items-center py-3 px-4 border-bottom text-dark hover-bg-light"
                                     >
                                         <div>
-                                            <div className="fw-bold text-primary">{p.codigo}</div>
+                                            <div className="fw-bold text-primary" style={{ letterSpacing: '0.5px' }}>{p.codigo}</div>
                                             <div className="text-dark small fw-medium">{p.descricao}</div>
-                                            <div className="d-flex gap-2 mt-1">
-                                                {p.fornecedor_nome && <Badge bg="info" className="x-small">Fab: {p.fornecedor_nome}</Badge>}
-                                                {p.ncm && <Badge bg="light" text="dark" className="border font-monospace x-small">NCM: {p.ncm}</Badge>}
+                                            <div className="d-flex gap-2 mt-2">
+                                                {p.fornecedor_nome && <Badge bg="info" className="rounded-pill px-2 py-1 x-small fw-bold" style={{ backgroundColor: 'rgba(73, 190, 255, 0.1)', color: '#49BEFF', border: 'none' }}>{p.fornecedor_nome}</Badge>}
+                                                {p.ncm && <Badge bg="light" text="dark" className="border font-monospace x-small rounded-pill px-2">NCM: {p.ncm}</Badge>}
                                             </div>
                                         </div>
                                         <div className="text-end">
-                                            <div className="fw-bold text-success">R$ {parseFloat(p.custo_base).toFixed(2)}</div>
-                                            <div className="text-muted x-small">Custo Base</div>
+                                            <div className="fw-extrabold" style={{ color: 'var(--success)', fontSize: '1.1rem' }}>R$ {parseFloat(p.custo_base).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                                            <div className="text-muted x-small fw-bold text-uppercase" style={{ letterSpacing: '1px' }}>Custo Base</div>
                                         </div>
                                     </ListGroup.Item>
                                 ))
                             ) : (
-                                <div className="text-center py-5 text-muted">
-                                    {(search.length > 0 || selCategoria || selFornecedor) ? 'Nenhum material encontrado para estes filtros.' : 'Comece a digitar ou selecione um filtro para buscar...'}
+                                <div className="text-center py-5 text-muted px-4">
+                                    <div className="opacity-20 mb-3"><Search size={48} /></div>
+                                    {(search.length > 0 || selCategoria || selFornecedor) ? 
+                                        <p className="mb-0">Nenhum material encontrado para estes filtros.</p> : 
+                                        <p className="mb-0">Utilize a busca ou os filtros para encontrar materiais.</p>
+                                    }
                                 </div>
                             )}
                         </ListGroup>
                     )}
                 </div>
             </Modal.Body>
+            <style>{`
+                .bg-primary-light { background-color: rgba(93, 135, 255, 0.1); }
+                .hover-bg-light:hover { background-color: rgba(93, 135, 255, 0.05) !important; }
+                .rounded-12 { border-radius: 12px !important; }
+                .shadow-inner { box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.02); }
+            `}</style>
         </Modal>
     );
 };

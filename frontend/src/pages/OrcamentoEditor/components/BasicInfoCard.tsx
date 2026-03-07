@@ -12,24 +12,25 @@ interface BasicInfoCardProps {
 
 const BasicInfoCard: React.FC<BasicInfoCardProps> = ({ orcamento, clientes, vendedores, onUpdate }) => {
     return (
-        <Card className="card-premium mb-4 border-0 shadow-sm" style={{ borderRadius: '20px' }}>
+        <Card className="card-premium mb-4 border-0 shadow-sm" style={{ borderRadius: '24px' }}>
             <Card.Body className="p-4">
-                <h5 className="card-title fw-bold mb-4 d-flex align-items-center">
+                <h5 className="card-title fw-bold mb-4 d-flex align-items-center" style={{ color: 'var(--text-primary)' }}>
                     <Users size={20} className="text-primary me-2" /> Informações Básicas
                 </h5>
                 <Row className="g-3">
                     <Col md={6}>
                         <Form.Group>
                             <Form.Label className="fw-bold small text-muted">Cliente</Form.Label>
-                            <InputGroup>
-                                <InputGroup.Text className="bg-light border-end-0">
+                            <InputGroup className="rounded-12 overflow-hidden border">
+                                <InputGroup.Text className="bg-light border-0">
                                     <User size={18} className="text-muted" />
                                 </InputGroup.Text>
                                 <Form.Select
                                     disabled
-                                    className="text-dark bg-light border-start-0"
+                                    className="text-dark bg-light border-0 shadow-none"
                                     value={orcamento.cliente || ''}
                                     onChange={(e) => onUpdate('cliente', parseInt(e.target.value))}
+                                    style={{ cursor: 'default' }}
                                 >
                                     <option value="" className="text-dark">Selecione o Cliente</option>
                                     {clientes?.map(c => <option key={c.id} value={c.id} className="text-dark">{c.razao_social}</option>)}
@@ -40,15 +41,16 @@ const BasicInfoCard: React.FC<BasicInfoCardProps> = ({ orcamento, clientes, vend
                     <Col md={6}>
                         <Form.Group>
                             <Form.Label className="fw-bold small text-muted">Vendedor Responsável</Form.Label>
-                            <InputGroup>
-                                <InputGroup.Text className="bg-light border-end-0">
+                            <InputGroup className="rounded-12 overflow-hidden border">
+                                <InputGroup.Text className="bg-light border-0">
                                     <User size={18} className="text-muted" />
                                 </InputGroup.Text>
                                 <Form.Select
                                     disabled
-                                    className="text-dark bg-light border-start-0"
+                                    className="text-dark bg-light border-0 shadow-none"
                                     value={orcamento.vendedor || ''}
                                     onChange={(e) => onUpdate('vendedor', e.target.value ? parseInt(e.target.value) : null)}
+                                    style={{ cursor: 'default' }}
                                 >
                                     <option value="" className="text-dark">Selecione o Vendedor</option>
                                     {vendedores.map((v: UserType) => (
@@ -61,14 +63,14 @@ const BasicInfoCard: React.FC<BasicInfoCardProps> = ({ orcamento, clientes, vend
                     <Col md={3}>
                         <Form.Group>
                             <Form.Label className="fw-bold small text-muted">Validade (Dias)</Form.Label>
-                            <InputGroup>
-                                <InputGroup.Text className="bg-white border-end-0">
+                            <InputGroup className="rounded-12 overflow-hidden border">
+                                <InputGroup.Text className="bg-white border-0">
                                     <Calendar size={18} className="text-muted" />
                                 </InputGroup.Text>
                                 <Form.Control
                                     type="number"
                                     placeholder="Ex: 15"
-                                    className="border-start-0"
+                                    className="border-0 shadow-none"
                                     value={orcamento.validade_dias || 15}
                                     onChange={(e) => onUpdate('validade_dias', parseInt(e.target.value))}
                                 />
@@ -78,18 +80,20 @@ const BasicInfoCard: React.FC<BasicInfoCardProps> = ({ orcamento, clientes, vend
                     <Col md={3}>
                         <Form.Group>
                             <Form.Label className="fw-bold small text-muted">Margem (%)</Form.Label>
-                            <InputGroup>
-                                <InputGroup.Text className="bg-white border-end-0">
+                            <InputGroup className="rounded-12 overflow-hidden border">
+                                <InputGroup.Text className="bg-white border-0">
                                     <Percent size={18} className="text-muted" />
                                 </InputGroup.Text>
                                 <Form.Control
                                     type="number"
                                     step="0.01"
                                     placeholder="20.00"
-                                    className="border-start-0"
+                                    className="border-0 shadow-none"
                                     value={(parseFloat(orcamento.margem_contrib || '0') * 100).toFixed(2)}
                                     onChange={(e) => {
-                                        const newMargin = (parseFloat(e.target.value) / 100).toString();
+                                        const val = e.target.value;
+                                        if (val === '') return onUpdate('margem_contrib', '0');
+                                        const newMargin = (parseFloat(val) / 100).toString();
                                         onUpdate('margem_contrib', newMargin);
                                     }}
                                     isInvalid={parseFloat(orcamento.margem_contrib || '0') < 0.15}
@@ -100,6 +104,9 @@ const BasicInfoCard: React.FC<BasicInfoCardProps> = ({ orcamento, clientes, vend
                     </Col>
                 </Row>
             </Card.Body>
+            <style>{`
+                .rounded-12 { border-radius: 12px !important; }
+            `}</style>
         </Card>
     );
 };

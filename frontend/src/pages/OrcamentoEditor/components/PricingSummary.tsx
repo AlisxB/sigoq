@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, Button } from 'react-bootstrap';
-import { Calculator } from 'lucide-react';
+import { Calculator, FileText } from 'lucide-react';
 import { Orcamento } from '../../../types';
 
 interface PricingSummaryProps {
@@ -15,48 +15,48 @@ const PricingSummary: React.FC<PricingSummaryProps> = ({ id, orcamento, onRecalc
         : '0.00';
 
     return (
-        <Card className="card-premium sticky-top shadow-sm" style={{ top: '100px' }}>
-            <Card.Body>
-                <h5 className="fw-bold mb-4">Resumo Financeiro</h5>
+        <Card className="card-premium sticky-top shadow-sm border-0" style={{ top: '100px', borderRadius: '24px' }}>
+            <Card.Body className="p-4">
+                <h5 className="fw-bold mb-4" style={{ color: 'var(--text-primary)' }}>Resumo Financeiro</h5>
 
                 <div className="d-flex justify-content-between mb-2">
-                    <span className="text-muted small">Custo Total:</span>
-                    <span className="fw-medium text-dark">
+                    <span className="text-muted small fw-medium">Custo Total:</span>
+                    <span className="fw-bold text-dark">
                         R$ {parseFloat(orcamento.custo_total || '0').toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </span>
                 </div>
 
                 <div className="d-flex justify-content-between mb-4">
-                    <span className="text-muted small">Markup Médio:</span>
-                    <span className="fw-medium text-primary">
+                    <span className="text-muted small fw-medium">Markup Médio:</span>
+                    <span className="fw-bold" style={{ color: 'var(--primary)' }}>
                         {markup}x
                     </span>
                 </div>
 
-                <hr />
+                <hr className="opacity-10" />
 
                 <div className="py-3">
-                    <h6 className="small text-muted mb-2">VALOR TOTAL DA PROPOSTA</h6>
-                    <div className="h2 fw-bold text-success mb-0">
+                    <h6 className="small fw-bold text-muted mb-2 text-uppercase" style={{ letterSpacing: '0.5px' }}>Valor Total da Proposta</h6>
+                    <div className="h2 fw-extrabold mb-0" style={{ color: 'var(--success)', letterSpacing: '-1px' }}>
                         R$ {parseFloat(orcamento.valor_total || '0').toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </div>
                 </div>
 
-                <div className="mt-4">
+                <div className="mt-4 d-flex flex-column gap-3">
                     <Button 
                         variant="primary" 
-                        className="w-100 py-3 fw-bold mb-3 shadow-sm d-flex justify-content-center align-items-center" 
+                        className="w-100 py-3 fw-bold shadow-sm d-flex justify-content-center align-items-center rounded-pill" 
                         onClick={onRecalculate}
                     >
                         <Calculator className="me-2" size={18} /> ATUALIZAR CÁLCULOS
                     </Button>
                     <Button
-                        variant="outline-secondary"
-                        className="w-100 py-2"
+                        variant="outline-primary"
+                        className="w-100 py-2 fw-bold rounded-pill border-2"
                         onClick={() => window.open(`http://127.0.0.1:8000/orcamentos/pdf/${id}/`, '_blank')}
                         disabled={!id}
                     >
-                        GERAR PREVIEW PDF
+                        <FileText className="me-2" size={16} /> GERAR PREVIEW PDF
                     </Button>
                 </div>
             </Card.Body>
