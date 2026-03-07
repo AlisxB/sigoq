@@ -41,6 +41,7 @@ class OrcamentoSerializer(serializers.ModelSerializer):
     cliente_detalhe = ClienteSimpleSerializer(source='cliente', read_only=True)
     vendedor_nome = serializers.SerializerMethodField()
     prioridade = serializers.ReadOnlyField(source='oportunidade.prioridade')
+    total_arquivos = serializers.IntegerField(source='oportunidade.arquivos.count', read_only=True)
 
     class Meta:
         model = Orcamento
@@ -49,7 +50,7 @@ class OrcamentoSerializer(serializers.ModelSerializer):
             'resp_orcam', 'vendedor', 'vendedor_nome', 'status', 'custo_total', 'valor_total', 
             'margem_contrib', 'desconto_percent', 'validade_dias', 
             'prazo_entrega', 'condicao_pagamento', 'observacoes',
-            'aprovado_gerencia', 'motivo_rejeicao', 'kits'
+            'aprovado_gerencia', 'motivo_rejeicao', 'total_arquivos', 'kits'
         ]
         read_only_fields = ['numero', 'revisao', 'custo_total', 'valor_total']
 
