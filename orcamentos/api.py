@@ -18,13 +18,16 @@ class OrcamentoViewSet(viewsets.ModelViewSet):
         if not user.is_authenticated:
             return Orcamento.objects.none()
 
-        permite_tudo = user.is_superuser or (
+        is_privileged = user.is_superuser or user.is_staff or (
             hasattr(user, 'perfil') and 
             user.perfil.cargo in ['ADMIN', 'GERENTE', 'ORCAMENTISTA']
         )
         
-        qs = self.queryset
-        if not permite_tudo:
+        # Usamos Orcamento.objects diretamente para garantir atualização do queryset
+        qs = Orcamento.objects.all().select_related('cliente', 'vendedor', 'oportunidade').prefetch_related('kits__itens')
+        
+        if not is_privileged:
+            # Vendedores comuns vêem apenas seus próprios orçamentos
             qs = qs.filter(vendedor=user)
             
         return qs.order_by('-numero', '-revisao')

@@ -6,10 +6,10 @@ from .api import OrcamentoViewSet, KitViewSet, ItemOrcamentoViewSet, Configuraca
 app_name = 'orcamentos'
 
 router = DefaultRouter()
-router.register(r'orcamentos', OrcamentoViewSet)
-router.register(r'kits', KitViewSet)
-router.register(r'itens', ItemOrcamentoViewSet)
-router.register(r'config-preco', ConfiguracaoPrecoViewSet)
+router.register(r'orcamentos', OrcamentoViewSet, basename='orcamento')
+router.register(r'kits', KitViewSet, basename='kit')
+router.register(r'itens', ItemOrcamentoViewSet, basename='item')
+router.register(r'config-preco', ConfiguracaoPrecoViewSet, basename='config-preco')
 
 urlpatterns = [
     path('api/', include(router.urls)),

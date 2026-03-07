@@ -62,20 +62,17 @@ class OrcamentoSerializer(serializers.ModelSerializer):
         kits_data = validated_data.pop('kits', [])
         orcamento = Orcamento.objects.create(**validated_data)
         
+        from .services import PricingService
         for kit_data in kits_data:
             itens_data = kit_data.pop('itens', [])
             kit = Kit.objects.create(orcamento=orcamento, **kit_data)
             for item_data in itens_data:
-                produto = item_data['produto']
-                ItemOrcamento.objects.create(
+                PricingService.create_item_snapshot(
                     kit=kit,
-                    codigo=produto.codigo,
-                    descricao=produto.descricao,
-                    custo_unit_snapshot=produto.custo_base,
-                    **item_data
+                    produto=item_data['produto'],
+                    quantidade=item_data['quantidade']
                 )
         
-        from .services import PricingService
         PricingService.recalculate_orcamento(orcamento)
         return orcamento
 
@@ -86,21 +83,18 @@ class OrcamentoSerializer(serializers.ModelSerializer):
             setattr(instance, attr, value)
         instance.save()
         
+        from .services import PricingService
         if 'kits' in self.initial_data:
             instance.kits.all().delete()
             for kit_data in kits_data:
                 itens_data = kit_data.pop('itens', [])
                 kit = Kit.objects.create(orcamento=instance, **kit_data)
                 for item_data in itens_data:
-                    produto = item_data['produto']
-                    ItemOrcamento.objects.create(
+                    PricingService.create_item_snapshot(
                         kit=kit,
-                        codigo=produto.codigo,
-                        descricao=produto.descricao,
-                        custo_unit_snapshot=produto.custo_base,
-                        **item_data
+                        produto=item_data['produto'],
+                        quantidade=item_data['quantidade']
                     )
         
-        from .services import PricingService
         PricingService.recalculate_orcamento(instance)
         return instance

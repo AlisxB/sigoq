@@ -8,15 +8,27 @@ class ComercialIsolationMixin(LoginRequiredMixin):
     """
     def get_object(self, queryset=None):
         obj = super().get_object(queryset)
+        user = self.request.user
+        
+        is_privileged = user.is_superuser or (
+            hasattr(user, 'perfil') and 
+            user.perfil.cargo in ['ADMIN', 'GERENTE', 'ORCAMENTISTA']
+        )
+        
         # Se o objeto tiver o campo 'vendedor', validamos
-        if hasattr(obj, 'vendedor') and obj.vendedor != self.request.user:
-            if not self.request.user.is_superuser:
-                raise PermissionDenied("Você não tem permissão para acessar este registro.")
+        if not is_privileged and hasattr(obj, 'vendedor') and obj.vendedor != user:
+            raise PermissionDenied("Você não tem permissão para acessar este registro.")
         return obj
 
     def get_queryset(self):
         qs = super().get_queryset()
-        if hasattr(self.model, 'vendedor'):
-            if not self.request.user.is_superuser:
-                return qs.filter(vendedor=self.request.user)
+        user = self.request.user
+        
+        is_privileged = user.is_superuser or (
+            hasattr(user, 'perfil') and 
+            user.perfil.cargo in ['ADMIN', 'GERENTE', 'ORCAMENTISTA']
+        )
+        
+        if not is_privileged and hasattr(self.model, 'vendedor'):
+            return qs.filter(vendedor=user)
         return qs

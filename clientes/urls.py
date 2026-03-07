@@ -5,7 +5,7 @@ from .api import ClienteViewSet
 app_name = 'clientes'
 
 router = DefaultRouter()
-router.register(r'clientes', ClienteViewSet)
+router.register(r'clientes', ClienteViewSet, basename='cliente')
 
 urlpatterns = [
     path('api/', include(router.urls)),

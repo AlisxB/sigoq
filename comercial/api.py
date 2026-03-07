@@ -24,13 +24,11 @@ class MetaMensalViewSet(viewsets.ModelViewSet):
         if not user.is_authenticated:
             return MetaMensal.objects.none()
         
-        # Admins e Gerentes vêem todas as metas. 
-        # Vendedores vêem as suas e as globais (para o dashboard).
-        is_admin = user.is_superuser or (
+        is_privileged = user.is_superuser or user.is_staff or (
             hasattr(user, 'perfil') and user.perfil.cargo in ['ADMIN', 'GERENTE']
         )
         
-        if is_admin:
+        if is_privileged:
             return MetaMensal.objects.all().order_by('-ano', '-mes')
         
         from django.db.models import Q
@@ -45,15 +43,16 @@ class OportunidadeViewSet(viewsets.ModelViewSet):
         if not user.is_authenticated:
             return Oportunidade.objects.none()
             
-        # RESTRIÇÃO: Apenas ADMIN e GERENTE vêem tudo.
-        permite_tudo = user.is_superuser or (
+        # RESTRIÇÃO: ADMIN, GERENTE e ORCAMENTISTA vêem tudo.
+        is_privileged = user.is_superuser or user.is_staff or (
             hasattr(user, 'perfil') and 
-            user.perfil.cargo in ['ADMIN', 'GERENTE']
+            user.perfil.cargo in ['ADMIN', 'GERENTE', 'ORCAMENTISTA']
         )
         
-        qs = self.queryset
-        if not permite_tudo:
-            # Vendedores, Orçamentistas, etc, vêem apenas seus próprios registros
+        qs = Oportunidade.objects.all().select_related('cliente', 'status', 'vendedor')
+        
+        if not is_privileged:
+            # Vendedores comuns vêem apenas seus próprios registros
             qs = qs.filter(vendedor=user)
             
         return qs.order_by('-numero')
