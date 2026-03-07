@@ -90,7 +90,7 @@ class OportunidadeViewSet(viewsets.ModelViewSet):
         
         return Response(funil)
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['post'], url_path='upload_arquivos')
     def upload_arquivos(self, request, pk=None):
         """
         Action para upload de múltiplos arquivos/pastas.
@@ -113,7 +113,7 @@ class OportunidadeViewSet(viewsets.ModelViewSet):
         serializer = ArquivoOportunidadeSerializer(created, many=True)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    @action(detail=True, methods=['get'])
+    @action(detail=True, methods=['get'], url_path='arquivos')
     def arquivos(self, request, pk=None):
         """
         Lista todos os arquivos vinculados a esta oportunidade.

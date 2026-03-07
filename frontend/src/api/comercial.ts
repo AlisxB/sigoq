@@ -3,29 +3,29 @@ import { Oportunidade, StatusOportunidade, MetaMensal, ArquivoOportunidade } fro
 
 export const comercialApi = {
     // Oportunidades
-    list: (): Promise<Oportunidade[]> => api.get('comercial/api/oportunidades/').then(res => {
+    list: (): Promise<Oportunidade[]> => api.get('comercial/api/oportunidade/').then(res => {
         const data = res.data;
         if (data && data.results && Array.isArray(data.results)) return data.results;
         if (Array.isArray(data)) return data;
         if (data && typeof data === 'object') return Object.values(data);
         return [];
     }),
-    get: (id: string | number): Promise<Oportunidade> => api.get(`comercial/api/oportunidades/${id}/`).then(res => res.data),
-    create: (data: Partial<Oportunidade>): Promise<Oportunidade> => api.post('comercial/api/oportunidades/', data).then(res => res.data),
-    update: (id: string | number, data: Partial<Oportunidade>): Promise<Oportunidade> => api.put(`comercial/api/oportunidades/${id}/`, data).then(res => res.data),
-    delete: (id: string | number): Promise<void> => api.delete(`comercial/api/oportunidades/${id}/`).then(res => res.data),
+    get: (id: string | number): Promise<Oportunidade> => api.get(`comercial/api/oportunidade/${id}/`).then(res => res.data),
+    create: (data: Partial<Oportunidade>): Promise<Oportunidade> => api.post('comercial/api/oportunidade/', data).then(res => res.data),
+    update: (id: string | number, data: Partial<Oportunidade>): Promise<Oportunidade> => api.put(`comercial/api/oportunidade/${id}/`, data).then(res => res.data),
+    delete: (id: string | number): Promise<void> => api.delete(`comercial/api/oportunidade/${id}/`).then(res => res.data),
     updateStatus: (id: number, statusId: number): Promise<any> => api.post('comercial/api/oportunidade/update-status/', { id, status_id: statusId }),
 
     // Arquivos
     listArquivos: (oportunidadeId: number): Promise<ArquivoOportunidade[]> => 
-        api.get(`comercial/api/oportunidades/${oportunidadeId}/arquivos/`).then(res => res.data),
+        api.get(`comercial/api/oportunidade/${oportunidadeId}/arquivos/`).then(res => res.data),
     
     uploadArquivos: (oportunidadeId: number, files: File[], paths: string[]): Promise<ArquivoOportunidade[]> => {
         const formData = new FormData();
         files.forEach(file => formData.append('files', file));
         paths.forEach(path => formData.append('paths[]', path));
         
-        return api.post(`comercial/api/oportunidades/${oportunidadeId}/upload_arquivos/`, formData, {
+        return api.post(`comercial/api/oportunidade/${oportunidadeId}/upload_arquivos/`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
         }).then(res => res.data);
     },
