@@ -39,8 +39,7 @@ class KitSerializer(serializers.ModelSerializer):
 class OrcamentoSerializer(serializers.ModelSerializer):
     kits = KitSerializer(many=True)
     cliente_detalhe = ClienteSimpleSerializer(source='cliente', read_only=True)
-
-    vendedor_nome = serializers.ReadOnlyField(source='vendedor.get_full_name')
+    vendedor_nome = serializers.SerializerMethodField()
 
     class Meta:
         model = Orcamento
@@ -53,6 +52,12 @@ class OrcamentoSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['numero', 'revisao', 'custo_total', 'valor_total']
 
+    def get_vendedor_nome(self, obj):
+        if obj.vendedor:
+            name = f"{obj.vendedor.first_name} {obj.vendedor.last_name}".strip()
+            return name if name else obj.vendedor.username
+        return "Sistema"
+
     def create(self, validated_data):
         kits_data = validated_data.pop('kits', [])
         orcamento = Orcamento.objects.create(**validated_data)
@@ -61,7 +66,6 @@ class OrcamentoSerializer(serializers.ModelSerializer):
             itens_data = kit_data.pop('itens', [])
             kit = Kit.objects.create(orcamento=orcamento, **kit_data)
             for item_data in itens_data:
-                # Buscar produto para obter snapshot
                 produto = item_data['produto']
                 ItemOrcamento.objects.create(
                     kit=kit,
@@ -71,39 +75,32 @@ class OrcamentoSerializer(serializers.ModelSerializer):
                     **item_data
                 )
         
-        # Recalcular totais usando o service
         from .services import PricingService
-        PricingService.update_orcamento_totals(orcamento)
+        PricingService.recalculate_orcamento(orcamento)
         return orcamento
 
     def update(self, instance, validated_data):
         kits_data = validated_data.pop('kits', [])
         
-        # Atualizar campos básicos
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
         
-        # Atualizar Kits (Simplificado: remove todos e recria para consistência total no MVP)
-        instance.kits.all().delete()
-        for kit_data in kits_data:
-            itens_data = kit_data.pop('itens', [])
-            kit = Kit.objects.create(orcamento=instance, **kit_data)
-            for item_data in itens_data:
-                produto = item_data['produto']
-                ItemOrcamento.objects.create(
-                    kit=kit,
-                    codigo=produto.codigo,
-                    descricao=produto.descricao,
-                    custo_unit_snapshot=produto.custo_base,
-                    **item_data
-                )
+        if 'kits' in self.initial_data:
+            instance.kits.all().delete()
+            for kit_data in kits_data:
+                itens_data = kit_data.pop('itens', [])
+                kit = Kit.objects.create(orcamento=instance, **kit_data)
+                for item_data in itens_data:
+                    produto = item_data['produto']
+                    ItemOrcamento.objects.create(
+                        kit=kit,
+                        codigo=produto.codigo,
+                        descricao=produto.descricao,
+                        custo_unit_snapshot=produto.custo_base,
+                        **item_data
+                    )
         
         from .services import PricingService
-        # Atualizar preços de venda de todos os itens antes de totalizar
-        for kit in instance.kits.all():
-            for item in kit.itens.all():
-                PricingService.update_item_pricing(item)
-                
-        PricingService.update_orcamento_totals(instance)
+        PricingService.recalculate_orcamento(instance)
         return instance

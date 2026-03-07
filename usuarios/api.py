@@ -25,15 +25,28 @@ class UserViewSet(viewsets.ModelViewSet):
             return qs.filter(perfil__cargo=backend_role)
         return qs
 
+    @action(detail=True, methods=['post'])
+    def reset_password(self, request, pk=None):
+        """
+        Gera uma senha temporária padrão para o usuário.
+        """
+        user = self.get_object()
+        temp_password = "Sigoq@Temp123"
+        user.set_password(temp_password)
+        user.save()
+        return Response({
+            'detail': f'Senha resetada com sucesso para {user.username}.',
+            'temp_password': temp_password
+        }, status=status.HTTP_200_OK)
+
 class AuthViewSet(viewsets.ViewSet):
     """
     ViewSet para autenticação de usuários.
     """
     permission_classes = [permissions.AllowAny]
-    # Reabilitamos a SessionAuthentication para que o endpoint /me consiga ler o cookie
     authentication_classes = [authentication.SessionAuthentication]
 
-    @method_decorator(csrf_exempt) # Login precisa ser isento de CSRF no primeiro acesso
+    @method_decorator(csrf_exempt)
     @action(detail=False, methods=['post'])
     def login(self, request):
         username = request.data.get('username')
@@ -42,7 +55,7 @@ class AuthViewSet(viewsets.ViewSet):
         
         if user:
             auth_login(request, user)
-            rotate_token(request) # Gera novo token CSRF para a nova sessão
+            rotate_token(request)
             serializer = UserSerializer(user, context={'request': request})
             return Response(serializer.data)
         return Response({'detail': 'Credenciais inválidas'}, status=status.HTTP_401_UNAUTHORIZED)
@@ -54,7 +67,6 @@ class AuthViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['get'])
     def me(self, request):
-        # Agora o request.user será preenchido corretamente via cookie de sessão
         if request.user.is_authenticated:
             serializer = UserSerializer(request.user, context={'request': request})
             return Response(serializer.data)
