@@ -45,7 +45,10 @@ const DonutChart: React.FC<DonutChartProps> = ({
                             label: title || 'Total',
                             color: '#5A6A83',
                             formatter: (w) => {
-                                return w.globals.seriesTotals.reduce((a: number, b: number) => a + b, 0);
+                                const totals = w.globals.seriesTotals;
+                                return Array.isArray(totals) 
+                                    ? totals.reduce((a: number, b: number) => a + b, 0)
+                                    : 0;
                             }
                         }
                     }

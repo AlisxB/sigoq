@@ -45,7 +45,10 @@ const AdminDashboardView: React.FC = () => {
         setLastUpdated(new Date());
     };
 
-    const totalFunnel = funnelData?.reduce((acc, curr) => acc + parseFloat(curr.total || 0), 0) || 0;
+    const totalFunnel = useMemo(() => {
+        if (!Array.isArray(funnelData)) return 0;
+        return funnelData.reduce((acc, curr) => acc + parseFloat(curr.total || 0), 0);
+    }, [funnelData]);
 
     // Memoized Chart Data
     const radialSeries = useMemo(() => {
