@@ -13,6 +13,16 @@ export const produtoApi = {
     create: (data: Partial<Produto>): Promise<Produto> => api.post('produtos/api/produtos/', data).then(res => res.data),
     update: (id: string | number, data: Partial<Produto>): Promise<Produto> => api.put(`produtos/api/produtos/${id}/`, data).then(res => res.data),
     delete: (id: string | number): Promise<void> => api.delete(`produtos/api/produtos/${id}/`).then(res => res.data),
+    getByCode: (code: string): Promise<Produto | null> => 
+        api.get(`produtos/api/produtos/?search=${code}`).then(res => {
+            const data = res.data;
+            const results = data.results || data;
+            if (Array.isArray(results) && results.length > 0) {
+                // Tenta encontrar o match exato do código
+                return results.find((p: Produto) => p.codigo.toLowerCase() === code.toLowerCase()) || null;
+            }
+            return null;
+        }),
     search: (query: string, filters?: { categoria?: number, fornecedor?: number }): Promise<Produto[]> => {
         let url = `produtos/api/produtos/?search=${query}`;
         if (filters?.categoria) url += `&categoria=${filters.categoria}`;

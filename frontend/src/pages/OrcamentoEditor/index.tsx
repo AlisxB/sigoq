@@ -141,6 +141,7 @@ const OrcamentoEditor: React.FC = () => {
                             onUpdateName={updateKitName}
                             onDeleteKit={handleDeleteKit}
                             onSearchMaterial={handleSearchMaterial}
+                            onAddProduct={addItemToKit}
                             onDeleteItem={deleteItem}
                             onUpdateQuantity={updateItemQuantity}
                         />
