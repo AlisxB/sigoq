@@ -97,6 +97,11 @@ const OrcamentoEditor: React.FC = () => {
         });
     };
 
+    const handleSearchMaterial = (idx: number) => {
+        setActiveKitIndex(idx);
+        setShowModal(true);
+    };
+
     if (isFetching) return <div className="text-center py-5"><Spinner animation="border" /></div>;
 
     return (
@@ -133,14 +138,11 @@ const OrcamentoEditor: React.FC = () => {
                             key={idx}
                             kit={kit}
                             index={idx}
-                            onUpdateName={(name) => updateKitName(idx, name)}
-                            onDelete={() => handleDeleteKit(idx)}
-                            onAddItem={() => {
-                                setActiveKitIndex(idx);
-                                setShowModal(true);
-                            }}
-                            onDeleteItem={(itemIdx) => deleteItem(idx, itemIdx)}
-                            onUpdateQuantity={(itemIdx, qty) => updateItemQuantity(idx, itemIdx, qty)}
+                            onUpdateName={updateKitName}
+                            onDeleteKit={handleDeleteKit}
+                            onSearchMaterial={handleSearchMaterial}
+                            onDeleteItem={deleteItem}
+                            onUpdateQuantity={updateItemQuantity}
                         />
                     ))}
                 </Col>
