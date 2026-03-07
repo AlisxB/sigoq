@@ -5,7 +5,9 @@ import sys
 # Setup django environment
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_DIR)
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "sigoq.settings")
+
+if "DJANGO_SETTINGS_MODULE" not in os.environ:
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "sigoq.settings.local")
 
 try:
     django.setup()
