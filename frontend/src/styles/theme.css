@@ -156,10 +156,10 @@ h6 {
   box-shadow: 0 0 0 4px var(--primary-light);
 }
 
-/* Melhorar visibilidade do placeholder em fundos escuros */
+/* Melhorar visibilidade do placeholder */
 .form-control::placeholder {
-  color: rgba(255, 255, 255, 0.4) !important;
-  opacity: 1;
+  color: var(--text-muted) !important;
+  opacity: 0.7 !important;
 }
 
 /* Glassmorphism utility */
