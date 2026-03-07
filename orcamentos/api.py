@@ -193,7 +193,9 @@ class OrcamentoViewSet(viewsets.ModelViewSet):
                     'vendas_mes': round(vendas_mes, 2),
                     'meta_valor': round(valor_meta, 2),
                     'meta_atingimento': round(percentual_atingimento, 1),
-                    'total_estagnadas': estagnadas_raw.count()
+                    'total_estagnadas': estagnadas_raw.count(),
+                    'em_elaboracao': qs_all.filter(status='ELABORACAO').count(),
+                    'em_revisao': qs_all.filter(status='REVISAO').count(),
                 },
                 'charts': {
                     'evolucao_mensal': evolucao_list,

@@ -195,6 +195,8 @@ export interface AnalyticsData {
         meta_valor: number;
         meta_atingimento: number;
         total_estagnadas: number;
+        em_elaboracao: number;
+        em_revisao: number;
     };
     charts: {
         evolucao_mensal: { mes: string; total: number }[];
