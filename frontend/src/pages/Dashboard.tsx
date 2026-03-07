@@ -89,7 +89,7 @@ const Dashboard: React.FC = () => {
     }, [selectedIdx, funnelData]);
 
     const salesEvolutionData = useMemo(() => {
-        if (!financeData) return { series: [], categories: [] };
+        if (!financeData || !financeData.charts) return { series: [], categories: [] };
         return {
             series: [{ name: 'Faturamento', data: financeData.charts.evolucao_mensal.map(e => e.total) }],
             categories: financeData.charts.evolucao_mensal.map(e => e.mes)
@@ -97,7 +97,7 @@ const Dashboard: React.FC = () => {
     }, [financeData]);
 
     const categoryMix = useMemo(() => {
-        if (!financeData) return { series: [], categories: [] };
+        if (!financeData || !financeData.charts) return { series: [], categories: [] };
         return {
             series: [{ name: 'Itens Vendidos', data: financeData.charts.mix_categorias.map(c => c.value) }],
             categories: financeData.charts.mix_categorias.map(c => c.label)
@@ -105,7 +105,7 @@ const Dashboard: React.FC = () => {
     }, [financeData]);
 
     const leadSourceData = useMemo(() => {
-        if (!financeData) return { series: [], labels: [] };
+        if (!financeData || !financeData.charts) return { series: [], labels: [] };
         return {
             series: financeData.charts.origem_leads.map(o => o.value),
             labels: financeData.charts.origem_leads.map(o => o.label)
@@ -113,7 +113,7 @@ const Dashboard: React.FC = () => {
     }, [financeData]);
 
     const lostReasonsData = useMemo(() => {
-        if (!financeData) return { series: [], labels: [] };
+        if (!financeData || !financeData.charts) return { series: [], labels: [] };
         return {
             series: financeData.charts.motivos_perda.map(m => m.value),
             labels: financeData.charts.motivos_perda.map(m => m.label)
@@ -160,8 +160,8 @@ const Dashboard: React.FC = () => {
                 <Col xl={2} lg={3} md={6}>
                     <StatCard 
                         title="Faturamento Mês" 
-                        value={`R$ ${(financeData?.kpis.vendas_mes! / 1000).toFixed(1)}k`} 
-                        subtitle={`${financeData?.kpis.meta_atingimento}% da meta atingida`}
+                        value={`R$ ${( (financeData?.kpis?.vendas_mes || 0) / 1000).toFixed(1)}k`} 
+                        subtitle={`${financeData?.kpis?.meta_atingimento || 0}% da meta atingida`}
                         icon={<DollarSign size={22} color="white" />} 
                         bgColor="#5D87FF" 
                     />
@@ -169,8 +169,8 @@ const Dashboard: React.FC = () => {
                 <Col xl={2} lg={3} md={6}>
                     <StatCard 
                         title="Ticket Médio" 
-                        value={`R$ ${(financeData?.kpis.ticket_medio! / 1000).toFixed(1)}k`} 
-                        subtitle={`Baseado em ${financeData?.kpis.total_aprovados} vendas`}
+                        value={`R$ ${( (financeData?.kpis?.ticket_medio || 0) / 1000).toFixed(1)}k`} 
+                        subtitle={`Baseado em ${financeData?.kpis?.total_aprovados || 0} vendas`}
                         icon={<TrendingUp size={22} color="white" />} 
                         bgColor="#49BEFF" 
                     />
@@ -178,8 +178,8 @@ const Dashboard: React.FC = () => {
                 <Col xl={2} lg={3} md={6}>
                     <StatCard 
                         title="Margem Média" 
-                        value={`${financeData?.kpis.margem_media}%`} 
-                        subtitle={financeData?.kpis.margem_media! >= 20 ? 'Meta saudável' : 'Alerta de lucratividade'}
+                        value={`${financeData?.kpis?.margem_media || 0}%`} 
+                        subtitle={(financeData?.kpis?.margem_media || 0) >= 20 ? 'Meta saudável' : 'Alerta de lucratividade'}
                         icon={<Award size={22} color="white" />} 
                         bgColor="#13DEB9" 
                     />
@@ -187,7 +187,7 @@ const Dashboard: React.FC = () => {
                 <Col xl={2} lg={3} md={6}>
                     <StatCard 
                         title="Pipeline Ativo" 
-                        value={`R$ ${(financeData?.kpis.pipeline_ativo_valor! / 1000000).toFixed(1)}M`} 
+                        value={`R$ ${( (financeData?.kpis?.pipeline_ativo_valor || 0) / 1000000).toFixed(1)}M`} 
                         subtitle="Potencial de fechamento"
                         icon={<ShoppingBag size={22} color="white" />} 
                         bgColor="#2A3547" 
@@ -292,7 +292,7 @@ const Dashboard: React.FC = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {financeData?.ranking_clientes.map((c, i) => (
+                                {financeData?.ranking_clientes?.map((c, i) => (
                                     <tr key={i}>
                                         <td className="ps-4 py-3">
                                             <div className="d-flex align-items-center">
@@ -317,19 +317,19 @@ const Dashboard: React.FC = () => {
                         <div className="p-4 bg-white d-flex justify-content-between align-items-center border-bottom">
                             <div className="d-flex align-items-center">
                                 <h3 className="h5 fw-bold mb-0">Alertas de Estagnação</h3>
-                                <Badge bg="danger" className="ms-3 rounded-pill px-2">{financeData?.kpis.total_estagnadas}</Badge>
+                                <Badge bg="danger" className="ms-3 rounded-pill px-2">{financeData?.kpis?.total_estagnadas || 0}</Badge>
                             </div>
                             <AlertTriangle size={20} className="text-warning" />
                         </div>
                         <Card.Body className="p-0">
-                            {financeData?.alertas.estagnadas.length === 0 ? (
+                            {(!financeData?.alertas?.estagnadas || financeData.alertas.estagnadas.length === 0) ? (
                                 <div className="text-center py-5 text-muted italic">
                                     <TrendingUp size={48} className="opacity-10 mb-2" />
                                     <p>Nenhuma oportunidade estagnada. Equipe em dia!</p>
                                 </div>
                             ) : (
                                 <div className="list-group list-group-flush">
-                                    {financeData?.alertas.estagnadas.map(op => (
+                                    {financeData?.alertas?.estagnadas.map(op => (
                                         <div key={op.id} className="list-group-item p-4 border-bottom border-light hover-bg-light cursor-pointer" onClick={() => navigate('/kanban')}>
                                             <div className="d-flex justify-content-between align-items-start mb-1">
                                                 <span className="x-small fw-bold text-muted">OP-{op.numero.toString().padStart(4, '0')}</span>

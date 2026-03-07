@@ -26,21 +26,12 @@ const BarChart: React.FC<BarChartProps> = ({
                 borderRadius: 4,
                 horizontal: true,
                 barHeight: '40%',
-                distributed: true
+                distributed: true,
             }
         },
         colors: colors,
         dataLabels: {
-            enabled: true,
-            textAnchor: 'start',
-            style: {
-                colors: ['#fff'],
-                fontWeight: 700
-            },
-            formatter: (val, opt) => {
-                return opt.w.globals.labels[opt.dataPointIndex] + ": " + val
-            },
-            offsetX: 0
+            enabled: false // Removido para evitar redundância e problemas de alinhamento
         },
         xaxis: {
             categories: categories,
@@ -69,7 +60,7 @@ const BarChart: React.FC<BarChartProps> = ({
             theme: 'dark',
             y: {
                 title: {
-                    formatter: () => ''
+                    formatter: () => 'Quantidade: '
                 }
             }
         },
