@@ -21,7 +21,10 @@ const Clientes: React.FC = () => {
 
     const columns = [
         { header: 'Nome/Razão Social', accessor: (item: Cliente) => item.nome_fantasia || item.razao_social },
-        { header: 'Doc (CPF/CNPJ)', accessor: (item: Cliente) => item.cnpj || item.cpf || '-' },
+        { 
+            header: 'Doc (CPF/CNPJ)', 
+            accessor: (item: Cliente) => item.cnpj ? maskCNPJ(item.cnpj) : (item.cpf ? maskCPF(item.cpf) : '---')
+        },
         { header: 'E-mail', accessor: 'email' as const },
         { header: 'Cidade/UF', accessor: (item: Cliente) => `${item.cidade}/${item.estado}` },
     ];

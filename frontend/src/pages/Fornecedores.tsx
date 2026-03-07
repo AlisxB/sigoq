@@ -9,9 +9,15 @@ import { Building, Briefcase, FileText, Mail, Phone, User, CalendarClock, AlignL
 const Fornecedores: React.FC = () => {
     const columns = [
         { header: 'Nome Fantasia', accessor: 'nome_fantasia' as const },
-        { header: 'CNPJ', accessor: 'cnpj' as const },
+        { 
+            header: 'CNPJ', 
+            accessor: (item: Fornecedor) => item.cnpj ? maskCNPJ(item.cnpj) : '---'
+        },
         { header: 'E-mail', accessor: 'email' as const },
-        { header: 'Telefone', accessor: 'telefone' as const },
+        { 
+            header: 'Telefone', 
+            accessor: (item: Fornecedor) => item.telefone ? maskPhone(item.telefone) : '---'
+        },
     ];
 
     const renderForm = (data: Partial<Fornecedor>, onChange: (field: keyof Fornecedor, value: any) => void) => (
