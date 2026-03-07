@@ -6,6 +6,7 @@ interface AuthContextType {
     user: User | null;
     login: (username: string, password: string) => Promise<void>;
     logout: () => Promise<void>;
+    refreshUser: () => Promise<void>;
     isAuthenticated: boolean;
     isLoading: boolean;
 }
@@ -16,16 +17,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
+    const refreshUser = async () => {
+        try {
+            const currentUser = await usuarioApi.me();
+            setUser(currentUser);
+        } catch (err) {
+            setUser(null);
+        }
+    };
+
     useEffect(() => {
         const checkAuth = async () => {
-            try {
-                const currentUser = await usuarioApi.me();
-                setUser(currentUser);
-            } catch (err) {
-                setUser(null);
-            } finally {
-                setIsLoading(false);
-            }
+            setIsLoading(true);
+            await refreshUser();
+            setIsLoading(false);
         };
         checkAuth();
     }, []);
@@ -52,6 +57,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             user,
             login,
             logout,
+            refreshUser,
             isAuthenticated: !!user,
             isLoading
         }}>
