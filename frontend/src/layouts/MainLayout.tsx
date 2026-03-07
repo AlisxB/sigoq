@@ -44,9 +44,9 @@ const MainLayout: React.FC = () => {
             roles: ['ADMIN', 'VENDEDOR'],
             items: [
                 { name: 'Clientes', path: '/clientes', icon: <Users size={20} />, roles: ['ADMIN', 'VENDEDOR'] },
-                { name: 'Fornecedores', path: '/fornecedores', icon: <Rocket size={20} />, roles: ['ADMIN', 'VENDEDOR'] },
+                { name: 'Fornecedores', path: '/fornecedores', icon: <Rocket size={20} />, roles: ['ADMIN'] },
                 { name: 'Kanban', path: '/kanban', icon: <LayoutGrid size={20} />, roles: ['ADMIN', 'VENDEDOR'] },
-                { name: 'Metas Mensais', path: '/metas', icon: <Target size={20} />, roles: ['ADMIN', 'VENDEDOR'] },
+                { name: 'Metas Mensais', path: '/metas', icon: <Target size={20} />, roles: ['ADMIN'] },
             ]
         },
         {
@@ -55,7 +55,7 @@ const MainLayout: React.FC = () => {
             items: [
                 { name: 'Orçamentos', path: '/orcamentos', icon: <FileText size={20} />, roles: ['ADMIN', 'ORCAMENTISTA'] },
                 { name: 'Materiais', path: '/materiais', icon: <Box size={20} />, roles: ['ADMIN', 'ORCAMENTISTA'] },
-                { name: 'Categorias', path: '/categorias', icon: <Layers size={20} />, roles: ['ADMIN', 'ORCAMENTISTA'] },
+                { name: 'Categorias', path: '/categorias', icon: <Layers size={20} />, roles: ['ADMIN'] },
             ]
         },
         {
