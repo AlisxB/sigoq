@@ -43,12 +43,18 @@ const ProductSearchModal: React.FC<ProductSearchModalProps> = ({ show, onHide, o
         staleTime: 1000 * 60 * 60 // 1 hora de cache para fornecedores
     });
 
-    const isSearchValid = debouncedSearch.length >= 2 || !!selCategoria || !!selFornecedor;
+    const isSearchActive = debouncedSearch.length >= 2 || !!selCategoria || !!selFornecedor;
 
     const { data: results, isLoading } = useQuery<Produto[]>({
         queryKey: ['search-products', debouncedSearch, selCategoria, selFornecedor],
-        queryFn: () => produtoApi.search(debouncedSearch, { categoria: selCategoria, fornecedor: selFornecedor }),
-        enabled: show && isSearchValid,
+        queryFn: () => {
+            if (isSearchActive) {
+                return produtoApi.search(debouncedSearch, { categoria: selCategoria, fornecedor: selFornecedor });
+            }
+            // Carrega os primeiros materiais para "aquecer" o banco e a interface
+            return produtoApi.list();
+        },
+        enabled: show,
         staleTime: 1000 * 60 * 5, // 5 minutos de cache para resultados de busca
     });
 
@@ -124,34 +130,38 @@ const ProductSearchModal: React.FC<ProductSearchModalProps> = ({ show, onHide, o
                     ) : (
                         <ListGroup variant="flush">
                             {results && results.length > 0 ? (
-                                results.map(p => (
-                                    <ListGroup.Item
-                                        key={p.id}
-                                        action
-                                        onClick={() => { onSelect(p); setSearch(''); }}
-                                        className="d-flex justify-content-between align-items-center py-3 px-4 border-bottom text-dark hover-bg-light"
-                                    >
-                                        <div>
-                                            <div className="fw-bold text-primary" style={{ letterSpacing: '0.5px' }}>{p.codigo}</div>
-                                            <div className="text-dark small fw-medium">{p.descricao}</div>
-                                            <div className="d-flex gap-2 mt-2">
-                                                {p.fornecedor_nome && <Badge bg="info" className="rounded-pill px-2 py-1 x-small fw-bold" style={{ backgroundColor: 'rgba(73, 190, 255, 0.1)', color: '#49BEFF', border: 'none' }}>{p.fornecedor_nome}</Badge>}
-                                                {p.ncm && <Badge bg="light" text="dark" className="border font-monospace x-small rounded-pill px-2">NCM: {p.ncm}</Badge>}
+                                <>
+                                    {!isSearchActive && (
+                                        <div className="bg-light px-4 py-2 border-bottom text-muted x-small fw-bold text-uppercase" style={{ letterSpacing: '1px' }}>
+                                            Materiais sugeridos (digite para filtrar)
+                                        </div>
+                                    )}
+                                    {results.map(p => (
+                                        <ListGroup.Item
+                                            key={p.id}
+                                            action
+                                            onClick={() => { onSelect(p); setSearch(''); }}
+                                            className="d-flex justify-content-between align-items-center py-3 px-4 border-bottom text-dark hover-bg-light"
+                                        >
+                                            <div>
+                                                <div className="fw-bold text-primary" style={{ letterSpacing: '0.5px' }}>{p.codigo}</div>
+                                                <div className="text-dark small fw-medium">{p.descricao}</div>
+                                                <div className="d-flex gap-2 mt-2">
+                                                    {p.fornecedor_nome && <Badge bg="info" className="rounded-pill px-2 py-1 x-small fw-bold" style={{ backgroundColor: 'rgba(73, 190, 255, 0.1)', color: '#49BEFF', border: 'none' }}>{p.fornecedor_nome}</Badge>}
+                                                    {p.ncm && <Badge bg="light" text="dark" className="border font-monospace x-small rounded-pill px-2">NCM: {p.ncm}</Badge>}
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div className="text-end">
-                                            <div className="fw-extrabold" style={{ color: 'var(--success)', fontSize: '1.1rem' }}>R$ {parseFloat(p.custo_base).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-                                            <div className="text-muted x-small fw-bold text-uppercase" style={{ letterSpacing: '1px' }}>Custo Base</div>
-                                        </div>
-                                    </ListGroup.Item>
-                                ))
+                                            <div className="text-end">
+                                                <div className="fw-extrabold" style={{ color: 'var(--success)', fontSize: '1.1rem' }}>R$ {parseFloat(p.custo_base).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                                                <div className="text-muted x-small fw-bold text-uppercase" style={{ letterSpacing: '1px' }}>Custo Base</div>
+                                            </div>
+                                        </ListGroup.Item>
+                                    ))}
+                                </>
                             ) : (
                                 <div className="text-center py-5 text-muted px-4">
                                     <div className="opacity-20 mb-3"><Search size={48} /></div>
-                                    {(search.length > 0 || selCategoria || selFornecedor) ? 
-                                        <p className="mb-0">Nenhum material encontrado para estes filtros.</p> : 
-                                        <p className="mb-0">Utilize a busca ou os filtros para encontrar materiais.</p>
-                                    }
+                                    <p className="mb-0">Nenhum material encontrado para estes filtros.</p>
                                 </div>
                             )}
                         </ListGroup>

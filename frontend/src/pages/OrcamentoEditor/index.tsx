@@ -55,6 +55,13 @@ const OrcamentoEditor: React.FC = () => {
         enabled: !!id
     });
 
+    // Prefetch de materiais para "aquecer" o banco e o cache
+    useQuery({
+        queryKey: ['search-products', '', undefined, undefined],
+        queryFn: () => produtoApi.list(),
+        staleTime: 1000 * 60 * 5
+    });
+
     const {
         localOrcamento, addKit, deleteKit, updateKitName,
         addItemToKit, deleteItem, updateItemQuantity, updateBasicInfo, recalculate

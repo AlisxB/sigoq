@@ -15,6 +15,12 @@ class ProdutoViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
+        
+        # Filtro de busca exata (muito mais rápido que SearchFilter)
+        codigo_exato = self.request.query_params.get('codigo_exato')
+        if codigo_exato:
+            return queryset.filter(codigo__iexact=codigo_exato)
+
         categoria = self.request.query_params.get('categoria')
         fornecedor = self.request.query_params.get('fornecedor')
         
