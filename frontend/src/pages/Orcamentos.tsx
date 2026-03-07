@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { Container, Card, Table, Button, Badge, Spinner, Form, Row, Col, InputGroup } from 'react-bootstrap';
-import { Plus, Search, Filter, Eye, Edit, Printer, Copy, Trash2, FileText } from 'lucide-react';
+import { Plus, Search, Filter, Eye, Edit, Printer, Copy, Trash2, FileText, Activity, User } from 'lucide-react';
 import { orcamentoApi } from '../api/orcamentos';
 import { Orcamento } from '../types';
 import ConfirmModal from '../components/ConfirmModal';
@@ -81,37 +81,42 @@ const Orcamentos: React.FC = () => {
                 <Card.Body className="p-4">
                     <Row className="g-3 align-items-end">
                         <Col md={5}>
-                            <Form.Label className="small fw-bold text-muted">Pesquisar</Form.Label>
-                            <InputGroup className="input-group-premium">
-                                <InputGroup.Text className="bg-white border-end-0">
+                            <Form.Label className="small fw-bold text-muted">Pesquisar Orçamento</Form.Label>
+                            <InputGroup className="shadow-sm rounded-12 overflow-hidden border">
+                                <InputGroup.Text className="bg-white border-0 ps-3">
                                     <Search size={18} className="text-muted" />
                                 </InputGroup.Text>
                                 <Form.Control
-                                    className="border-start-0 ps-0"
-                                    placeholder="Nº Orçamento ou Cliente..."
+                                    className="border-0 shadow-none py-2"
+                                    placeholder="Digite o número do orçamento ou nome do cliente..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                 />
                             </InputGroup>
                         </Col>
                         <Col md={3}>
-                            <Form.Label className="small fw-bold text-muted">Status</Form.Label>
-                            <Form.Select
-                                className="form-select-premium"
-                                value={statusFilter}
-                                onChange={(e) => setStatusFilter(e.target.value)}
-                            >
-                                <option value="">Todos os Status</option>
-                                <option value="RASCUNHO">Rascunho</option>
-                                <option value="ELABORACAO">Em Elaboração</option>
-                                <option value="REVISAO">Aguardando Revisão</option>
-                                <option value="ENVIADO">Enviado</option>
-                                <option value="APROVADO">Aprovado</option>
-                                <option value="REPROVADO">Reprovado</option>
-                            </Form.Select>
+                            <Form.Label className="small fw-bold text-muted">Filtrar por Status</Form.Label>
+                            <InputGroup className="shadow-sm rounded-12 overflow-hidden border">
+                                <InputGroup.Text className="bg-white border-0 ps-3">
+                                    <Activity size={18} className="text-muted" />
+                                </InputGroup.Text>
+                                <Form.Select
+                                    className="border-0 shadow-none py-2 ps-0"
+                                    value={statusFilter}
+                                    onChange={(e) => setStatusFilter(e.target.value)}
+                                >
+                                    <option value="">Todos os Status</option>
+                                    <option value="RASCUNHO">Rascunho</option>
+                                    <option value="ELABORACAO">Em Elaboração</option>
+                                    <option value="REVISAO">Aguardando Revisão</option>
+                                    <option value="ENVIADO">Enviado</option>
+                                    <option value="APROVADO">Aprovado</option>
+                                    <option value="REPROVADO">Reprovado</option>
+                                </Form.Select>
+                            </InputGroup>
                         </Col>
                         <Col md={4} className="text-end">
-                            <Button variant="light" className="text-muted" onClick={() => { setSearchTerm(''); setStatusFilter(''); }}>
+                            <Button variant="light" className="text-muted fw-bold" onClick={() => { setSearchTerm(''); setStatusFilter(''); }}>
                                 Limpar Filtros
                             </Button>
                         </Col>
@@ -128,7 +133,7 @@ const Orcamentos: React.FC = () => {
                             <th>Vendedor</th>
                             <th>Status</th>
                             <th>Valor Total</th>
-                            <th className="text-end pe-4">Ações</th>
+                            <th className="text-end pe-4">AÇÕES</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -152,7 +157,10 @@ const Orcamentos: React.FC = () => {
                                     </td>
                                     <td>
                                         <div className="small text-muted d-flex align-items-center">
-                                            <span className="me-2">{orc.vendedor_nome || 'Sistema'}</span>
+                                            <div className="bg-light rounded-circle p-1 me-2 d-flex align-items-center justify-content-center" style={{ width: '24px', height: '24px' }}>
+                                                <User size={12} className="text-primary" />
+                                            </div>
+                                            <span className="fw-medium text-dark">{orc.vendedor_nome}</span>
                                         </div>
                                     </td>
                                     <td>{getStatusBadge(orc.status)}</td>
@@ -162,16 +170,18 @@ const Orcamentos: React.FC = () => {
                                     <td className="text-end pe-4">
                                         <div className="d-flex justify-content-end gap-2">
                                             <Button
-                                                variant="outline-primary"
+                                                variant="light"
                                                 size="sm"
+                                                className="text-primary"
                                                 title="Editar"
                                                 onClick={() => navigate(`/orcamento/${orc.id}`)}
                                             >
                                                 <Edit size={14} />
                                             </Button>
                                             <Button
-                                                variant="outline-secondary"
+                                                variant="light"
                                                 size="sm"
+                                                className="text-secondary"
                                                 title="Nova Revisão"
                                                 onClick={() => revisionMutation.mutate(orc.id)}
                                                 disabled={revisionMutation.isPending}
@@ -179,16 +189,18 @@ const Orcamentos: React.FC = () => {
                                                 <Copy size={14} />
                                             </Button>
                                             <Button
-                                                variant="outline-info"
+                                                variant="light"
                                                 size="sm"
+                                                className="text-info"
                                                 title="Gerar PDF"
                                                 onClick={() => window.open(`http://127.0.0.1:8000/orcamentos/pdf/${orc.id}/`, '_blank')}
                                             >
                                                 <Printer size={14} />
                                             </Button>
                                             <Button
-                                                variant="outline-danger"
+                                                variant="light"
                                                 size="sm"
+                                                className="text-danger"
                                                 title="Excluir"
                                                 onClick={() => handleDeleteClick(orc)}
                                             >
@@ -220,6 +232,7 @@ const Orcamentos: React.FC = () => {
             />
 
             <style>{`
+                .rounded-12 { border-radius: 12px !important; }
                 .x-small { font-size: 0.75rem; }
                 .table-modern th { 
                     font-size: 0.75rem; 

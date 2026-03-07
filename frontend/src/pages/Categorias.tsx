@@ -1,5 +1,5 @@
 import React from 'react';
-import { Form, Row, Col } from 'react-bootstrap';
+import { Form, Row, Col, InputGroup } from 'react-bootstrap';
 import { Layers, AlignLeft } from 'lucide-react';
 import GenericCRUD from '../components/GenericCRUD';
 import { categoriaApi } from '../api/produtos';
@@ -16,32 +16,32 @@ const Categorias: React.FC = () => {
             <Col md={12}>
                 <Form.Group>
                     <Form.Label className="form-premium-label">Nome da Categoria</Form.Label>
-                    <div className="input-icon-wrapper">
-                        <Layers size={18} />
+                    <InputGroup>
+                        <InputGroup.Text className="bg-light border-end-0"><Layers size={18} className="text-muted" /></InputGroup.Text>
                         <Form.Control
                             required
-                            className="form-control-premium"
+                            className="form-control-premium border-start-0"
                             value={data.nome || ''}
                             onChange={(e) => onChange('nome', e.target.value)}
                             placeholder="Ex: Disjuntores"
                         />
-                    </div>
+                    </InputGroup>
                 </Form.Group>
             </Col>
             <Col md={12}>
                 <Form.Group>
                     <Form.Label className="form-premium-label">Descrição</Form.Label>
-                    <div className="input-icon-wrapper">
-                        <AlignLeft size={18} style={{ top: '24px' }} />
+                    <InputGroup>
+                        <InputGroup.Text className="bg-light border-end-0 align-items-start pt-3"><AlignLeft size={18} className="text-muted" /></InputGroup.Text>
                         <Form.Control
                             as="textarea"
                             rows={3}
-                            className="form-control-premium"
+                            className="form-control-premium border-start-0"
                             value={data.descricao || ''}
                             onChange={(e) => onChange('descricao', e.target.value)}
                             placeholder="Breve descrição da categoria..."
                         />
-                    </div>
+                    </InputGroup>
                 </Form.Group>
             </Col>
         </Row>

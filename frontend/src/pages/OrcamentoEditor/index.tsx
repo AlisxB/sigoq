@@ -4,9 +4,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Row, Col, Button, Spinner } from 'react-bootstrap';
 import { Plus } from 'lucide-react';
 
-import { orcamentoApi } from '../../../api/orcamentos';
-import { usuarioApi } from '../../../api/usuarios';
-import { clienteApi } from '../../../api/clientes';
+import { orcamentoApi } from '../../api/orcamentos';
+import { usuarioApi } from '../../api/usuarios';
+import { clienteApi } from '../../api/clientes';
 
 import { useOrcamentoState } from './hooks/useOrcamentoState';
 import EditorHeader from './components/EditorHeader';
@@ -14,7 +14,7 @@ import BasicInfoCard from './components/BasicInfoCard';
 import KitSection from './components/KitSection';
 import PricingSummary from './components/PricingSummary';
 import ProductSearchModal from './components/ProductSearchModal';
-import ConfirmModal from '../../../components/ConfirmModal';
+import ConfirmModal from '../../components/ConfirmModal';
 
 const OrcamentoEditor: React.FC = () => {
     const { id } = useParams<{ id: string }>();

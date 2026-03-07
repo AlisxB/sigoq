@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Row, Col, InputGroup, Form, Spinner, ListGroup, Badge } from 'react-bootstrap';
-import { Search, Filter, Compass } from 'lucide-react';
+import { Search, Filter, Compass, Layers } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { produtoApi, categoriaApi } from '../../../api/produtos';
 import { fornecedorApi } from '../../../api/fornecedores';
@@ -79,14 +79,17 @@ const ProductSearchModal: React.FC<ProductSearchModalProps> = ({ show, onHide, o
                             <Form.Label className="small fw-bold text-muted d-flex align-items-center">
                                 <Filter size={14} className="me-1" /> Categoria
                             </Form.Label>
-                            <Form.Select
-                                className="text-dark"
-                                value={selCategoria || ''}
-                                onChange={(e) => setSelCategoria(e.target.value ? parseInt(e.target.value) : undefined)}
-                            >
-                                <option value="">Todas as Categorias</option>
-                                {categorias.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
-                            </Form.Select>
+                            <InputGroup>
+                                <InputGroup.Text className="bg-light border-end-0"><Layers size={18} className="text-muted" /></InputGroup.Text>
+                                <Form.Select
+                                    className="text-dark border-start-0"
+                                    value={selCategoria || ''}
+                                    onChange={(e) => setSelCategoria(e.target.value ? parseInt(e.target.value) : undefined)}
+                                >
+                                    <option value="">Todas as Categorias</option>
+                                    {categorias.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                                </Form.Select>
+                            </InputGroup>
                         </Form.Group>
                     </Col>
                     <Col md={6}>
@@ -94,14 +97,17 @@ const ProductSearchModal: React.FC<ProductSearchModalProps> = ({ show, onHide, o
                             <Form.Label className="small fw-bold text-muted d-flex align-items-center">
                                 <Compass size={14} className="me-1" /> Fabricante
                             </Form.Label>
-                            <Form.Select
-                                className="text-dark"
-                                value={selFornecedor || ''}
-                                onChange={(e) => setSelFornecedor(e.target.value ? parseInt(e.target.value) : undefined)}
-                            >
-                                <option value="">Todos os Fabricantes</option>
-                                {fornecedores.map(f => <option key={f.id} value={f.id}>{f.nome_fantasia || f.razao_social}</option>)}
-                            </Form.Select>
+                            <InputGroup>
+                                <InputGroup.Text className="bg-light border-end-0"><Compass size={18} className="text-muted" /></InputGroup.Text>
+                                <Form.Select
+                                    className="text-dark border-start-0"
+                                    value={selFornecedor || ''}
+                                    onChange={(e) => setSelFornecedor(e.target.value ? parseInt(e.target.value) : undefined)}
+                                >
+                                    <option value="">Todos os Fabricantes</option>
+                                    {fornecedores.map(f => <option key={f.id} value={f.id}>{f.nome_fantasia || f.razao_social}</option>)}
+                                </Form.Select>
+                            </InputGroup>
                         </Form.Group>
                     </Col>
                 </Row>

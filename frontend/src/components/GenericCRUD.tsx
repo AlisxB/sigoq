@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Table, Button, Modal, Form, Card, Spinner } from 'react-bootstrap';
+import { Table, Button, Modal, Form, Card, Spinner, InputGroup } from 'react-bootstrap';
 import { Plus, Edit, Trash2, Search } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
 
@@ -136,17 +136,19 @@ const GenericCRUD = <T extends { id?: number | string }>({
                 <Card.Body className="p-0">
                     <div className="p-4 border-bottom bg-light bg-opacity-10">
                         <div className="d-flex flex-wrap align-items-end gap-3">
-                            <div style={{ position: 'relative', flex: '1 1 300px', maxWidth: '400px' }}>
+                            <div style={{ flex: '1 1 300px', maxWidth: '400px' }}>
                                 <Form.Label className="form-premium-label">Pesquisar</Form.Label>
-                                <div style={{ position: 'relative' }}>
-                                    <Search size={18} color="#7C8FAC" style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)' }} />
+                                <InputGroup className="shadow-sm rounded-12 overflow-hidden border">
+                                    <InputGroup.Text className="bg-white border-0 ps-3">
+                                        <Search size={18} className="text-muted" />
+                                    </InputGroup.Text>
                                     <Form.Control
-                                        placeholder={`Buscar ${entityName.toLowerCase()}...`}
+                                        placeholder={`Buscar ${entityName.toLowerCase()} por qualquer campo...`}
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
-                                        className="form-control-premium ps-5"
+                                        className="border-0 shadow-none py-2"
                                     />
-                                </div>
+                                </InputGroup>
                             </div>
                             {renderFilters?.()}
                         </div>

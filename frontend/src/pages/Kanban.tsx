@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
-import { Container, Row, Col, Card, Badge, Button, Spinner, Dropdown } from 'react-bootstrap';
+import { Container, Row, Col, Card, Badge, Button, Spinner, Dropdown, InputGroup } from 'react-bootstrap';
 import { Plus, MoreVertical, DollarSign, Calendar, User, Search, Briefcase, Building, Flag, ListTodo, Lock } from 'lucide-react';
 import { comercialApi } from '../api/comercial';
 import { clienteApi } from '../api/clientes';
@@ -15,7 +15,7 @@ const Kanban: React.FC = () => {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const { user: currentUser } = useAuth();
-    
+
     const { data: statusList = [], isLoading: loadingStatus } = useQuery<StatusOportunidade[]>({
         queryKey: ['kanban-status'],
         queryFn: comercialApi.listStatus
@@ -102,7 +102,7 @@ const Kanban: React.FC = () => {
                     <h1 className="h4 fw-extrabold mb-1" style={{ color: '#2A3547', letterSpacing: '-0.5px' }}>Pipeline de Vendas</h1>
                     <p className="text-muted small mb-0">Gerencie suas oportunidades comerciais e acompanhe o progresso.</p>
                 </div>
-                <Button variant="primary" className="d-flex align-items-center shadow-sm" onClick={() => setShowModal(true)}>
+                <Button variant="primary" className="d-flex align-items-center shadow-sm px-4 fw-bold rounded-12" onClick={() => setShowModal(true)}>
                     <Plus size={18} className="me-2" /> Nova Oportunidade
                 </Button>
             </div>
@@ -140,8 +140,7 @@ const Kanban: React.FC = () => {
                                             .filter((o: Oportunidade) => o.status === status.id)
                                             .map((op: Oportunidade, index: number) => {
                                                 const isLocked = op.status_detalhe?.notifica_setor_tecnico;
-                                                
-                                                // Lógica de fallback para o nome do vendedor (Garante que nunca seja transparente/vazio)
+
                                                 let vendedorNome = "Vendedor";
                                                 if (op.vendedor_nome && op.vendedor_nome.trim() !== "") {
                                                     vendedorNome = op.vendedor_nome;
@@ -195,23 +194,21 @@ const Kanban: React.FC = () => {
                                                                         </Dropdown>
                                                                     </div>
                                                                     <h6 className="fw-bold mb-2 text-dark" style={{ fontSize: '0.9rem' }}>{op.titulo}</h6>
-                                                                    
+
                                                                     <div className="mb-3">
-                                                                        {/* Cliente */}
                                                                         <div className="d-flex align-items-center mb-2">
                                                                             <User size={14} className="text-primary me-2" />
                                                                             <span className="small fw-bold" style={{ fontSize: '0.8rem', color: '#5A6A83' }}>
                                                                                 {op.cliente_detalhe?.nome_fantasia || op.cliente_detalhe?.razao_social || 'Cliente'}
                                                                             </span>
                                                                         </div>
-                                                                        
-                                                                        {/* Vendedor (Onde estava o problema) */}
+
                                                                         <div className="d-flex align-items-center mb-2">
-                                                                            <div style={{ 
-                                                                                width: '20px', height: '20px', borderRadius: '50%', 
-                                                                                backgroundColor: '#5D87FF', display: 'flex', 
-                                                                                alignItems: 'center', justifyContent: 'center', 
-                                                                                marginRight: '8px' 
+                                                                            <div style={{
+                                                                                width: '20px', height: '20px', borderRadius: '50%',
+                                                                                backgroundColor: '#5D87FF', display: 'flex',
+                                                                                alignItems: 'center', justifyContent: 'center',
+                                                                                marginRight: '8px'
                                                                             }}>
                                                                                 <User size={12} color="white" />
                                                                             </div>
@@ -220,7 +217,6 @@ const Kanban: React.FC = () => {
                                                                             </span>
                                                                         </div>
 
-                                                                        {/* Valor */}
                                                                         <div className="d-flex align-items-center mb-2">
                                                                             <DollarSign size={14} className="text-success me-2" />
                                                                             <span className="small fw-bold text-success" style={{ fontSize: '0.9rem' }}>
@@ -255,7 +251,7 @@ const Kanban: React.FC = () => {
                 </div>
             </DragDropContext>
 
-            <Modal show={showModal} onHide={() => setShowModal(false)} centered className="modal-premium">
+            <Modal show={showModal} onHide={() => setShowModal(false)} centered size="lg" className="modal-premium">
                 <Modal.Header closeButton className="border-0">
                     <Modal.Title className="fw-bold">Nova Oportunidade</Modal.Title>
                 </Modal.Header>
@@ -263,39 +259,39 @@ const Kanban: React.FC = () => {
                     <Form className="g-3 row">
                         <Col md={12} className="mb-3">
                             <Form.Label className="form-premium-label">Título da Oportunidade</Form.Label>
-                            <div className="input-icon-wrapper">
-                                <Briefcase size={18} />
+                            <InputGroup>
+                                <InputGroup.Text className="bg-light border-end-0"><Briefcase size={18} className="text-muted" /></InputGroup.Text>
                                 <Form.Control
                                     required
-                                    className="form-control-premium"
+                                    className="form-control-premium border-start-0"
                                     value={formData.titulo}
                                     onChange={e => setFormData({ ...formData, titulo: e.target.value })}
                                     placeholder="Ex: Projeto Residencial Alpha"
                                 />
-                            </div>
+                            </InputGroup>
                         </Col>
                         <Col md={12} className="mb-3">
                             <Form.Label className="form-premium-label">Cliente</Form.Label>
-                            <div className="input-icon-wrapper">
-                                <Building size={18} />
+                            <InputGroup>
+                                <InputGroup.Text className="bg-light border-end-0"><Building size={18} className="text-muted" /></InputGroup.Text>
                                 <Form.Select
                                     required
-                                    className="form-select-premium"
+                                    className="form-select-premium border-start-0"
                                     value={formData.cliente}
                                     onChange={e => setFormData({ ...formData, cliente: parseInt(e.target.value) })}
                                 >
                                     <option value="">Selecione o Cliente</option>
                                     {clientes.map((c: Cliente) => <option key={c.id} value={c.id}>{c.razao_social}</option>)}
                                 </Form.Select>
-                            </div>
+                            </InputGroup>
                         </Col>
                         <Col md={6} className="mb-3">
                             <Form.Label className="form-premium-label">Valor Estimado (R$)</Form.Label>
-                            <div className="input-icon-wrapper">
-                                <DollarSign size={18} />
+                            <InputGroup>
+                                <InputGroup.Text className="bg-light border-end-0"><DollarSign size={18} className="text-muted" /></InputGroup.Text>
                                 <Form.Control
                                     required
-                                    className="form-control-premium"
+                                    className="form-control-premium border-start-0"
                                     value={formData.valor_estimado ? maskCurrency(formData.valor_estimado) : ''}
                                     onChange={(e) => {
                                         const unmasked = unmaskCurrency(e.target.value);
@@ -303,14 +299,14 @@ const Kanban: React.FC = () => {
                                     }}
                                     placeholder="R$ 0,00"
                                 />
-                            </div>
+                            </InputGroup>
                         </Col>
                         <Col md={6} className="mb-3">
                             <Form.Label className="form-premium-label">Prioridade</Form.Label>
-                            <div className="input-icon-wrapper">
-                                <Flag size={18} />
+                            <InputGroup>
+                                <InputGroup.Text className="bg-light border-end-0"><Flag size={18} className="text-muted" /></InputGroup.Text>
                                 <Form.Select
-                                    className="form-select-premium"
+                                    className="form-select-premium border-start-0"
                                     value={formData.prioridade}
                                     onChange={e => setFormData({ ...formData, prioridade: e.target.value as any })}
                                 >
@@ -318,14 +314,14 @@ const Kanban: React.FC = () => {
                                     <option value="MEDIA">Média</option>
                                     <option value="ALTA">Alta</option>
                                 </Form.Select>
-                            </div>
+                            </InputGroup>
                         </Col>
                         <Col md={6} className="mb-3">
-                            <Form.Label className="form-premium-label">Fonte</Form.Label>
-                            <div className="input-icon-wrapper">
-                                <Search size={18} />
+                            <Form.Label className="form-premium-label">Fonte de Prospecção</Form.Label>
+                            <InputGroup>
+                                <InputGroup.Text className="bg-light border-end-0"><Search size={18} className="text-muted" /></InputGroup.Text>
                                 <Form.Select
-                                    className="form-select-premium"
+                                    className="form-select-premium border-start-0"
                                     value={formData.fonte}
                                     onChange={e => setFormData({ ...formData, fonte: e.target.value as any })}
                                 >
@@ -335,27 +331,28 @@ const Kanban: React.FC = () => {
                                     <option value="WHATSAPP">WhatsApp</option>
                                     <option value="OUTRO">Outro</option>
                                 </Form.Select>
-                            </div>
+                            </InputGroup>
                         </Col>
                         <Col md={12} className="mb-3">
                             <Form.Label className="form-premium-label">Status Inicial</Form.Label>
-                            <div className="input-icon-wrapper">
-                                <ListTodo size={18} />
+                            <InputGroup>
+                                <InputGroup.Text className="bg-light border-end-0"><ListTodo size={18} className="text-muted" /></InputGroup.Text>
                                 <Form.Select
-                                    className="form-select-premium"
+                                    className="form-select-premium border-start-0"
                                     value={formData.status}
                                     onChange={e => setFormData({ ...formData, status: parseInt(e.target.value) })}
                                 >
                                     {statusList.map((s: StatusOportunidade) => <option key={s.id} value={s.id}>{s.nome}</option>)}
                                 </Form.Select>
-                            </div>
+                            </InputGroup>
                         </Col>
                     </Form>
                 </Modal.Body>
                 <Modal.Footer className="border-0 p-4 pt-0">
-                    <Button variant="light" onClick={() => setShowModal(false)} className="btn-premium-secondary">Cancelar</Button>
+                    <Button variant="link" onClick={() => setShowModal(false)} className="text-muted text-decoration-none">Cancelar</Button>
                     <Button
-                        className="btn-premium-primary"
+                        variant="primary"
+                        className="px-4 fw-bold rounded-pill shadow-sm"
                         onClick={() => createMutation.mutate(formData)}
                         disabled={createMutation.isPending}
                     >
@@ -364,6 +361,7 @@ const Kanban: React.FC = () => {
                 </Modal.Footer>
             </Modal>
             <style>{`
+                .rounded-12 { border-radius: 12px !important; }
                 .kanban-wrapper::-webkit-scrollbar {
                     height: 8px;
                 }

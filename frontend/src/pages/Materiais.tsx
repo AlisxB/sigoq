@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Form, Row, Col } from 'react-bootstrap';
+import { Form, Row, Col, InputGroup } from 'react-bootstrap';
 import GenericCRUD from '../components/GenericCRUD';
 import { produtoApi, categoriaApi } from '../api/produtos';
 import { fornecedorApi } from '../api/fornecedores';
@@ -29,31 +29,31 @@ const Materiais: React.FC = () => {
         <>
             <div style={{ flex: '1 1 200px', maxWidth: '300px' }}>
                 <Form.Label className="form-premium-label">Filtrar Categoria</Form.Label>
-                <div className="input-icon-wrapper">
-                    <Layers size={16} />
+                <InputGroup>
+                    <InputGroup.Text className="bg-light border-end-0"><Layers size={16} className="text-muted" /></InputGroup.Text>
                     <Form.Select
-                        className="form-select-premium ps-4"
+                        className="form-select-premium border-start-0 ps-2"
                         value={categoriaFilter}
                         onChange={(e) => setCategoriaFilter(e.target.value)}
                     >
                         <option value="">Todas as Categorias</option>
                         {categorias.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
                     </Form.Select>
-                </div>
+                </InputGroup>
             </div>
             <div style={{ flex: '1 1 200px', maxWidth: '300px' }}>
                 <Form.Label className="form-premium-label">Filtrar Fornecedor</Form.Label>
-                <div className="input-icon-wrapper">
-                    <Building size={16} />
+                <InputGroup>
+                    <InputGroup.Text className="bg-light border-end-0"><Building size={16} className="text-muted" /></InputGroup.Text>
                     <Form.Select
-                        className="form-select-premium ps-4"
+                        className="form-select-premium border-start-0 ps-2"
                         value={fornecedorFilter}
                         onChange={(e) => setFornecedorFilter(e.target.value)}
                     >
                         <option value="">Todos os Fornecedores</option>
                         {fornecedores.map(f => <option key={f.id} value={f.id}>{f.nome_fantasia || f.razao_social}</option>)}
                     </Form.Select>
-                </div>
+                </InputGroup>
             </div>
         </>
     );
@@ -69,75 +69,75 @@ const Materiais: React.FC = () => {
             <Col md={4}>
                 <Form.Group>
                     <Form.Label className="form-premium-label">Código</Form.Label>
-                    <div className="input-icon-wrapper">
-                        <Barcode size={18} />
+                    <InputGroup>
+                        <InputGroup.Text className="bg-light border-end-0"><Barcode size={18} className="text-muted" /></InputGroup.Text>
                         <Form.Control
                             required
-                            className="form-control-premium"
+                            className="form-control-premium border-start-0"
                             value={data.codigo || ''}
                             onChange={(e) => onChange('codigo', e.target.value)}
                             placeholder="Ex: PRD-001"
                         />
-                    </div>
+                    </InputGroup>
                 </Form.Group>
             </Col>
             <Col md={8}>
                 <Form.Group>
                     <Form.Label className="form-premium-label">Descrição</Form.Label>
-                    <div className="input-icon-wrapper">
-                        <Box size={18} />
+                    <InputGroup>
+                        <InputGroup.Text className="bg-light border-end-0"><Box size={18} className="text-muted" /></InputGroup.Text>
                         <Form.Control
                             required
-                            className="form-control-premium"
+                            className="form-control-premium border-start-0"
                             value={data.descricao || ''}
                             onChange={(e) => onChange('descricao', e.target.value)}
                             placeholder="Ex: Janela de Alumínio"
                         />
-                    </div>
+                    </InputGroup>
                 </Form.Group>
             </Col>
             <Col md={6}>
                 <Form.Group>
                     <Form.Label className="form-premium-label">Categoria</Form.Label>
-                    <div className="input-icon-wrapper">
-                        <Layers size={18} />
+                    <InputGroup>
+                        <InputGroup.Text className="bg-light border-end-0"><Layers size={18} className="text-muted" /></InputGroup.Text>
                         <Form.Select
                             required
-                            className="form-select-premium"
+                            className="form-select-premium border-start-0"
                             value={data.categoria || ''}
                             onChange={(e) => onChange('categoria', parseInt(e.target.value))}
                         >
                             <option value="">Selecione...</option>
                             {categorias.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
                         </Form.Select>
-                    </div>
+                    </InputGroup>
                 </Form.Group>
             </Col>
             <Col md={6}>
                 <Form.Group>
                     <Form.Label className="form-premium-label">Fornecedor Principal</Form.Label>
-                    <div className="input-icon-wrapper">
-                        <Building size={18} />
+                    <InputGroup>
+                        <InputGroup.Text className="bg-light border-end-0"><Building size={18} className="text-muted" /></InputGroup.Text>
                         <Form.Select
                             required
-                            className="form-select-premium"
+                            className="form-select-premium border-start-0"
                             value={data.fornecedor || ''}
                             onChange={(e) => onChange('fornecedor', parseInt(e.target.value))}
                         >
                             <option value="">Selecione...</option>
                             {fornecedores.map(f => <option key={f.id} value={f.id}>{f.nome_fantasia || f.razao_social}</option>)}
                         </Form.Select>
-                    </div>
+                    </InputGroup>
                 </Form.Group>
             </Col>
             <Col md={4}>
                 <Form.Group>
                     <Form.Label className="form-premium-label">Unidade de Medida</Form.Label>
-                    <div className="input-icon-wrapper">
-                        <Ruler size={18} />
+                    <InputGroup>
+                        <InputGroup.Text className="bg-light border-end-0"><Ruler size={18} className="text-muted" /></InputGroup.Text>
                         <Form.Select
                             required
-                            className="form-select-premium"
+                            className="form-select-premium border-start-0"
                             value={data.unidade_medida || 'UN'}
                             onChange={(e) => onChange('unidade_medida', e.target.value)}
                         >
@@ -147,17 +147,17 @@ const Materiais: React.FC = () => {
                             <option value="PC">Peça</option>
                             <option value="CJ">Conjunto</option>
                         </Form.Select>
-                    </div>
+                    </InputGroup>
                 </Form.Group>
             </Col>
             <Col md={4}>
                 <Form.Group>
                     <Form.Label className="form-premium-label">Custo Base (R$)</Form.Label>
-                    <div className="input-icon-wrapper">
-                        <DollarSign size={18} />
+                    <InputGroup>
+                        <InputGroup.Text className="bg-light border-end-0"><DollarSign size={18} className="text-muted" /></InputGroup.Text>
                         <Form.Control
                             required
-                            className="form-control-premium"
+                            className="form-control-premium border-start-0"
                             value={data.custo_base ? maskCurrency(data.custo_base) : ''}
                             onChange={(e) => {
                                 const unmasked = unmaskCurrency(e.target.value);
@@ -165,7 +165,7 @@ const Materiais: React.FC = () => {
                             }}
                             placeholder="R$ 0,00"
                         />
-                    </div>
+                    </InputGroup>
                 </Form.Group>
             </Col>
             <Col md={12}>
@@ -173,46 +173,48 @@ const Materiais: React.FC = () => {
                     <Col md={4}>
                         <Form.Group>
                             <Form.Label className="form-premium-label">NCM</Form.Label>
-                            <div className="input-icon-wrapper">
-                                <FileText size={18} />
+                            <InputGroup>
+                                <InputGroup.Text className="bg-light border-end-0"><FileText size={18} className="text-muted" /></InputGroup.Text>
                                 <Form.Control
-                                    className="form-control-premium"
+                                    className="form-control-premium border-start-0"
                                     value={data.ncm || ''}
                                     onChange={(e) => onChange('ncm', keepOnlyNumbers(e.target.value))}
                                     placeholder="Apenas números"
                                     maxLength={8}
                                 />
-                            </div>
+                            </InputGroup>
                         </Form.Group>
                     </Col>
                     <Col md={4}>
                         <Form.Group>
                             <Form.Label className="form-premium-label">Estoque Atual</Form.Label>
-                            <div className="input-icon-wrapper">
-                                <PackageSearch size={18} />
+                            <InputGroup>
+                                <InputGroup.Text className="bg-light border-end-0"><PackageSearch size={18} className="text-muted" /></InputGroup.Text>
                                 <Form.Control
                                     type="number"
-                                    className="form-control-premium"
+                                    className="form-control-premium border-start-0"
                                     value={data.estoque_atual || 0}
                                     onChange={(e) => onChange('estoque_atual', parseInt(e.target.value))}
                                     min={0}
+                                    placeholder="0"
                                 />
-                            </div>
+                            </InputGroup>
                         </Form.Group>
                     </Col>
                     <Col md={4}>
                         <Form.Group>
                             <Form.Label className="form-premium-label">Estoque Mínimo</Form.Label>
-                            <div className="input-icon-wrapper">
-                                <Archive size={18} />
+                            <InputGroup>
+                                <InputGroup.Text className="bg-light border-end-0"><Archive size={18} className="text-muted" /></InputGroup.Text>
                                 <Form.Control
                                     type="number"
-                                    className="form-control-premium"
+                                    className="form-control-premium border-start-0"
                                     value={data.estoque_minimo || 0}
                                     onChange={(e) => onChange('estoque_minimo', parseInt(e.target.value))}
                                     min={0}
+                                    placeholder="0"
                                 />
-                            </div>
+                            </InputGroup>
                         </Form.Group>
                     </Col>
                 </Row>
@@ -220,17 +222,17 @@ const Materiais: React.FC = () => {
             <Col md={12}>
                 <Form.Group>
                     <Form.Label className="form-premium-label">Observações</Form.Label>
-                    <div className="input-icon-wrapper">
-                        <AlignLeft size={18} style={{ top: '24px' }} />
+                    <InputGroup>
+                        <InputGroup.Text className="bg-light border-end-0 align-items-start pt-3"><AlignLeft size={18} className="text-muted" /></InputGroup.Text>
                         <Form.Control
                             as="textarea"
                             rows={2}
-                            className="form-control-premium"
+                            className="form-control-premium border-start-0"
                             value={data.observacoes || ''}
                             onChange={(e) => onChange('observacoes', e.target.value)}
                             placeholder="Detalhes adicionais e especificações técnicas..."
                         />
-                    </div>
+                    </InputGroup>
                 </Form.Group>
             </Col>
         </Row>
