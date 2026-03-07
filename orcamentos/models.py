@@ -76,11 +76,32 @@ class Orcamento(BaseModel):
         return f"ORC-{self.numero:04d}-R{self.revisao:02d}"
 
     def save(self, *args, **kwargs):
+        is_new = not self.pk
+        old_status = None
+        if not is_new:
+            try:
+                old_status = Orcamento.objects.get(pk=self.pk).status
+            except Orcamento.DoesNotExist:
+                pass
+
         if not self.numero:
-            # Mantemos apenas a lógica de numeração no save (integridade estrutural)
             last_orc = Orcamento.objects.all().order_by('numero').last()
             self.numero = (last_orc.numero + 1) if last_orc else 1
+        
         super().save(*args, **kwargs)
+
+        # Sincronização com a Oportunidade
+        if self.oportunidade and self.status == 'ENVIADO' and old_status != 'ENVIADO':
+            from comercial.models import StatusOportunidade
+            try:
+                # Move para status 'Negociação' (ID 4)
+                novo_status = StatusOportunidade.objects.get(id=4)
+                if self.oportunidade.status != novo_status:
+                    self.oportunidade.status = novo_status
+                    self.oportunidade.save()
+                    print(f"AUTO-SYNC: Oportunidade {self.oportunidade.numero} movida para Negociação.")
+            except StatusOportunidade.DoesNotExist:
+                pass
 
 class Kit(models.Model):
     orcamento = models.ForeignKey(Orcamento, on_delete=models.CASCADE, related_name='kits')
