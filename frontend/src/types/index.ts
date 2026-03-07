@@ -182,3 +182,32 @@ export interface MetaMensal {
     vendedor?: number;
     vendedor_nome?: string;
 }
+
+export interface AnalyticsData {
+    kpis: {
+        margem_media: number;
+        ticket_medio: number;
+        total_aprovados: number;
+        pipeline_ativo_valor: number;
+        vendas_mes: number;
+        meta_valor: number;
+        meta_atingimento: number;
+        total_estagnadas: number;
+    };
+    charts: {
+        evolucao_mensal: { mes: string; total: number }[];
+        mix_categorias: { label: string; value: number }[];
+        origem_leads: { label: string; value: number }[];
+        motivos_perda: { label: string; value: number }[];
+    };
+    ranking_clientes: { nome: string; total: number }[];
+    alertas: {
+        estagnadas: {
+            id: number;
+            numero: number;
+            titulo: string;
+            dias_parado: number;
+            valor: number;
+        }[];
+    };
+}

@@ -50,31 +50,23 @@ class OrcamentoViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def analytics(self, request):
-        """Estatísticas financeiras protegidas por escopo de vendedor."""
+        """Estatísticas de BI completas para visão gerencial e operacional."""
         from django.utils import timezone
-        from comercial.models import MetaMensal
+        from django.db.models.functions import TruncMonth
+        from django.db.models import Q, F
+        from comercial.models import MetaMensal, Oportunidade
         
         try:
             now = timezone.now()
-            qs = self.get_queryset()
+            qs_all = self.get_queryset() # Respeita isolamento se não for admin
             
-            margem_data = qs.filter(status__in=['ENVIADO', 'APROVADO']).aggregate(avg=Avg('margem_contrib'))
+            # --- 1. MÉTRICAS DE TOPO (KPIs) ---
+            # Margem Média
+            margem_data = qs_all.filter(status__in=['ENVIADO', 'APROVADO']).aggregate(avg=Avg('margem_contrib'))
             margem_media = float(margem_data.get('avg') or 0)
             
-            categorias_raw = ItemOrcamento.objects.filter(
-                kit__orcamento__in=qs.filter(status='APROVADO')
-            ).values('produto__categoria__nome').annotate(
-                total=Sum('quantidade')
-            ).order_by('-total')
-            
-            categorias = []
-            for item in categorias_raw:
-                categorias.append({
-                    'produto__categoria__nome': item['produto__categoria__nome'] or 'Indefinido',
-                    'total': float(item['total'] or 0)
-                })
-
-            vendas_mes_data = qs.filter(
+            # Faturamento Mês Atual vs Meta
+            vendas_mes_data = qs_all.filter(
                 status='APROVADO',
                 atualizado_em__month=now.month,
                 atualizado_em__year=now.year
@@ -88,13 +80,111 @@ class OrcamentoViewSet(viewsets.ModelViewSet):
             valor_meta = float(meta_obj.valor_meta if meta_obj else 0)
             percentual_atingimento = (vendas_mes / valor_meta * 100) if valor_meta > 0 else 0
 
+            # Ticket Médio (Aprovados)
+            ticket_data = qs_all.filter(status='APROVADO').aggregate(avg=Avg('valor_total'), count=Count('id'))
+            ticket_medio = float(ticket_data.get('avg') or 0)
+            total_aprovados = ticket_data.get('count') or 0
+
+            # Valor do Pipeline Ativo (Tudo que não está aprovado/reprovado/cancelado)
+            pipeline_ativo = float(qs_all.filter(
+                status__in=['RASCUNHO', 'ELABORACAO', 'REVISAO', 'ENVIADO']
+            ).aggregate(total=Sum('valor_total'))['total'] or 0)
+
+            # --- 2. GRÁFICOS DE TENDÊNCIA E MIX ---
+            # Evolução Mensal (Últimos 6 meses)
+            seis_meses_atras = now - timezone.timedelta(days=180)
+            evolucao = qs_all.filter(
+                status='APROVADO', 
+                atualizado_em__gte=seis_meses_atras
+            ).annotate(month=TruncMonth('atualizado_em')) \
+             .values('month') \
+             .annotate(total=Sum('valor_total')) \
+             .order_by('month')
+            
+            evolucao_list = [{
+                'mes': e['month'].strftime('%b/%y'),
+                'total': float(e['total'])
+            } for e in evolucao]
+
+            # Mix por Categoria
+            categorias_raw = ItemOrcamento.objects.filter(
+                kit__orcamento__in=qs_all.filter(status='APROVADO')
+            ).values('produto__categoria__nome').annotate(
+                total=Sum('quantidade')
+            ).order_by('-total')[:5]
+            
+            categorias = [{
+                'label': item['produto__categoria__nome'] or 'Outros',
+                'value': float(item['total'] or 0)
+            } for item in categorias_raw]
+
+            # --- 3. ANÁLISE COMERCIAL (BI) ---
+            # Origem de Leads (Baseado nas Oportunidades vinculadas)
+            origens_raw = Oportunidade.objects.filter(
+                id__in=qs_all.values_list('oportunidade_id', flat=True)
+            ).values('fonte').annotate(count=Count('id')).order_by('-count')
+            
+            origens = [{
+                'label': item['fonte'],
+                'value': item['count']
+            } for item in origens_raw]
+
+            # Motivos de Perda
+            motivos_raw = qs_all.filter(status='REPROVADO').exclude(motivo_rejeicao='') \
+                .values('motivo_rejeicao').annotate(count=Count('id')).order_by('-count')[:5]
+            
+            motivos_perda = [{
+                'label': item['motivo_rejeicao'][:30],
+                'value': item['count']
+            } for item in motivos_raw]
+
+            # Ranking de Clientes (Pareto - Top 10)
+            ranking_clientes = qs_all.filter(status='APROVADO') \
+                .values('cliente__razao_social', 'cliente__nome_fantasia') \
+                .annotate(total=Sum('valor_total')) \
+                .order_by('-total')[:10]
+            
+            clientes_bi = [{
+                'nome': item['cliente__nome_fantasia'] or item['cliente__razao_social'],
+                'total': float(item['total'])
+            } for item in ranking_clientes]
+
+            # --- 4. ALERTAS ESTRATÉGICOS ---
+            # Oportunidades estagnadas (> 15 dias sem atualização)
+            limite_estagnacao = now - timezone.timedelta(days=15)
+            estagnadas_raw = Oportunidade.objects.filter(
+                id__in=qs_all.values_list('oportunidade_id', flat=True),
+                atualizado_em__lt=limite_estagnacao
+            ).exclude(status__id__in=[5, 6]) # Exclui Ganho/Perdido
+            
+            estagnadas = [{
+                'id': op.id,
+                'numero': op.numero,
+                'titulo': op.titulo,
+                'dias_parado': (now - op.atualizado_em).days,
+                'valor': float(op.valor_estimado)
+            } for op in estagnadas_raw[:5]] # Apenas top 5 alertas
+
             return Response({
-                'margem_media': round(margem_media, 4),
-                'categorias': categorias,
-                'meta': {
-                    'valor_venda_mes': round(vendas_mes, 2),
-                    'valor_meta_configurada': round(valor_meta, 2),
-                    'percentual_atingimento': round(percentual_atingimento, 1)
+                'kpis': {
+                    'margem_media': round(margem_media * 100, 1),
+                    'ticket_medio': round(ticket_medio, 2),
+                    'total_aprovados': total_aprovados,
+                    'pipeline_ativo_valor': round(pipeline_ativo, 2),
+                    'vendas_mes': round(vendas_mes, 2),
+                    'meta_valor': round(valor_meta, 2),
+                    'meta_atingimento': round(percentual_atingimento, 1),
+                    'total_estagnadas': estagnadas_raw.count()
+                },
+                'charts': {
+                    'evolucao_mensal': evolucao_list,
+                    'mix_categorias': categorias,
+                    'origem_leads': origens,
+                    'motivos_perda': motivos_perda
+                },
+                'ranking_clientes': clientes_bi,
+                'alertas': {
+                    'estagnadas': estagnadas
                 }
             })
         except Exception as e:
