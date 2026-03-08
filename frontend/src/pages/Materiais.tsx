@@ -3,17 +3,31 @@ import { Form, Row, Col, InputGroup } from 'react-bootstrap';
 import GenericCRUD from '../components/GenericCRUD';
 import { produtoApi, categoriaApi } from '../api/produtos';
 import { fornecedorApi } from '../api/fornecedores';
-import { Produto, User } from '../types';
+import { Produto, Categoria, Fornecedor } from '../types';
 import { useQuery } from '@tanstack/react-query';
 import { keepOnlyNumbers, maskCurrency, unmaskCurrency } from '../utils/masks';
-import { Barcode, Box, Layers, Building, Ruler, DollarSign, FileText, PackageSearch, Archive, AlignLeft, Filter } from 'lucide-react';
+import { Barcode, Box, Layers, Building, Ruler, DollarSign, FileText, PackageSearch, Archive, AlignLeft } from 'lucide-react';
+import Autocomplete from '../components/Autocomplete';
 
 const Materiais: React.FC = () => {
-    const [categoriaFilter, setCategoriaFilter] = useState<string>('');
-    const [fornecedorFilter, setFornecedorFilter] = useState<string>('');
+    const [categoriaFilter, setCategoriaFilter] = useState<number | string | undefined>('');
+    const [fornecedorFilter, setFornecedorFilter] = useState<number | string | undefined>('');
 
-    const { data: categorias = [] } = useQuery({ queryKey: ['categorias'], queryFn: categoriaApi.list });
-    const { data: fornecedores = [] } = useQuery({ queryKey: ['fornecedores'], queryFn: fornecedorApi.list });
+    const { data: categoriasData } = useQuery({ 
+        queryKey: ['categorias'], 
+        queryFn: () => categoriaApi.list() 
+    });
+    const categorias: Categoria[] = Array.isArray(categoriasData) 
+        ? categoriasData 
+        : (categoriasData as any)?.results || [];
+
+    const { data: fornecedoresData } = useQuery({ 
+        queryKey: ['fornecedores'], 
+        queryFn: () => fornecedorApi.list() 
+    });
+    const fornecedores: Fornecedor[] = Array.isArray(fornecedoresData) 
+        ? fornecedoresData 
+        : (fornecedoresData as any)?.results || [];
 
     const columns = [
         { header: 'Código', accessor: 'codigo' as const },
@@ -27,42 +41,28 @@ const Materiais: React.FC = () => {
 
     const renderFilters = () => (
         <>
-            <div style={{ flex: '1 1 200px', maxWidth: '300px' }}>
-                <Form.Label className="form-premium-label">Filtrar Categoria</Form.Label>
-                <InputGroup>
-                    <InputGroup.Text className="bg-light border-end-0"><Layers size={16} className="text-muted" /></InputGroup.Text>
-                    <Form.Select
-                        className="form-select-premium border-start-0 ps-2"
-                        value={categoriaFilter}
-                        onChange={(e) => setCategoriaFilter(e.target.value)}
-                    >
-                        <option value="">Todas as Categorias</option>
-                        {categorias.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
-                    </Form.Select>
-                </InputGroup>
-            </div>
-            <div style={{ flex: '1 1 200px', maxWidth: '300px' }}>
-                <Form.Label className="form-premium-label">Filtrar Fornecedor</Form.Label>
-                <InputGroup>
-                    <InputGroup.Text className="bg-light border-end-0"><Building size={16} className="text-muted" /></InputGroup.Text>
-                    <Form.Select
-                        className="form-select-premium border-start-0 ps-2"
-                        value={fornecedorFilter}
-                        onChange={(e) => setFornecedorFilter(e.target.value)}
-                    >
-                        <option value="">Todos os Fornecedores</option>
-                        {fornecedores.map(f => <option key={f.id} value={f.id}>{f.nome_fantasia || f.razao_social}</option>)}
-                    </Form.Select>
-                </InputGroup>
-            </div>
+            <Autocomplete
+                className="flex-grow-1"
+                style={{ maxWidth: '300px' }}
+                label="Filtrar Categoria"
+                placeholder="Todas as Categorias"
+                options={categorias.map((c: Categoria) => ({ id: c.id, label: c.nome }))}
+                value={categoriaFilter}
+                onChange={setCategoriaFilter}
+                icon={<Layers size={16} className="text-muted" />}
+            />
+            <Autocomplete
+                className="flex-grow-1"
+                style={{ maxWidth: '300px' }}
+                label="Filtrar Fornecedor"
+                placeholder="Todos os Fornecedores"
+                options={fornecedores.map((f: Fornecedor) => ({ id: f.id, label: f.nome_fantasia || f.razao_social }))}
+                value={fornecedorFilter}
+                onChange={setFornecedorFilter}
+                icon={<Building size={16} className="text-muted" />}
+            />
         </>
     );
-
-    const filterFn = (item: Produto) => {
-        const matchesCat = categoriaFilter ? item.categoria === parseInt(categoriaFilter) : true;
-        const matchesFor = fornecedorFilter ? item.fornecedor === parseInt(fornecedorFilter) : true;
-        return matchesCat && matchesFor;
-    };
 
     const renderForm = (data: Partial<Produto>, onChange: (field: keyof Produto, value: any) => void) => (
         <Row className="g-3">
@@ -97,38 +97,26 @@ const Materiais: React.FC = () => {
                 </Form.Group>
             </Col>
             <Col md={6}>
-                <Form.Group>
-                    <Form.Label className="form-premium-label">Categoria</Form.Label>
-                    <InputGroup>
-                        <InputGroup.Text className="bg-light border-end-0"><Layers size={18} className="text-muted" /></InputGroup.Text>
-                        <Form.Select
-                            required
-                            className="form-select-premium border-start-0"
-                            value={data.categoria || ''}
-                            onChange={(e) => onChange('categoria', parseInt(e.target.value))}
-                        >
-                            <option value="">Selecione...</option>
-                            {categorias.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
-                        </Form.Select>
-                    </InputGroup>
-                </Form.Group>
+                <Autocomplete
+                    label="Categoria"
+                    placeholder="Selecione a Categoria..."
+                    options={categorias.map((c: Categoria) => ({ id: c.id, label: c.nome }))}
+                    value={data.categoria}
+                    onChange={(val) => onChange('categoria', val)}
+                    icon={<Layers size={18} className="text-muted" />}
+                    required
+                />
             </Col>
             <Col md={6}>
-                <Form.Group>
-                    <Form.Label className="form-premium-label">Fornecedor Principal</Form.Label>
-                    <InputGroup>
-                        <InputGroup.Text className="bg-light border-end-0"><Building size={18} className="text-muted" /></InputGroup.Text>
-                        <Form.Select
-                            required
-                            className="form-select-premium border-start-0"
-                            value={data.fornecedor || ''}
-                            onChange={(e) => onChange('fornecedor', parseInt(e.target.value))}
-                        >
-                            <option value="">Selecione...</option>
-                            {fornecedores.map(f => <option key={f.id} value={f.id}>{f.nome_fantasia || f.razao_social}</option>)}
-                        </Form.Select>
-                    </InputGroup>
-                </Form.Group>
+                <Autocomplete
+                    label="Fornecedor Principal"
+                    placeholder="Selecione o Fornecedor..."
+                    options={fornecedores.map((f: Fornecedor) => ({ id: f.id, label: f.nome_fantasia || f.razao_social }))}
+                    value={data.fornecedor}
+                    onChange={(val) => onChange('fornecedor', val)}
+                    icon={<Building size={18} className="text-muted" />}
+                    required
+                />
             </Col>
             <Col md={4}>
                 <Form.Group>
@@ -248,7 +236,11 @@ const Materiais: React.FC = () => {
             initialData={{ codigo: '', descricao: '', unidade_medida: 'UN', custo_base: '0.00', estoque_minimo: 0 }}
             queryKey="produtos"
             renderFilters={renderFilters}
-            filterFn={filterFn}
+            useInfinite={true}
+            extraParams={{
+                categoria: categoriaFilter,
+                fornecedor: fornecedorFilter
+            }}
         />
     );
 };
