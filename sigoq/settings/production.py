@@ -22,18 +22,22 @@ if not db_config:
 else:
     DATABASES = {'default': db_config}
 
-# Confiança no Proxy Reverso
+# Confiança no Proxy Reverso (Essencial para VPS com Nginx Global)
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 USE_X_FORWARDED_HOST = True
 USE_X_FORWARDED_PORT = True
 
 # Hosts Permitidos
-ALLOWED_HOSTS = [host for host in os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',') if host]
-if not ALLOWED_HOSTS:
-    ALLOWED_HOSTS = ['msf.desenrolaai.tech', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['msf.desenrolaai.tech', '127.0.0.1', 'localhost']
+env_hosts = os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',')
+for host in env_hosts:
+    if host and host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(host)
 
-# Evitar loops de redirecionamento 301 indesejados
-APPEND_SLASH = False
+# --- TRAVAS ANTI-REDIRECIONAMENTO (Resolve o loop 301) ---
+SECURE_SSL_REDIRECT = False  # O Nginx Global já faz isso
+APPEND_SLASH = False         # Evita redirecionar para adicionar "/"
+REMOVE_SLASH = False         # Evita redirecionar para remover "/"
 
 # Segurança de Cookies - Configuração de Compatibilidade VPS
 SESSION_COOKIE_SECURE = True
@@ -42,15 +46,12 @@ SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_DOMAIN = None
-
-# CSRF Settings
 CSRF_COOKIE_HTTPONLY = False
 
 # Security Headers
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
-SECURE_SSL_REDIRECT = False # Desativado: Nginx Global já gerencia o redirecionamento HTTPS
-SECURE_HSTS_SECONDS = 31536000 # 1 ano
+SECURE_HSTS_SECONDS = 31536000
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 
