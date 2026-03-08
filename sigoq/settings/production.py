@@ -7,7 +7,7 @@ DEBUG = False
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
 
 # Configurar conforme o domínio real de produção
-ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',')
+ALLOWED_HOSTS = [host for host in os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',') if host]
 
 # Banco de Dados Profissional (PostgreSQL)
 import dj_database_url
@@ -16,7 +16,6 @@ db_config = dj_database_url.config(conn_max_age=600)
 if not db_config:
     if os.environ.get('REQUIRE_POSTGRES', 'False') == 'True':
         raise Exception("DATABASE_URL não configurada. O PostgreSQL é obrigatório em produção.")
-    # Fallback apenas para scripts de build que não acessam o banco
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -29,12 +28,16 @@ else:
 # Confiança no Proxy Reverso
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-# Segurança Máxima de Cookies (Exige HTTPS)
+# Segurança de Cookies - Configuração de Compatibilidade VPS
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SAMESITE = 'Strict'
-CSRF_COOKIE_SAMESITE = 'Strict'
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_DOMAIN = None # Deixa o Django detectar o domínio automaticamente
+
+# CSRF Settings
+CSRF_COOKIE_HTTPONLY = False # Deve ser False para o Frontend conseguir ler o token
 
 # Security Headers
 SECURE_BROWSER_XSS_FILTER = True
