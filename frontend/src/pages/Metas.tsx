@@ -21,15 +21,17 @@ const Metas: React.FC = () => {
     const [displayValue, setDisplayValue] = useState('');
     const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
 
-    const { data: metas, isLoading } = useQuery({
+    const { data: metasData, isLoading } = useQuery<MetaMensal[]>({
         queryKey: ['metas'],
-        queryFn: comercialApi.listMetas
+        queryFn: () => comercialApi.listMetas()
     });
+    const metas = Array.isArray(metasData) ? metasData : [];
 
-    const { data: vendedores = [] } = useQuery({
+    const { data: vendedoresData } = useQuery<User[]>({
         queryKey: ['vendedores'],
-        queryFn: () => usuarioApi.list({ role: 'COMERCIAL' })
+        queryFn: () => usuarioApi.list({ role: 'COMERCIAL', page_size: 1000 })
     });
+    const vendedores = Array.isArray(vendedoresData) ? vendedoresData : [];
 
     const saveMutation = useMutation({
         mutationFn: (data: Partial<MetaMensal>) =>

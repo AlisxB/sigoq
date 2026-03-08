@@ -324,6 +324,7 @@ const Clientes: React.FC = () => {
             renderForm={renderForm}
             initialData={initialData}
             queryKey="clientes"
+            useInfinite={true}
         />
     );
 };

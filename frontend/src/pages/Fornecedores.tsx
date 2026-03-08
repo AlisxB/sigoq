@@ -157,6 +157,7 @@ const Fornecedores: React.FC = () => {
             renderForm={renderForm}
             initialData={{ razao_social: '', nome_fantasia: '', cnpj: '', email: '', telefone: '', prazo_entrega_medio: 0 }}
             queryKey="fornecedores"
+            useInfinite={true}
         />
     );
 };

@@ -21,10 +21,11 @@ const ConfiguracoesPreco: React.FC = () => {
     const queryClient = useQueryClient();
     const [success, setSuccess] = useState(false);
 
-    const { data: configs = [], isLoading } = useQuery({
+    const { data: configsData, isLoading } = useQuery<ConfiguracaoPreco[]>({
         queryKey: ['config-preco'],
         queryFn: orcamentoApi.getConfig
     });
+    const configs = Array.isArray(configsData) ? configsData : [];
 
     const activeConfig = configs.find(c => c.ativo) || configs[0];
 
@@ -40,8 +41,23 @@ const ConfiguracoesPreco: React.FC = () => {
     const [localData, setLocalData] = useState<Partial<ConfiguracaoPreco> | null>(null);
 
     React.useEffect(() => {
-        if (activeConfig) setLocalData(activeConfig);
-    }, [activeConfig]);
+        if (activeConfig) {
+            setLocalData(activeConfig);
+        } else if (!isLoading && configs.length === 0) {
+            // Inicializa com valores zerados se não houver nenhuma config no banco
+            setLocalData({
+                markup_engenharia: '0.00',
+                markup_capitalizacao: '0.00',
+                markup_frete: '0.00',
+                markup_imposto: '0.00',
+                markup_comissao: '0.00',
+                markup_difal: '0.00',
+                markup_frete_especial: '0.00',
+                margem_contribuicao_padrao: '0.00',
+                ativo: true
+            });
+        }
+    }, [activeConfig, isLoading, configs.length]);
 
     const totalMarkups = useMemo(() => {
         if (!localData) return 0;
@@ -50,7 +66,10 @@ const ConfiguracoesPreco: React.FC = () => {
     }, [localData]);
 
     const marginTarget = useMemo(() => parseFloat(localData?.margem_contribuicao_padrao || '0'), [localData]);
-    const totalDivisor = 1 - (totalMarkups + marginTarget);
+    const totalDivisor = useMemo(() => {
+        const div = 1 - (totalMarkups + marginTarget);
+        return div > 0 ? div : 0.0001; // Evita divisão por zero
+    }, [totalMarkups, marginTarget]);
 
     // Dados para o Gráfico de Relação
     const chartLabels = useMemo(() => 
@@ -66,12 +85,26 @@ const ConfiguracoesPreco: React.FC = () => {
         CONFIG_FIELDS.filter(f => parseFloat(localData?.[f.key as keyof ConfiguracaoPreco] as string || '0') > 0).map(f => f.color),
     [localData]);
 
-    if (isLoading || !localData) return <div className="text-center p-5"><Spinner animation="border" /></div>;
+    if (isLoading || !localData) return <div className="text-center py-5"><Spinner animation="border" variant="primary" /></div>;
 
     const handlePercentChange = (field: keyof ConfiguracaoPreco, displayValue: string) => {
         const floatVal = parseFloat(displayValue) || 0;
         const decimalValue = (floatVal / 100).toString();
         setLocalData(prev => prev ? { ...prev, [field]: decimalValue } : null);
+    };
+
+    const handleSave = () => {
+        if (!localData) return;
+        if (localData.id) {
+            updateMutation.mutate(localData as ConfiguracaoPreco);
+        } else {
+            // Se for uma nova config (banco vazio)
+            orcamentoApi.createConfig(localData).then(() => {
+                queryClient.invalidateQueries({ queryKey: ['config-preco'] });
+                setSuccess(true);
+                setTimeout(() => setSuccess(false), 3000);
+            });
+        }
     };
 
     return (
@@ -84,7 +117,7 @@ const ConfiguracoesPreco: React.FC = () => {
                 <Button
                     variant="primary"
                     className="shadow-premium rounded-pill px-4 fw-bold d-flex align-items-center"
-                    onClick={() => updateMutation.mutate(localData as ConfiguracaoPreco)}
+                    onClick={handleSave}
                     disabled={updateMutation.isPending}
                 >
                     <Save size={18} className="me-2" />
