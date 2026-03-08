@@ -6,9 +6,6 @@ DEBUG = False
 # A SECRET_KEY DEVE estar em variáveis de ambiente em produção
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
 
-# Configurar conforme o domínio real de produção
-ALLOWED_HOSTS = [host for host in os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',') if host]
-
 # Banco de Dados Profissional (PostgreSQL)
 import dj_database_url
 db_config = dj_database_url.config(conn_max_age=600)
@@ -30,8 +27,13 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 USE_X_FORWARDED_HOST = True
 USE_X_FORWARDED_PORT = True
 
-# Evitar loops de redirecionamento
-APPEND_SLASH = False # Desativado para evitar 301 indesejados no proxy reverso
+# Hosts Permitidos
+ALLOWED_HOSTS = [host for host in os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',') if host]
+if not ALLOWED_HOSTS:
+    ALLOWED_HOSTS = ['msf.desenrolaai.tech', 'localhost', '127.0.0.1']
+
+# Evitar loops de redirecionamento 301 indesejados
+APPEND_SLASH = False
 
 # Segurança de Cookies - Configuração de Compatibilidade VPS
 SESSION_COOKIE_SECURE = True
@@ -39,10 +41,10 @@ CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_SAMESITE = 'Lax'
-SESSION_COOKIE_DOMAIN = None # Deixa o Django detectar o domínio automaticamente
+SESSION_COOKIE_DOMAIN = None
 
 # CSRF Settings
-CSRF_COOKIE_HTTPONLY = False # Deve ser False para o Frontend conseguir ler o token
+CSRF_COOKIE_HTTPONLY = False
 
 # Security Headers
 SECURE_BROWSER_XSS_FILTER = True
