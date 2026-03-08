@@ -30,19 +30,21 @@ const ProductSearchModal: React.FC<ProductSearchModalProps> = ({ show, onHide, o
     const [selCategoria, setSelCategoria] = useState<number | string | undefined>(undefined);
     const [selFornecedor, setSelFornecedor] = useState<number | string | undefined>(undefined);
 
-    const { data: categorias = [] } = useQuery<Categoria[]>({
+    const { data: categoriasData } = useQuery<Categoria[]>({
         queryKey: ['categorias'],
-        queryFn: categoriaApi.list,
+        queryFn: () => categoriaApi.list(),
         enabled: show,
-        staleTime: 1000 * 60 * 60 // 1 hora de cache para categorias
+        staleTime: 1000 * 60 * 60
     });
+    const categorias = Array.isArray(categoriasData) ? categoriasData : [];
 
-    const { data: fornecedores = [] } = useQuery<Fornecedor[]>({
+    const { data: fornecedoresData } = useQuery<Fornecedor[]>({
         queryKey: ['fornecedores'],
-        queryFn: fornecedorApi.list,
+        queryFn: () => fornecedorApi.list(),
         enabled: show,
-        staleTime: 1000 * 60 * 60 // 1 hora de cache para fornecedores
+        staleTime: 1000 * 60 * 60
     });
+    const fornecedores = Array.isArray(fornecedoresData) ? fornecedoresData : [];
 
     const isSearchActive = debouncedSearch.length >= 2 || !!selCategoria || !!selFornecedor;
 
@@ -57,10 +59,11 @@ const ProductSearchModal: React.FC<ProductSearchModalProps> = ({ show, onHide, o
             }
             // Carrega os primeiros materiais para "aquecer" o banco e a interface
             const response = await produtoApi.list();
+            // Desembrulha se vier paginado ou retorna array puro
             return Array.isArray(response) ? response : (response.results || []);
         },
         enabled: show,
-        staleTime: 1000 * 60 * 5, // 5 minutos de cache para resultados de busca
+        staleTime: 1000 * 60 * 5,
     });
 
     return (
