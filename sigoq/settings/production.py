@@ -4,7 +4,12 @@ from .base import *
 DEBUG = False
 
 # A SECRET_KEY DEVE estar em variáveis de ambiente em produção
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY') or os.environ.get('SECRET_KEY')
+
+if not SECRET_KEY:
+    # Se chegarmos aqui em produção, o sistema está configurado errado,
+    # mas fornecemos uma mensagem clara no log.
+    raise Exception("A variável DJANGO_SECRET_KEY não foi encontrada no ambiente de produção.")
 
 # Banco de Dados Profissional (PostgreSQL)
 import dj_database_url
