@@ -2,13 +2,8 @@ import api from './client';
 import { Produto, Categoria } from '../types';
 
 export const produtoApi = {
-    list: (): Promise<Produto[]> => api.get('produtos/api/produtos/').then(res => {
-        const data = res.data;
-        if (data && data.results && Array.isArray(data.results)) return data.results;
-        if (Array.isArray(data)) return data;
-        if (data && typeof data === 'object') return Object.values(data);
-        return [];
-    }),
+    list: (params?: { page?: number, search?: string, categoria?: number, fornecedor?: number }): Promise<any> => 
+        api.get('produtos/api/produtos/', { params }).then(res => res.data),
     get: (id: string | number): Promise<Produto> => api.get(`produtos/api/produtos/${id}/`).then(res => res.data),
     create: (data: Partial<Produto>): Promise<Produto> => api.post('produtos/api/produtos/', data).then(res => res.data),
     update: (id: string | number, data: Partial<Produto>): Promise<Produto> => api.put(`produtos/api/produtos/${id}/`, data).then(res => res.data),
@@ -35,12 +30,10 @@ export const produtoApi = {
 };
 
 export const categoriaApi = {
-    list: (): Promise<Categoria[]> => api.get('produtos/api/categorias/').then(res => {
+    list: (): Promise<Categoria[]> => api.get('produtos/api/categorias/?page_size=1000').then(res => {
         const data = res.data;
         if (data && data.results && Array.isArray(data.results)) return data.results;
-        if (Array.isArray(data)) return data;
-        if (data && typeof data === 'object') return Object.values(data);
-        return [];
+        return Array.isArray(data) ? data : [];
     }),
     get: (id: string | number): Promise<Categoria> => api.get(`produtos/api/categorias/${id}/`).then(res => res.data),
     create: (data: Partial<Categoria>): Promise<Categoria> => api.post('produtos/api/categorias/', data).then(res => res.data),
