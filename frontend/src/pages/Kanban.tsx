@@ -38,20 +38,25 @@ const Kanban: React.FC = () => {
     const [showLossModal, setShowLossModal] = useState(false);
     const [lossData, setLossData] = useState({ opId: 0, statusId: 0, motivo: '', detalhes: '' });
 
-    const { data: statusList = [], isLoading: loadingStatus } = useQuery<StatusOportunidade[]>({
+    const { data: statusData, isLoading: loadingStatus } = useQuery<StatusOportunidade[]>({
         queryKey: ['kanban-status'],
         queryFn: comercialApi.listStatus
     });
+    const statusList = Array.isArray(statusData) ? statusData : [];
 
-    const { data: oportunidades = [], isLoading: loadingOps } = useQuery<Oportunidade[]>({
+    const { data: opsData, isLoading: loadingOps } = useQuery<Oportunidade[]>({
         queryKey: ['kanban-ops'],
         queryFn: comercialApi.list
     });
+    const oportunidades = Array.isArray(opsData) ? opsData : [];
 
-    const { data: clientes = [] } = useQuery<Cliente[]>({
+    const { data: clientesData } = useQuery({
         queryKey: ['clientes'],
-        queryFn: clienteApi.list
+        queryFn: () => clienteApi.list({ page_size: 1000 }) // Busca todos para o select
     });
+    const clientes: Cliente[] = Array.isArray(clientesData) 
+        ? clientesData 
+        : (clientesData as any)?.results || [];
 
     const [showModal, setShowModal] = useState(false);
     const [formData, setFormData] = useState<Partial<Oportunidade>>({
@@ -116,7 +121,7 @@ const Kanban: React.FC = () => {
         const newStatusId = parseInt(destination.droppableId);
         
         // Verifica se o destino é o status "Perdido"
-        const targetStatus = statusList.find(s => s.id === newStatusId);
+        const targetStatus = statusList.find((s: StatusOportunidade) => s.id === newStatusId);
         const isLost = targetStatus?.nome.toLowerCase().includes('perdido') || targetStatus?.id === 6;
 
         if (isLost) {
