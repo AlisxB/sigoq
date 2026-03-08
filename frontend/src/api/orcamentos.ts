@@ -26,5 +26,6 @@ export const orcamentoApi = {
         return [];
     }),
     updateConfig: (id: number, data: any): Promise<any> => api.patch(`orcamentos/api/config-preco/${id}/`, data).then(res => res.data),
+    createConfig: (data: any): Promise<any> => api.post('orcamentos/api/config-preco/', data).then(res => res.data),
     createRevision: (id: string | number): Promise<Orcamento> => api.post(`orcamentos/api/orcamentos/${id}/revisao/`).then(res => res.data),
 };
