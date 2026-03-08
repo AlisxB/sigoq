@@ -164,10 +164,13 @@ class OrcamentoViewSet(viewsets.ModelViewSet):
 
             # Motivos de Perda (Baseado nas Oportunidades Perdidas)
             motivos_dict = dict(Oportunidade.MOTIVO_PERDA_CHOICES)
-            motivos_raw = Oportunidade.objects.filter(
-                id__in=qs_all.values_list('oportunidade_id', flat=True),
-                status_id=6 # Status 'PERDIDO'
-            ).exclude(motivo_perda__isnull=True).exclude(motivo_perda='') \
+            
+            # Buscamos em todas as OPs perdidas, não apenas as que têm orçamento
+            motivos_qs = Oportunidade.objects.filter(status_id=6)
+            if not is_privileged:
+                motivos_qs = motivos_qs.filter(vendedor=user)
+                
+            motivos_raw = motivos_qs.exclude(motivo_perda__isnull=True).exclude(motivo_perda='') \
              .values('motivo_perda').annotate(count=Count('id')).order_by('-count')[:5]
             
             motivos_perda = [{
