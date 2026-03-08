@@ -9,3 +9,4 @@ weasyprint>=61.0
 django-weasyprint>=2.2
 djangorestframework>=3.14
 django-cors-headers>=4.3
+openpyxl>=3.1.2
