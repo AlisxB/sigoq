@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { useState, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { Table, Button, Modal, Form, Card, Spinner, InputGroup } from 'react-bootstrap';
-import { Plus, Edit, Trash2, Search } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, ChevronDown } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
 
 interface GenericCRUDProps<T> {
@@ -9,7 +9,7 @@ interface GenericCRUDProps<T> {
     entityName: string;
     queryKey: string;
     api: {
-        list: () => Promise<T[]>;
+        list: (params?: any) => Promise<any>;
         create: (item: Partial<T>) => Promise<T>;
         update: (id: number | string, item: Partial<T>) => Promise<T>;
         delete: (id: number | string) => Promise<void>;
@@ -22,6 +22,8 @@ interface GenericCRUDProps<T> {
     renderForm: (formData: Partial<T>, handleChange: (field: keyof T, value: any) => void) => React.ReactNode;
     filterFn?: (item: T) => boolean;
     renderFilters?: () => React.ReactNode;
+    useInfinite?: boolean; // Se verdadeiro, habilita o botão "Carregar Mais"
+    extraParams?: any;     // Parâmetros extras para a busca no servidor
 }
 
 const GenericCRUD = <T extends { id?: number | string }>({
@@ -33,7 +35,9 @@ const GenericCRUD = <T extends { id?: number | string }>({
     initialData,
     renderForm,
     filterFn,
-    renderFilters
+    renderFilters,
+    useInfinite = false,
+    extraParams = {}
 }: GenericCRUDProps<T>) => {
     const queryClient = useQueryClient();
     const [searchTerm, setSearchTerm] = useState('');
@@ -43,10 +47,53 @@ const GenericCRUD = <T extends { id?: number | string }>({
     const [itemToDelete, setItemToDelete] = useState<number | string | null>(null);
     const [formData, setFormData] = useState<Partial<T>>(initialData);
 
-    const { data: items = [], isLoading } = useQuery({
-        queryKey: [queryKey],
-        queryFn: api.list
+    // Query para o modo Infinito
+    const infiniteQuery = useInfiniteQuery({
+        queryKey: [queryKey, 'infinite', searchTerm, extraParams],
+        queryFn: ({ pageParam = 1 }) => api.list({ 
+            page: pageParam, 
+            search: searchTerm,
+            ...extraParams 
+        }),
+        getNextPageParam: (lastPage) => {
+            if (lastPage.next) {
+                try {
+                    const url = new URL(lastPage.next);
+                    return parseInt(url.searchParams.get('page') || '1');
+                } catch (e) {
+                    // Fallback se a URL for relativa
+                    const match = lastPage.next.match(/page=(\d+)/);
+                    return match ? parseInt(match[1]) : undefined;
+                }
+            }
+            return undefined;
+        },
+        initialPageParam: 1,
+        enabled: useInfinite
     });
+
+    // Query para o modo Normal (Legado/Simples)
+    const normalQuery = useQuery({
+        queryKey: [queryKey, searchTerm, extraParams],
+        queryFn: () => api.list({ search: searchTerm, ...extraParams }),
+        enabled: !useInfinite
+    });
+
+    // Consolidação dos itens
+    const items = useMemo(() => {
+        if (useInfinite) {
+            return infiniteQuery.data?.pages.flatMap(page => {
+                if (Array.isArray(page)) return page;
+                return page.results || [];
+            }) || [];
+        }
+        const data = normalQuery.data;
+        if (Array.isArray(data)) return data;
+        if (data?.results) return data.results;
+        return [];
+    }, [useInfinite, infiniteQuery.data, normalQuery.data]);
+
+    const isLoading = useInfinite ? infiniteQuery.isLoading : normalQuery.isLoading;
 
     const createMutation = useMutation({
         mutationFn: api.create,
@@ -109,11 +156,9 @@ const GenericCRUD = <T extends { id?: number | string }>({
     };
 
     const filteredItems = items.filter(item => {
-        const matchesSearch = Object.values(item).some(val =>
-            String(val).toLowerCase().includes(searchTerm.toLowerCase())
-        );
+        // Busca simplificada local para filtros customizados que não estão no servidor
         const matchesCustom = filterFn ? filterFn(item) : true;
-        return matchesSearch && matchesCustom;
+        return matchesCustom;
     });
 
     return (
@@ -178,41 +223,65 @@ const GenericCRUD = <T extends { id?: number | string }>({
                                         </td>
                                     </tr>
                                 ) : (
-                                    filteredItems.map((item) => (
-                                        <tr key={item.id}>
-                                            {columns.map((col, idx) => (
-                                                <td key={idx} className="px-4 py-3 border-0 fw-medium">
-                                                    {typeof col.accessor === 'function'
-                                                        ? col.accessor(item)
-                                                        : (item[col.accessor] as any)}
+                                    <>
+                                        {filteredItems.map((item) => (
+                                            <tr key={item.id}>
+                                                {columns.map((col, idx) => (
+                                                    <td key={idx} className="px-4 py-3 border-0 fw-medium">
+                                                        {typeof col.accessor === 'function'
+                                                            ? col.accessor(item)
+                                                            : (item[col.accessor] as any)}
+                                                    </td>
+                                                ))}
+                                                <td className="px-4 py-3 border-0">
+                                                    <div className="d-flex justify-content-end gap-2">
+                                                        <Button
+                                                            variant="light"
+                                                            size="sm"
+                                                            className="text-primary border-0"
+                                                            style={{ borderRadius: '8px', padding: '8px' }}
+                                                            onClick={() => handleOpen(item)}
+                                                            title="Editar"
+                                                        >
+                                                            <Edit size={16} />
+                                                        </Button>
+                                                        <Button
+                                                            variant="light"
+                                                            size="sm"
+                                                            className="text-danger border-0"
+                                                            style={{ borderRadius: '8px', padding: '8px' }}
+                                                            onClick={() => item.id && handleDeleteClick(item.id)}
+                                                            title="Excluir"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </Button>
+                                                    </div>
                                                 </td>
-                                            ))}
-                                            <td className="px-4 py-3 border-0 text-end">
-                                                <Button
-                                                    variant="light"
-                                                    size="sm"
-                                                    className="me-2 text-primary"
-                                                    style={{ borderRadius: '8px' }}
-                                                    onClick={() => handleOpen(item)}
-                                                >
-                                                    <Edit size={16} />
-                                                </Button>
-                                                <Button
-                                                    variant="light"
-                                                    size="sm"
-                                                    className="text-danger"
-                                                    style={{ borderRadius: '8px' }}
-                                                    onClick={() => item.id && handleDeleteClick(item.id)}
-                                                >
-                                                    <Trash2 size={16} />
-                                                </Button>
-                                            </td>
-                                        </tr>
-                                    ))
+                                            </tr>
+                                        ))}
+                                    </>
                                 )}
                             </tbody>
                         </Table>
                     </div>
+
+                    {useInfinite && infiniteQuery.hasNextPage && (
+                        <div className="p-4 border-top text-center bg-light bg-opacity-10">
+                            <Button 
+                                variant="outline-primary" 
+                                className="rounded-pill px-4 fw-bold d-inline-flex align-items-center gap-2"
+                                onClick={() => infiniteQuery.fetchNextPage()}
+                                disabled={infiniteQuery.isFetchingNextPage}
+                            >
+                                {infiniteQuery.isFetchingNextPage ? (
+                                    <Spinner animation="border" size="sm" />
+                                ) : (
+                                    <ChevronDown size={18} />
+                                )}
+                                CARREGAR MAIS {entityName.toUpperCase()}S
+                            </Button>
+                        </div>
+                    )}
                 </Card.Body>
             </Card>
 
