@@ -27,6 +27,11 @@ else:
 
 # Confiança no Proxy Reverso
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_PORT = True
+
+# Evitar loops de redirecionamento
+APPEND_SLASH = False # Desativado para evitar 301 indesejados no proxy reverso
 
 # Segurança de Cookies - Configuração de Compatibilidade VPS
 SESSION_COOKIE_SECURE = True
