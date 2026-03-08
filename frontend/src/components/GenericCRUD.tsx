@@ -1,8 +1,18 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { Table, Button, Modal, Form, Card, Spinner, InputGroup } from 'react-bootstrap';
 import { Plus, Edit, Trash2, Search, ChevronDown } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
+
+// Hook de Debounce para busca
+function useDebounce<T>(value: T, delay: number): T {
+    const [debouncedValue, setDebouncedValue] = useState<T>(value);
+    useEffect(() => {
+        const handler = setTimeout(() => setDebouncedValue(value), delay);
+        return () => clearTimeout(handler);
+    }, [value, delay]);
+    return debouncedValue;
+}
 
 interface GenericCRUDProps<T> {
     title: string;
@@ -41,6 +51,8 @@ const GenericCRUD = <T extends { id?: number | string }>({
 }: GenericCRUDProps<T>) => {
     const queryClient = useQueryClient();
     const [searchTerm, setSearchTerm] = useState('');
+    const debouncedSearch = useDebounce(searchTerm, 500); // 500ms de atraso
+    
     const [showModal, setShowModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [editingItem, setEditingItem] = useState<T | null>(null);
@@ -49,10 +61,10 @@ const GenericCRUD = <T extends { id?: number | string }>({
 
     // Query para o modo Infinito
     const infiniteQuery = useInfiniteQuery({
-        queryKey: [queryKey, 'infinite', searchTerm, extraParams],
+        queryKey: [queryKey, 'infinite', debouncedSearch, extraParams],
         queryFn: ({ pageParam = 1 }) => api.list({ 
             page: pageParam, 
-            search: searchTerm,
+            search: debouncedSearch,
             ...extraParams 
         }),
         getNextPageParam: (lastPage) => {
@@ -61,7 +73,6 @@ const GenericCRUD = <T extends { id?: number | string }>({
                     const url = new URL(lastPage.next);
                     return parseInt(url.searchParams.get('page') || '1');
                 } catch (e) {
-                    // Fallback se a URL for relativa
                     const match = lastPage.next.match(/page=(\d+)/);
                     return match ? parseInt(match[1]) : undefined;
                 }
@@ -74,8 +85,8 @@ const GenericCRUD = <T extends { id?: number | string }>({
 
     // Query para o modo Normal (Legado/Simples)
     const normalQuery = useQuery({
-        queryKey: [queryKey, searchTerm, extraParams],
-        queryFn: () => api.list({ search: searchTerm, ...extraParams }),
+        queryKey: [queryKey, debouncedSearch, extraParams],
+        queryFn: () => api.list({ search: debouncedSearch, ...extraParams }),
         enabled: !useInfinite
     });
 
@@ -155,11 +166,22 @@ const GenericCRUD = <T extends { id?: number | string }>({
         setShowDeleteModal(true);
     };
 
-    const filteredItems = items.filter(item => {
-        // Busca simplificada local para filtros customizados que não estão no servidor
-        const matchesCustom = filterFn ? filterFn(item) : true;
-        return matchesCustom;
-    });
+    const filteredItems = useMemo(() => {
+        return items.filter(item => {
+            const matchesCustom = filterFn ? filterFn(item) : true;
+            
+            // Se não estamos no modo infinito, garantimos uma busca local 
+            // caso o backend não suporte a busca por algum motivo
+            if (!useInfinite && debouncedSearch) {
+                const matchesLocal = Object.values(item).some(val =>
+                    String(val).toLowerCase().includes(debouncedSearch.toLowerCase())
+                );
+                return matchesLocal && matchesCustom;
+            }
+            
+            return matchesCustom;
+        });
+    }, [items, filterFn, debouncedSearch, useInfinite]);
 
     return (
         <div className="p-4">

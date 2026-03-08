@@ -5,6 +5,9 @@ from .serializers import CategoriaSerializer, ProdutoSerializer
 class CategoriaViewSet(viewsets.ModelViewSet):
     queryset = Categoria.objects.all()
     serializer_class = CategoriaSerializer
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['nome', 'descricao']
+    ordering_fields = ['nome']
 
 class ProdutoViewSet(viewsets.ModelViewSet):
     queryset = Produto.objects.all().select_related('categoria', 'fornecedor').defer('observacoes', 'criado_em', 'atualizado_em')
