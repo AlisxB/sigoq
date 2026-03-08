@@ -4,7 +4,8 @@ import { Search, Filter, Compass, Layers } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { produtoApi, categoriaApi } from '../../../api/produtos';
 import { fornecedorApi } from '../../../api/fornecedores';
-import { Produto } from '../../../types';
+import { Produto, Categoria, Fornecedor } from '../../../types';
+import Autocomplete from '../../../components/Autocomplete';
 
 // Hook personalizado de Debounce interno para o componente de busca
 function useDebounce<T>(value: T, delay: number): T {
@@ -26,17 +27,17 @@ const ProductSearchModal: React.FC<ProductSearchModalProps> = ({ show, onHide, o
     const [search, setSearch] = useState('');
     const debouncedSearch = useDebounce(search, 600);
 
-    const [selCategoria, setSelCategoria] = useState<number | undefined>(undefined);
-    const [selFornecedor, setSelFornecedor] = useState<number | undefined>(undefined);
+    const [selCategoria, setSelCategoria] = useState<number | string | undefined>(undefined);
+    const [selFornecedor, setSelFornecedor] = useState<number | string | undefined>(undefined);
 
-    const { data: categorias = [] } = useQuery({
+    const { data: categorias = [] } = useQuery<Categoria[]>({
         queryKey: ['categorias'],
         queryFn: categoriaApi.list,
         enabled: show,
         staleTime: 1000 * 60 * 60 // 1 hora de cache para categorias
     });
 
-    const { data: fornecedores = [] } = useQuery({
+    const { data: fornecedores = [] } = useQuery<Fornecedor[]>({
         queryKey: ['fornecedores'],
         queryFn: fornecedorApi.list,
         enabled: show,
@@ -47,12 +48,16 @@ const ProductSearchModal: React.FC<ProductSearchModalProps> = ({ show, onHide, o
 
     const { data: results, isLoading } = useQuery<Produto[]>({
         queryKey: ['search-products', debouncedSearch, selCategoria, selFornecedor],
-        queryFn: () => {
+        queryFn: async () => {
+            const catId = typeof selCategoria === 'string' ? parseInt(selCategoria) : selCategoria;
+            const forId = typeof selFornecedor === 'string' ? parseInt(selFornecedor) : selFornecedor;
+
             if (isSearchActive) {
-                return produtoApi.search(debouncedSearch, { categoria: selCategoria, fornecedor: selFornecedor });
+                return produtoApi.search(debouncedSearch, { categoria: catId, fornecedor: forId });
             }
             // Carrega os primeiros materiais para "aquecer" o banco e a interface
-            return produtoApi.list();
+            const response = await produtoApi.list();
+            return Array.isArray(response) ? response : (response.results || []);
         },
         enabled: show,
         staleTime: 1000 * 60 * 5, // 5 minutos de cache para resultados de busca
@@ -87,40 +92,22 @@ const ProductSearchModal: React.FC<ProductSearchModalProps> = ({ show, onHide, o
                         </InputGroup>
                     </Col>
                     <Col md={6}>
-                        <Form.Group>
-                            <Form.Label className="small fw-bold text-muted d-flex align-items-center">
-                                <Filter size={14} className="me-1" /> Categoria
-                            </Form.Label>
-                            <InputGroup className="rounded-12 overflow-hidden border">
-                                <InputGroup.Text className="bg-light border-0"><Layers size={18} className="text-muted" /></InputGroup.Text>
-                                <Form.Select
-                                    className="text-dark border-0 shadow-none bg-light"
-                                    value={selCategoria || ''}
-                                    onChange={(e) => setSelCategoria(e.target.value ? parseInt(e.target.value) : undefined)}
-                                >
-                                    <option value="">Todas as Categorias</option>
-                                    {categorias.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
-                                </Form.Select>
-                            </InputGroup>
-                        </Form.Group>
+                        <Autocomplete
+                            placeholder="Todas as Categorias"
+                            options={categorias.map(c => ({ id: c.id, label: c.nome }))}
+                            value={selCategoria}
+                            onChange={setSelCategoria}
+                            icon={<Layers size={18} className="text-muted" />}
+                        />
                     </Col>
                     <Col md={6}>
-                        <Form.Group>
-                            <Form.Label className="small fw-bold text-muted d-flex align-items-center">
-                                <Compass size={14} className="me-1" /> Fabricante
-                            </Form.Label>
-                            <InputGroup className="rounded-12 overflow-hidden border">
-                                <InputGroup.Text className="bg-light border-0"><Compass size={18} className="text-muted" /></InputGroup.Text>
-                                <Form.Select
-                                    className="text-dark border-0 shadow-none bg-light"
-                                    value={selFornecedor || ''}
-                                    onChange={(e) => setSelFornecedor(e.target.value ? parseInt(e.target.value) : undefined)}
-                                >
-                                    <option value="">Todos os Fabricantes</option>
-                                    {fornecedores.map(f => <option key={f.id} value={f.id}>{f.nome_fantasia || f.razao_social}</option>)}
-                                </Form.Select>
-                            </InputGroup>
-                        </Form.Group>
+                        <Autocomplete
+                            placeholder="Todos os Fabricantes"
+                            options={fornecedores.map(f => ({ id: f.id, label: f.nome_fantasia || f.razao_social }))}
+                            value={selFornecedor}
+                            onChange={setSelFornecedor}
+                            icon={<Compass size={18} className="text-muted" />}
+                        />
                     </Col>
                 </Row>
 

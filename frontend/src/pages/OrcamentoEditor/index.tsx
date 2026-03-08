@@ -39,15 +39,21 @@ const OrcamentoEditor: React.FC = () => {
         queryFn: orcamentoApi.getConfig
     });
 
-    const { data: clientes = [] } = useQuery({
+    const { data: clientesData } = useQuery({
         queryKey: ['clientes'],
-        queryFn: clienteApi.list
+        queryFn: () => clienteApi.list({ page_size: 1000 })
     });
+    const clientes: Cliente[] = Array.isArray(clientesData) 
+        ? clientesData 
+        : (clientesData as any)?.results || [];
 
-    const { data: vendedores = [] } = useQuery({
+    const { data: vendedoresData } = useQuery({
         queryKey: ['vendedores'],
-        queryFn: () => usuarioApi.list({ role: 'COMERCIAL' })
+        queryFn: () => usuarioApi.list({ role: 'COMERCIAL', page_size: 1000 })
     });
+    const vendedores: UserType[] = Array.isArray(vendedoresData) 
+        ? vendedoresData 
+        : (vendedoresData as any)?.results || [];
 
     const { data: remoteOrcamento, isLoading: isFetching } = useQuery({
         queryKey: ['orcamento', id],
