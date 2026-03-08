@@ -14,6 +14,7 @@ from .services import FileManagementService
 class StatusOportunidadeViewSet(viewsets.ModelViewSet):
     queryset = StatusOportunidade.objects.all()
     serializer_class = StatusOportunidadeSerializer
+    pagination_class = None
 
 class MetaMensalViewSet(viewsets.ModelViewSet):
     queryset = MetaMensal.objects.all()
