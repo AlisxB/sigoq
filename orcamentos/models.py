@@ -91,15 +91,26 @@ class Orcamento(BaseModel):
         super().save(*args, **kwargs)
 
         # Sincronização com a Oportunidade
-        if self.oportunidade and self.status == 'ENVIADO' and old_status != 'ENVIADO':
+        if self.oportunidade and self.status in ['ENVIADO', 'APROVADO'] and old_status not in ['ENVIADO', 'APROVADO']:
             from comercial.models import StatusOportunidade
             try:
-                # Move para status 'Negociação' (ID 4)
-                novo_status = StatusOportunidade.objects.get(id=4)
-                if self.oportunidade.status != novo_status:
+                # Se enviado, move para Negociação (ID 4). Se aprovado, pode ser movido para Ganho (ID 5) manualmente ou automático.
+                # Por enquanto, garantimos o movimento para Negociação e a LIBERAÇÃO técnica.
+                target_status_id = 4 if self.status == 'ENVIADO' else 5
+                novo_status = StatusOportunidade.objects.get(id=target_status_id)
+                changed = False
+                
+                if self.oportunidade.status.ordem < novo_status.ordem:
                     self.oportunidade.status = novo_status
+                    changed = True
+                
+                if not self.oportunidade.liberado_orcamento:
+                    self.oportunidade.liberado_orcamento = True
+                    changed = True
+                
+                if changed:
                     self.oportunidade.save()
-                    print(f"AUTO-SYNC: Oportunidade {self.oportunidade.numero} movida para Negociação.")
+                    print(f"AUTO-SYNC: Oportunidade {self.oportunidade.numero} atualizada via Orçamento ({self.status}).")
             except StatusOportunidade.DoesNotExist:
                 pass
 

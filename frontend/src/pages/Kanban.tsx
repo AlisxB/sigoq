@@ -158,14 +158,12 @@ const Kanban: React.FC = () => {
         const opId = parseInt(draggableId);
         const newStatusId = parseInt(destination.droppableId);
         
-        // 1. Regra de Retrocesso (No Rollback)
+        // 1. Regra de Retrocesso (No Rollback parcial)
         const op = oportunidades.find((o: Oportunidade) => o.id === opId);
         if (op?.liberado_orcamento) {
-            const currentStatus = statusList.find((s: StatusOportunidade) => s.id === op.status);
-            const targetStatus = statusList.find((s: StatusOportunidade) => s.id === newStatusId);
-            
-            if (currentStatus && targetStatus && targetStatus.ordem < currentStatus.ordem) {
-                setBlockMessage("Esta oportunidade já foi liberada pelo setor de orçamento e não pode retornar para estágios anteriores.");
+            // Oportunidade liberada só é bloqueada se tentar voltar para status antes de Negociação (ID < 4)
+            if (newStatusId < 4) {
+                setBlockMessage("Esta oportunidade já foi liberada pelo setor de orçamento e não pode retornar para as fases iniciais (Prospecção/Qualificação).");
                 setShowBlockModal(true);
                 return;
             }
