@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import os
 import django
 import sys
@@ -12,10 +12,12 @@ sys.path.append(BASE_DIR)
 # Detecta se estamos em produção ou local
 if os.path.exists('/.dockerenv') or os.environ.get('DJANGO_SETTINGS_MODULE') == 'sigoq.settings.production':
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'sigoq.settings.production')
-    print("🌐 Ambiente: PRODUÇÃO detectado.")
+    print("----------------------------------------------------------")
+    print("🌐 SIGOQ: Ambiente de PRODUÇÃO detectado.")
 else:
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'sigoq.settings.local')
-    print("💻 Ambiente: LOCAL detectado.")
+    print("----------------------------------------------------------")
+    print("💻 SIGOQ: Ambiente LOCAL detectado.")
 
 django.setup()
 
