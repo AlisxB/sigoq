@@ -42,26 +42,35 @@ else:
     print('Configurações de preço detectadas.')
 "
 
-echo "5/5 -> Garantindo privilégios de ADMIN para o Superusuário..."
+echo "5/5 -> Garantindo privilégios de ADMIN para todos os Superusuários..."
 python manage.py shell -c "
 from django.contrib.auth.models import User
 from usuarios.models import Perfil
-u = User.objects.filter(is_superuser=True).first()
-if u:
-    perfil, _ = Perfil.objects.get_or_create(user=u)
-    if perfil.cargo != 'ADMIN':
-        perfil.cargo = 'ADMIN'
-        perfil.save()
-        print(f'Sucesso: Cargo ADMIN vinculado ao superusuário {u.username}.')
-    else:
-        print(f'Superusuário {u.username} já possui cargo ADMIN.')
+superusers = User.objects.filter(is_superuser=True)
+if superusers.exists():
+    for u in superusers:
+        # Garante is_staff para acesso administrativo
+        if not u.is_staff:
+            u.is_staff = True
+            u.save()
+            print(f'-> Ativado is_staff para {u.username}')
+        
+        # Garante Perfil com Cargo ADMIN para regras de BI
+        perfil, created = Perfil.objects.get_or_create(user=u)
+        if perfil.cargo != 'ADMIN':
+            perfil.cargo = 'ADMIN'
+            perfil.save()
+            print(f'-> Cargo ADMIN vinculado ao perfil de {u.username}.')
+        else:
+            print(f'-> Usuário {u.username} já possui perfil ADMIN completo.')
 else:
-    print('Aviso: Nenhum superusuário encontrado ainda. Crie um para liberar o acesso total.')
+    print('Aviso: Nenhum superusuário encontrado. Crie um para liberar o acesso total.')
 "
 
 echo "----------------------------------------------------------"
 echo "✅ Setup de Produção Concluído!"
 echo "----------------------------------------------------------"
-echo "DICA: Para criar um acesso de Administrador, execute:"
+echo "DICA: Se ainda não criou um administrador, execute:"
 echo "docker compose -f docker-compose.prod.yml exec backend python manage.py createsuperuser"
+echo "Depois, rode este script novamente para aplicar as permissões de Perfil."
 echo "----------------------------------------------------------"
