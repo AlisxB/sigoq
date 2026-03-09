@@ -249,24 +249,13 @@ const MainLayout: React.FC = () => {
                     alignItems: 'center',
                     padding: '5px 10px'
                 }}>
-                    <div className="d-flex align-items-center gap-4">
+                    <div className="d-flex align-items-center">
                         <div
                             onClick={() => setIsCollapsed(!isCollapsed)}
                             style={{ padding: '8px', cursor: 'pointer', borderRadius: '8px', backgroundColor: '#FFF', border: '1px solid #DFE5EF' }}
                         >
                             <Menu size={20} color="#5A6A83" />
                         </div>
-
-                        <InputGroup style={{ width: '350px', backgroundColor: '#FFFFFF', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(0,0,0,0.05)', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>
-                            <InputGroup.Text className="bg-transparent border-0 pe-1 ps-3">
-                                <Search size={18} color="#7C8FAC" />
-                            </InputGroup.Text>
-                            <Form.Control
-                                placeholder="Busca global (clientes, orçamentos...)"
-                                className="bg-transparent border-0 shadow-none py-2"
-                                style={{ fontSize: '14px' }}
-                            />
-                        </InputGroup>
                     </div>
 
                     <div className="d-flex align-items-center gap-3">
