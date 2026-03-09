@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import os
 import django
 import sys
@@ -5,8 +6,17 @@ import openpyxl
 import re
 
 # Configuração do ambiente Django
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'sigoq.settings.local')
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(BASE_DIR)
+
+# Detecta se estamos em produção ou local
+if os.path.exists('/.dockerenv') or os.environ.get('DJANGO_SETTINGS_MODULE') == 'sigoq.settings.production':
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'sigoq.settings.production')
+    print("🌐 Ambiente: PRODUÇÃO detectado.")
+else:
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'sigoq.settings.local')
+    print("💻 Ambiente: LOCAL detectado.")
+
 django.setup()
 
 from fornecedores.models import Fornecedor
@@ -18,8 +28,11 @@ def clean_cnpj(value):
 
 def import_fornecedores(file_path):
     if not os.path.exists(file_path):
-        print(f"Erro: Arquivo {file_path} não encontrado.")
-        return
+        # Tenta procurar na raiz caso o path falhe
+        file_path = os.path.join(BASE_DIR, file_path)
+        if not os.path.exists(file_path):
+            print(f"Erro: Arquivo {file_path} não encontrado.")
+            return
 
     print(f"🚀 Iniciando importação de fornecedores a partir de: {file_path}")
     
@@ -39,7 +52,12 @@ def import_fornecedores(file_path):
     total_rows = len(rows)
 
     for index, row in enumerate(rows, start=2):
-        nome_fantasia, razao_social, cnpj_raw, email, telefone, obs = row
+        # Desempacota garantindo que temos 6 colunas
+        try:
+            nome_fantasia, razao_social, cnpj_raw, email, telefone, obs = row[:6]
+        except ValueError:
+            print(f"⚠️ Linha {index} com formato inesperado.")
+            continue
 
         if not cnpj_raw or not razao_social:
             print(f"⚠️ Linha {index} ignorada: Razão Social ou CNPJ ausentes.")
@@ -67,7 +85,7 @@ def import_fornecedores(file_path):
             else:
                 count_updated += 1
                 
-            if index % 10 == 0:
+            if (index - 1) % 10 == 0 or index - 1 == total_rows:
                 print(f"Processando... {index-1}/{total_rows}")
 
         except Exception as e:
