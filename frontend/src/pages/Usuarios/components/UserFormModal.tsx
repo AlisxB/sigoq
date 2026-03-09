@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Modal, Button, Form, Row, Col, InputGroup } from 'react-bootstrap';
-import { User, Mail, ShieldCheck, Phone, Image, UserPlus, Type, Tag } from 'lucide-react';
+import { User, Mail, ShieldCheck, Phone, Image, UserPlus, Type, Tag, Lock, Eye, EyeOff } from 'lucide-react';
 import { User as UserType } from '../../../types';
 import { maskPhone } from '../../../utils/masks';
 
@@ -13,6 +13,7 @@ interface UserFormModalProps {
 }
 
 const UserFormModal: React.FC<UserFormModalProps> = ({ show, onHide, onSave, user, isSaving }) => {
+    const [showPassword, setShowPassword] = React.useState(false);
     const [formData, setFormData] = React.useState<any>({
         username: '',
         first_name: '',
@@ -20,7 +21,8 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ show, onHide, onSave, use
         email: '',
         role: 'VENDEDOR',
         celular: '',
-        avatar_url: ''
+        avatar_url: '',
+        password: ''
     });
 
     useEffect(() => {
@@ -32,7 +34,8 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ show, onHide, onSave, use
                 email: user.email,
                 role: user.role || 'VENDEDOR',
                 celular: maskPhone(user.celular || ''),
-                avatar_url: user.avatar_url || ''
+                avatar_url: user.avatar_url || '',
+                password: ''
             });
         } else {
             setFormData({
@@ -42,9 +45,11 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ show, onHide, onSave, use
                 email: '',
                 role: 'VENDEDOR',
                 celular: '',
-                avatar_url: ''
+                avatar_url: '',
+                password: ''
             });
         }
+        setShowPassword(false);
     }, [user, show]);
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -190,6 +195,37 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ show, onHide, onSave, use
                                 </InputGroup>
                             </Form.Group>
                         </Col>
+                        {!user && (
+                            <Col md={12}>
+                                <Form.Group>
+                                    <Form.Label className="small fw-bold text-muted">Senha Inicial</Form.Label>
+                                    <InputGroup>
+                                        <InputGroup.Text className="bg-light border-end-0">
+                                            <Lock size={18} className="text-muted" />
+                                        </InputGroup.Text>
+                                        <Form.Control
+                                            type={showPassword ? 'text' : 'password'}
+                                            required
+                                            className="border-start-0 border-end-0"
+                                            placeholder="Defina uma senha para o primeiro acesso..."
+                                            value={formData.password}
+                                            onChange={e => setFormData({...formData, password: e.target.value})}
+                                        />
+                                        <Button 
+                                            variant="outline-light" 
+                                            className="border-start-0 text-muted d-flex align-items-center bg-white border"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            style={{ borderColor: '#DFE5EF' }}
+                                        >
+                                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                        </Button>
+                                    </InputGroup>
+                                    <Form.Text className="text-muted x-small">
+                                        Se deixado em branco, a senha padrão será <strong>Sigoq@123</strong>.
+                                    </Form.Text>
+                                </Form.Group>
+                            </Col>
+                        )}
                     </Row>
                 </Modal.Body>
                 <Modal.Footer className="border-0 px-4 pb-4">

@@ -7,12 +7,13 @@ class UserSerializer(serializers.ModelSerializer):
     role = serializers.CharField(source='perfil.cargo', required=False)
     celular = serializers.CharField(source='perfil.celular', required=False, allow_blank=True)
     avatar_url = serializers.URLField(source='perfil.avatar_url', required=False, allow_null=True, allow_blank=True)
+    password = serializers.CharField(write_only=True, required=False)
 
     class Meta:
         model = User
         fields = [
             'id', 'username', 'first_name', 'last_name', 
-            'full_name', 'email', 'role', 'celular', 'avatar_url'
+            'full_name', 'email', 'role', 'celular', 'avatar_url', 'password'
         ]
 
     def get_full_name(self, obj):
@@ -37,13 +38,12 @@ class UserSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         perfil_data = validated_data.pop('perfil', {})
+        password = validated_data.pop('password', 'Sigoq@123')
         
-        # Cria usuário
+        # Cria usuário com senha criptografada
         user = User.objects.create_user(**validated_data)
-        # Define uma senha inicial se não houver
-        if not user.password:
-            user.set_password("Sigoq@123")
-            user.save()
+        user.set_password(password)
+        user.save()
 
         # Cria perfil
         Perfil.objects.create(user=user, **perfil_data)
