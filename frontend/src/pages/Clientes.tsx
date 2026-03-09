@@ -1,6 +1,9 @@
-import React, { useMemo } from 'react';
-import { Form, Row, Col, InputGroup } from 'react-bootstrap';
-import { Building, Briefcase, Hash, FileText, Mail, Phone, MapPin, Map, UserCircle, AlignLeft, Home, Info, Locate } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Form, Row, Col, InputGroup, Spinner } from 'react-bootstrap';
+import { 
+    Building, Briefcase, Hash, FileText, Mail, Phone, 
+    MapPin, Map, UserCircle, AlignLeft, Home, Info, Locate, User as UserIcon 
+} from 'lucide-react';
 import GenericCRUD from '../components/GenericCRUD';
 import { clienteApi } from '../api/clientes';
 import { usuarioApi } from '../api/usuarios';
@@ -11,13 +14,25 @@ import { keepOnlyNumbers, maskCPF, maskCNPJ, maskPhone, maskCEP } from '../utils
 
 const Clientes: React.FC = () => {
     const { user } = useAuth();
-    const isAdmin = user?.role === 'ADMIN' || user?.role === 'ORCAMENTISTA';
+    
+    // Admins e Orçamentistas vêem tudo e podem trocar o vendedor
+    const isAdmin = useMemo(() => {
+        return user?.role === 'ADMIN' || user?.role === 'ORCAMENTISTA';
+    }, [user]);
 
-    const { data: vendedores = [] } = useQuery({
-        queryKey: ['vendedores'],
-        queryFn: () => usuarioApi.list({ role: 'VENDEDOR' }),
-        enabled: isAdmin 
+    const { data: vendedoresData, isLoading: loadingVendedores } = useQuery({
+        queryKey: ['vendedores-select'], // Usando chave única para evitar conflitos
+        queryFn: () => usuarioApi.list({ role: 'VENDEDOR', page_size: 1000 }),
+        enabled: !!user && isAdmin 
     });
+
+    const vendedores: User[] = useMemo(() => {
+        if (!vendedoresData) return [];
+        const data = vendedoresData;
+        if (Array.isArray(data)) return data;
+        if (data && data.results && Array.isArray(data.results)) return data.results;
+        return [];
+    }, [vendedoresData]);
 
     const columns = [
         { header: 'Nome/Razão Social', accessor: (item: Cliente) => item.nome_fantasia || item.razao_social },
@@ -26,7 +41,7 @@ const Clientes: React.FC = () => {
             accessor: (item: Cliente) => item.cnpj ? maskCNPJ(item.cnpj) : (item.cpf ? maskCPF(item.cpf) : '---')
         },
         { header: 'E-mail', accessor: 'email' as const },
-        { header: 'Cidade/UF', accessor: (item: Cliente) => `${item.cidade}/${item.estado}` },
+        { header: 'Cidade/UF', accessor: (item: Cliente) => `${item.cidade || ''}/${item.estado || ''}` },
     ];
 
     const initialData = useMemo(() => ({
@@ -49,11 +64,11 @@ const Clientes: React.FC = () => {
             <Col md={6}>
                 <Form.Group>
                     <Form.Label className="form-premium-label">Razão Social</Form.Label>
-                    <InputGroup>
-                        <InputGroup.Text className="bg-light border-end-0"><Building size={18} className="text-muted" /></InputGroup.Text>
+                    <InputGroup className="shadow-sm rounded-12 overflow-hidden border">
+                        <InputGroup.Text className="bg-light border-0"><Building size={18} className="text-muted" /></InputGroup.Text>
                         <Form.Control
                             required
-                            className="form-control-premium border-start-0"
+                            className="border-0 shadow-none py-2"
                             value={data.razao_social || ''}
                             onChange={(e) => onChange('razao_social', e.target.value)}
                             placeholder="Ex: Empresa Silva Ltda"
@@ -64,10 +79,10 @@ const Clientes: React.FC = () => {
             <Col md={6}>
                 <Form.Group>
                     <Form.Label className="form-premium-label">Nome Fantasia</Form.Label>
-                    <InputGroup>
-                        <InputGroup.Text className="bg-light border-end-0"><Briefcase size={18} className="text-muted" /></InputGroup.Text>
+                    <InputGroup className="shadow-sm rounded-12 overflow-hidden border">
+                        <InputGroup.Text className="bg-light border-0"><Briefcase size={18} className="text-muted" /></InputGroup.Text>
                         <Form.Control
-                            className="form-control-premium border-start-0"
+                            className="border-0 shadow-none py-2"
                             value={data.nome_fantasia || ''}
                             onChange={(e) => onChange('nome_fantasia', e.target.value)}
                             placeholder="Ex: Silva Comércio"
@@ -78,10 +93,10 @@ const Clientes: React.FC = () => {
             <Col md={4}>
                 <Form.Group>
                     <Form.Label className="form-premium-label">CNPJ</Form.Label>
-                    <InputGroup>
-                        <InputGroup.Text className="bg-light border-end-0"><FileText size={18} className="text-muted" /></InputGroup.Text>
+                    <InputGroup className="shadow-sm rounded-12 overflow-hidden border">
+                        <InputGroup.Text className="bg-light border-0"><FileText size={18} className="text-muted" /></InputGroup.Text>
                         <Form.Control
-                            className="form-control-premium border-start-0"
+                            className="border-0 shadow-none py-2"
                             value={data.cnpj ? maskCNPJ(data.cnpj) : ''}
                             onChange={(e) => onChange('cnpj', keepOnlyNumbers(e.target.value))}
                             disabled={!!data.cpf}
@@ -94,10 +109,10 @@ const Clientes: React.FC = () => {
             <Col md={4}>
                 <Form.Group>
                     <Form.Label className="form-premium-label">CPF</Form.Label>
-                    <InputGroup>
-                        <InputGroup.Text className="bg-light border-end-0"><FileText size={18} className="text-muted" /></InputGroup.Text>
+                    <InputGroup className="shadow-sm rounded-12 overflow-hidden border">
+                        <InputGroup.Text className="bg-light border-0"><FileText size={18} className="text-muted" /></InputGroup.Text>
                         <Form.Control
-                            className="form-control-premium border-start-0"
+                            className="border-0 shadow-none py-2"
                             value={data.cpf ? maskCPF(data.cpf) : ''}
                             onChange={(e) => onChange('cpf', keepOnlyNumbers(e.target.value))}
                             disabled={!!data.cnpj}
@@ -110,10 +125,10 @@ const Clientes: React.FC = () => {
             <Col md={4}>
                 <Form.Group>
                     <Form.Label className="form-premium-label">IE</Form.Label>
-                    <InputGroup>
-                        <InputGroup.Text className="bg-light border-end-0"><Hash size={18} className="text-muted" /></InputGroup.Text>
+                    <InputGroup className="shadow-sm rounded-12 overflow-hidden border">
+                        <InputGroup.Text className="bg-light border-0"><Hash size={18} className="text-muted" /></InputGroup.Text>
                         <Form.Control
-                            className="form-control-premium border-start-0"
+                            className="border-0 shadow-none py-2"
                             value={data.inscricao_estadual || ''}
                             onChange={(e) => onChange('inscricao_estadual', keepOnlyNumbers(e.target.value))}
                             placeholder="Apenas números"
@@ -125,12 +140,12 @@ const Clientes: React.FC = () => {
             <Col md={6}>
                 <Form.Group>
                     <Form.Label className="form-premium-label">E-mail</Form.Label>
-                    <InputGroup>
-                        <InputGroup.Text className="bg-light border-end-0"><Mail size={18} className="text-muted" /></InputGroup.Text>
+                    <InputGroup className="shadow-sm rounded-12 overflow-hidden border">
+                        <InputGroup.Text className="bg-light border-0"><Mail size={18} className="text-muted" /></InputGroup.Text>
                         <Form.Control
                             required
                             type="email"
-                            className="form-control-premium border-start-0"
+                            className="border-0 shadow-none py-2"
                             value={data.email || ''}
                             onChange={(e) => onChange('email', e.target.value)}
                             placeholder="contato@empresa.com.br"
@@ -141,11 +156,11 @@ const Clientes: React.FC = () => {
             <Col md={6}>
                 <Form.Group>
                     <Form.Label className="form-premium-label">Telefone</Form.Label>
-                    <InputGroup>
-                        <InputGroup.Text className="bg-light border-end-0"><Phone size={18} className="text-muted" /></InputGroup.Text>
+                    <InputGroup className="shadow-sm rounded-12 overflow-hidden border">
+                        <InputGroup.Text className="bg-light border-0"><Phone size={18} className="text-muted" /></InputGroup.Text>
                         <Form.Control
                             required
-                            className="form-control-premium border-start-0"
+                            className="border-0 shadow-none py-2"
                             value={data.telefone ? maskPhone(data.telefone) : ''}
                             onChange={(e) => onChange('telefone', keepOnlyNumbers(e.target.value))}
                             placeholder="(00) 00000-0000"
@@ -157,10 +172,10 @@ const Clientes: React.FC = () => {
             <Col md={3}>
                 <Form.Group>
                     <Form.Label className="form-premium-label">CEP</Form.Label>
-                    <InputGroup>
-                        <InputGroup.Text className="bg-light border-end-0"><MapPin size={18} className="text-muted" /></InputGroup.Text>
+                    <InputGroup className="shadow-sm rounded-12 overflow-hidden border">
+                        <InputGroup.Text className="bg-light border-0"><MapPin size={18} className="text-muted" /></InputGroup.Text>
                         <Form.Control
-                            className="form-control-premium border-start-0"
+                            className="border-0 shadow-none py-2"
                             value={data.cep ? maskCEP(data.cep) : ''}
                             onChange={(e) => {
                                 const val = keepOnlyNumbers(e.target.value);
@@ -188,10 +203,10 @@ const Clientes: React.FC = () => {
             <Col md={7}>
                 <Form.Group>
                     <Form.Label className="form-premium-label">Logradouro (Rua)</Form.Label>
-                    <InputGroup>
-                        <InputGroup.Text className="bg-light border-end-0"><MapPin size={18} className="text-muted" /></InputGroup.Text>
+                    <InputGroup className="shadow-sm rounded-12 overflow-hidden border">
+                        <InputGroup.Text className="bg-light border-0"><MapPin size={18} className="text-muted" /></InputGroup.Text>
                         <Form.Control
-                            className="form-control-premium border-start-0"
+                            className="border-0 shadow-none py-2"
                             value={data.logradouro || ''}
                             onChange={(e) => onChange('logradouro', e.target.value)}
                             placeholder="Rua, Avenida, etc"
@@ -202,10 +217,10 @@ const Clientes: React.FC = () => {
             <Col md={2}>
                 <Form.Group>
                     <Form.Label className="form-premium-label">Número</Form.Label>
-                    <InputGroup>
-                        <InputGroup.Text className="bg-light border-end-0"><Home size={18} className="text-muted" /></InputGroup.Text>
+                    <InputGroup className="shadow-sm rounded-12 overflow-hidden border">
+                        <InputGroup.Text className="bg-light border-0"><Home size={18} className="text-muted" /></InputGroup.Text>
                         <Form.Control
-                            className="form-control-premium border-start-0"
+                            className="border-0 shadow-none py-2"
                             value={data.numero || ''}
                             onChange={(e) => onChange('numero', e.target.value)}
                             placeholder="Ex: 10A"
@@ -216,10 +231,10 @@ const Clientes: React.FC = () => {
             <Col md={4}>
                 <Form.Group>
                     <Form.Label className="form-premium-label">Complemento</Form.Label>
-                    <InputGroup>
-                        <InputGroup.Text className="bg-light border-end-0"><Info size={18} className="text-muted" /></InputGroup.Text>
+                    <InputGroup className="shadow-sm rounded-12 overflow-hidden border">
+                        <InputGroup.Text className="bg-light border-0"><Info size={18} className="text-muted" /></InputGroup.Text>
                         <Form.Control
-                            className="form-control-premium border-start-0"
+                            className="border-0 shadow-none py-2"
                             value={data.complemento || ''}
                             onChange={(e) => onChange('complemento', e.target.value)}
                             placeholder="Ex: Sala 2"
@@ -230,10 +245,10 @@ const Clientes: React.FC = () => {
             <Col md={4}>
                 <Form.Group>
                     <Form.Label className="form-premium-label">Bairro</Form.Label>
-                    <InputGroup>
-                        <InputGroup.Text className="bg-light border-end-0"><Locate size={18} className="text-muted" /></InputGroup.Text>
+                    <InputGroup className="shadow-sm rounded-12 overflow-hidden border">
+                        <InputGroup.Text className="bg-light border-0"><Locate size={18} className="text-muted" /></InputGroup.Text>
                         <Form.Control
-                            className="form-control-premium border-start-0"
+                            className="border-0 shadow-none py-2"
                             value={data.bairro || ''}
                             onChange={(e) => onChange('bairro', e.target.value)}
                             placeholder="Bairro"
@@ -244,10 +259,10 @@ const Clientes: React.FC = () => {
             <Col md={4}>
                 <Form.Group>
                     <Form.Label className="form-premium-label">Cidade</Form.Label>
-                    <InputGroup>
-                        <InputGroup.Text className="bg-light border-end-0"><Map size={18} className="text-muted" /></InputGroup.Text>
+                    <InputGroup className="shadow-sm rounded-12 overflow-hidden border">
+                        <InputGroup.Text className="bg-light border-0"><Map size={18} className="text-muted" /></InputGroup.Text>
                         <Form.Control
-                            className="form-control-premium border-start-0"
+                            className="border-0 shadow-none py-2"
                             value={data.cidade || ''}
                             onChange={(e) => onChange('cidade', e.target.value)}
                             placeholder="Cidade"
@@ -258,11 +273,11 @@ const Clientes: React.FC = () => {
             <Col md={12} className="mb-2">
                 <Form.Group>
                     <Form.Label className="form-premium-label">Estado (UF)</Form.Label>
-                    <InputGroup>
-                        <InputGroup.Text className="bg-light border-end-0"><Map size={18} className="text-muted" /></InputGroup.Text>
+                    <InputGroup className="shadow-sm rounded-12 overflow-hidden border">
+                        <InputGroup.Text className="bg-light border-0"><Map size={18} className="text-muted" /></InputGroup.Text>
                         <Form.Control
                             required
-                            className="form-control-premium border-start-0"
+                            className="border-0 shadow-none py-2"
                             maxLength={2}
                             value={data.estado || ''}
                             onChange={(e) => onChange('estado', e.target.value.toUpperCase().replace(/[^a-zA-Z]/g, ''))}
@@ -276,10 +291,10 @@ const Clientes: React.FC = () => {
                 <Col md={12}>
                     <Form.Group>
                         <Form.Label className="form-premium-label">Vendedor Responsável</Form.Label>
-                        <InputGroup>
-                            <InputGroup.Text className="bg-light border-end-0"><UserCircle size={18} className="text-muted" /></InputGroup.Text>
+                        <InputGroup className="shadow-sm rounded-12 overflow-hidden border">
+                            <InputGroup.Text className="bg-light border-0"><UserCircle size={18} className="text-muted" /></InputGroup.Text>
                             <Form.Select
-                                className="form-select-premium border-start-0"
+                                className="border-0 shadow-none py-2 ps-0"
                                 value={data.vendedor || ''}
                                 onChange={(e) => onChange('vendedor', e.target.value ? parseInt(e.target.value) : null)}
                                 style={{ color: '#2A3547', opacity: 1 }}
@@ -299,12 +314,12 @@ const Clientes: React.FC = () => {
             <Col md={12}>
                 <Form.Group>
                     <Form.Label className="form-premium-label">Observações</Form.Label>
-                    <InputGroup>
-                        <InputGroup.Text className="bg-light border-end-0 align-items-start pt-3"><AlignLeft size={18} className="text-muted" /></InputGroup.Text>
+                    <InputGroup className="shadow-sm rounded-12 overflow-hidden border">
+                        <InputGroup.Text className="bg-light border-0 align-items-start pt-3"><AlignLeft size={18} className="text-muted" /></InputGroup.Text>
                         <Form.Control
                             as="textarea"
                             rows={2}
-                            className="form-control-premium border-start-0"
+                            className="border-0 shadow-none py-2"
                             value={data.observacoes || ''}
                             onChange={(e) => onChange('observacoes', e.target.value)}
                             placeholder="Informações adicionais do cliente..."
