@@ -1,7 +1,9 @@
 import axios from 'axios';
 
 const getBaseURL = () => {
-    let url = import.meta.env.VITE_API_URL || '/';
+    // No ambiente local (Vite), se a variável não estiver definida, apontamos para o backend local (8000)
+    // Em produção, a variável VITE_API_URL deve ser definida ou usaremos caminhos relativos '/'
+    let url = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:8000/' : '/');
     if (!url.endsWith('/')) url += '/';
     return url;
 };
