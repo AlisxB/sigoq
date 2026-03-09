@@ -120,7 +120,7 @@ const Metas: React.FC = () => {
 
                     return (
                         <Col key={idx} xs={6} md={4} lg={2}>
-                            <Card className={`border-0 shadow-sm h-100 transition-hover ${isPast ? 'bg-light opacity-75' : 'bg-white'}`} 
+                            <Card className={`border-0 shadow-sm h-100 transition-hover clickable-card ${isPast ? 'bg-light opacity-75' : 'bg-white'}`} 
                                   style={{ borderRadius: '16px', cursor: 'pointer' }}
                                   onClick={() => meta ? handleEdit(meta) : !isPast && handleAddForMonth(idx)}>
                                 <Card.Body className="p-2 text-center">

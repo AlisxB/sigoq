@@ -156,3 +156,54 @@ select option {
   font-size: 0.75rem;
   font-weight: 600;
 }
+
+/* -------------------------------------
+   Interatividade Visual (Cursor)
+-------------------------------------- */
+a, 
+button, 
+.btn, 
+.cursor-pointer,
+[role="button"],
+.nav-link,
+.dropdown-item,
+.sidebar-link,
+.clickable-card,
+.card-premium:not(.locked-card) {
+  cursor: pointer !important;
+}
+
+/* Cursor Grab para Kanban (Cards arrastáveis) */
+.kanban-card-interactive:not(.locked-card) {
+  cursor: grab !important;
+}
+
+.kanban-card-interactive:not(.locked-card) * {
+  cursor: grab !important;
+}
+
+/* Cursor Grabbing quando o elemento está sendo arrastado */
+.kanban-card-interactive:active, 
+.kanban-card-interactive.dragging,
+body.grabbing-active,
+body.grabbing-active * {
+  cursor: grabbing !important;
+}
+
+.kanban-card-interactive:active *,
+.kanban-card-interactive.dragging * {
+  cursor: grabbing !important;
+}
+
+.sidebar-link *, .clickable-card *, .card-premium:not(.locked-card):not(.kanban-card-interactive) * {
+  cursor: pointer !important;
+}
+
+/* Força herança de cursor em elementos internos de botões e links */
+a *, button *, .btn *, .cursor-pointer * {
+  cursor: inherit !important;
+}
+
+.locked-card, .locked-card * {
+  cursor: default !important;
+}

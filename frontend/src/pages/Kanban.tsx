@@ -144,7 +144,12 @@ const Kanban: React.FC = () => {
     const [showBlockModal, setShowBlockModal] = useState(false);
     const [blockMessage, setBlockMessage] = useState('');
 
+    const onDragStart = () => {
+        document.body.classList.add('grabbing-active');
+    };
+
     const onDragEnd = (result: DropResult) => {
+        document.body.classList.remove('grabbing-active');
         const { destination, source, draggableId } = result;
 
         if (!destination) return;
@@ -219,7 +224,7 @@ const Kanban: React.FC = () => {
                 </Button>
             </div>
 
-            <DragDropContext onDragEnd={onDragEnd}>
+            <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
                 <div className="kanban-wrapper" style={{
                     display: 'flex',
                     overflowX: 'auto',
@@ -272,7 +277,7 @@ const Kanban: React.FC = () => {
                                                                 ref={provided.innerRef}
                                                                 {...provided.draggableProps}
                                                                 {...provided.dragHandleProps}
-                                                                className={`mb-3 border-0 shadow-sm card-premium ${snapshot.isDragging ? 'shadow-lg rotate-1' : ''} ${isLocked ? 'locked-card' : ''}`}
+                                                                className={`mb-3 border-0 shadow-sm card-premium kanban-card-interactive ${snapshot.isDragging ? 'shadow-lg rotate-1 dragging' : ''} ${isLocked ? 'locked-card' : ''}`}
                                                                 style={{
                                                                     ...provided.draggableProps.style,
                                                                     borderLeft: `4px solid ${status.cor}`

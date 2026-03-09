@@ -146,6 +146,7 @@ const MainLayout: React.FC = () => {
                                         <Link
                                             key={item.name}
                                             to={item.path}
+                                            className="sidebar-link"
                                             title={!isExpanded ? item.name : ''}
                                             style={{
                                                 display: 'flex',
@@ -160,7 +161,8 @@ const MainLayout: React.FC = () => {
                                                 fontWeight: isActive ? '600' : '500',
                                                 fontSize: '14px',
                                                 transition: 'all 0.2s',
-                                                boxShadow: isActive ? '0px 4px 12px rgba(93, 135, 255, 0.3)' : 'none'
+                                                boxShadow: isActive ? '0px 4px 12px rgba(93, 135, 255, 0.3)' : 'none',
+                                                cursor: 'pointer'
                                             }}
                                         >
                                             <span style={{ display: 'flex', flexShrink: 0 }}>{item.icon}</span>
@@ -176,14 +178,15 @@ const MainLayout: React.FC = () => {
                 {/* User Card - Bottom */}
                 <Link 
                     to="/perfil"
-                    className="text-decoration-none"
+                    className="text-decoration-none sidebar-link"
                     style={{
                         backgroundColor: 'rgba(93, 135, 255, 0.08)',
                         borderRadius: '20px',
                         padding: isExpanded ? '15px' : '10px',
                         display: 'flex',
                         justifyContent: isExpanded ? 'flex-start' : 'center',
-                        transition: 'background-color 0.2s'
+                        transition: 'background-color 0.2s',
+                        cursor: 'pointer'
                     }}
                     onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(93, 135, 255, 0.15)'}
                     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(93, 135, 255, 0.08)'}
