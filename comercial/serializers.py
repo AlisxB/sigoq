@@ -15,6 +15,24 @@ class MetaMensalSerializer(serializers.ModelSerializer):
         model = MetaMensal
         fields = '__all__'
 
+    def validate(self, data):
+        mes = data.get('mes')
+        ano = data.get('ano')
+        vendedor = data.get('vendedor')
+        
+        # Verifica se já existe uma meta para o mesmo mês, ano e vendedor
+        # Se for uma atualização (self.instance), exclui o próprio registro da busca
+        queryset = MetaMensal.objects.filter(mes=mes, ano=ano, vendedor=vendedor)
+        if self.instance:
+            queryset = queryset.exclude(pk=self.instance.pk)
+            
+        if queryset.exists():
+            vendedor_str = vendedor.get_full_name() if vendedor else "GLOBAL"
+            raise serializers.ValidationError(
+                f"Já existe uma meta cadastrada para {vendedor_str} em {mes}/{ano}."
+            )
+        return data
+
 class ArquivoOportunidadeSerializer(serializers.ModelSerializer):
     enviado_por_nome = serializers.ReadOnlyField(source='enviado_por.get_full_name')
     
