@@ -1,68 +1,130 @@
 # SIGOQ - Sistema Integrado de Gestão de Orçamentos de Quadros Elétricos
 
-O SIGOQ é uma plataforma sênior de ERP e BI focada na automação do ciclo comercial e técnico para fabricantes de quadros elétricos. O sistema integra desde a prospecção de oportunidades no Kanban até a geração de propostas técnicas complexas com cálculos financeiros precisos.
+O **SIGOQ** é uma plataforma sênior de gestão e Business Intelligence (BI) desenvolvida sob medida para fabricantes de quadros elétricos. Ele resolve o problema da gestão fragmentada ao centralizar o catálogo de materiais, automatizar o motor de precificação técnica e gerenciar o funil de vendas (CRM) em uma infraestrutura moderna e blindada.
 
-## 🚀 Status do Projeto: Produção / Refatorado
-O sistema passou por uma consolidação arquitetural completa, adotando padrões de **Service Layer** no backend e **Feature-Based Atomic Design** no frontend.
+---
 
-## 🛠️ Stack Tecnológica
+## 🚀 Principais Funcionalidades
 
-### Backend (Sênior Architecture)
-- **Framework:** Django 4.2+ (Python 3.12)
-- **API:** Django Rest Framework (DRF)
-- **Banco de Dados:** PostgreSQL 15
-- **Geração de PDF:** WeasyPrint (Alta fidelidade visual)
-- **Padrão de Projeto:** Service Layer + Pure Logic (Cálculos isolados dos Models)
+### 1. Governança Comercial (Kanban)
+- **Fluxo Blindado**: Oportunidades seguem estágios rígidos regidos por IDs fixos (Prospecção → Qualificação → Orçamento → Negociação → Fechado).
+- **Liberação Técnica (Portão de Avanço)**: Cards só avançam para 'Negociação' ou 'Ganho' após o check verde (✓) emitido pelo setor de orçamentos.
+- **Blindagem de Retrocesso ("No Rollback")**: Uma vez liberado pela engenharia, o card é bloqueado para retornar a fases iniciais, garantindo a integridade do processo.
+- **Validação de Perda**: Exige justificativa técnica ou comercial obrigatória para alimentar os gráficos de análise de perdas.
 
-### Frontend (Premium UI/UX)
-- **Framework:** React 18 (Vite + TypeScript)
-- **Gerenciamento de Estado/Cache:** TanStack Query (v5)
-- **Design System:** Vanilla CSS + React Bootstrap (Custom Premium Cards)
-- **Gráficos/BI:** ApexCharts (Biblioteca universal customizada)
-- **Ícones:** Lucide React
+### 2. Motor de Precificação Técnica (Engenharia)
+- **Snapshot de Custos**: Ao inserir um material, o sistema congela o custo base e descrição, protegendo o orçamento de flutuações futuras do catálogo.
+- **Metodologia de Markup Divisor**: Automatiza cálculos de impostos, fretes, comissões e margens alvo.
+- **Kits de Montagem**: Agrupamento lógico de materiais para acelerar a criação de orçamentos complexos.
 
-## 💎 Funcionalidades Principais
+### 3. Business Intelligence & Dashboards
+- **Visão 360°**: Dashboards especializados para Administração, Vendas e Engenharia.
+- **Análise Temporal**: Gráficos dinâmicos com filtros por Dia, Mês e Ano.
+- **Gestão de Metas**: Planejamento financeiro global e individual com visualização em grade anual.
 
-### 📊 BI & Analytics Gerencial
-- **Dashboards Customizados:** Visões específicas para Admin (Estratégico), Vendedor (Performance) e Orçamentista (Produtividade).
-- **Dados em Tempo Real:** Sincronização automática (Polling) e manual sem necessidade de refresh da página.
-- **Análise de Pareto:** Ranking automático dos Top 10 clientes e faturamento por categoria.
+---
 
-### 💼 CRM & Kanban
-- **Pipeline Inteligente:** Gestão de oportunidades com validação obrigatória de perda (Motivos de Perda).
-- **Gestão de Arquivos:** Suporte a upload de pastas completas e extração automática de arquivos .ZIP no servidor.
-- **Sincronização Automática:** Movimentação automática para "Negociação" ao finalizar orçamentos técnicos.
+## 🛠 Stack Tecnológica
 
-### ⚙️ Motor de Orçamentos
-- **Pricing Engine:** Cálculo automatizado via Markup Divisor (Custo / (1 - Encargos)).
-- **Versionamento:** Sistema de revisões (R00, R01...) com snapshots de custo preservados.
-- **Entrada Rápida:** Adição de materiais ao orçamento via digitação direta de código com latência zero.
+| Camada | Tecnologia |
+| :--- | :--- |
+| **Frontend** | React 19, TypeScript, Vite, React-Bootstrap 5 |
+| **Backend** | Python 3.11, Django 4.2, Django REST Framework |
+| **Banco de Dados** | PostgreSQL 15, Redis 7 |
+| **Infraestrutura** | Docker, Nginx (Reverse Proxy), Certbot (SSL) |
+| **Documentos** | WeasyPrint (PDFs de Proposta Comercial) |
 
-## 📁 Estrutura do Projeto
-- `frontend/`: Aplicação React moderna dividida por `pages/`, `components/` e `api/`.
-- `orcamentos/`: Núcleo técnico com `logic/pricing.py` e `services.py`.
-- `comercial/`: Gestão de leads, metas e arquivos técnicos.
-- `usuarios/`: Controle de acesso granular e perfis customizados.
-- `sigoq/settings/`: Configurações divididas entre `base`, `local` e `production`.
+---
 
-## 🚀 Como Iniciar
+## 🌐 Guia de Deploy na VPS (Produção)
 
-### Pré-requisitos
+Este sistema utiliza uma arquitetura de **Segurança por Isolamento**. Os containers realizam bind apenas em `127.0.0.1`, tornando-os invisíveis para o tráfego externo direto e acessíveis exclusivamente via Nginx Global.
+
+### 1. Pré-requisitos na VPS
 - Docker e Docker Compose instalados.
+- Nginx instalado no Host principal (fora do Docker).
+- Domínio configurado apontando para o IP da VPS.
 
-### Passo a Passo
-1. Clone o repositório.
-2. Configure o ambiente:
-   ```bash
-   cp .env.example .env
-   ```
-3. Suba os containers:
-   ```bash
-   sudo docker-compose up -d --build
-   ```
-4. O sistema estará disponível em:
-   - **Frontend:** [http://localhost:5173](http://localhost:5173)
-   - **Backend API:** [http://localhost:8000](http://localhost:8000)
+### 2. Preparação do Ambiente
+Crie o arquivo `.env` na raiz do projeto:
+```env
+# Segurança Django
+DJANGO_SECRET_KEY=sua_chave_ultra_segura_aqui
+DEBUG=False
 
-## 📄 Licença
-Propriedade intelectual restrita. Desenvolvido para gestão técnica industrial de alta precisão.
+# Banco de Dados
+POSTGRES_DB=sigoq_db
+POSTGRES_USER=sigoq_user
+POSTGRES_PASSWORD=senha_forte_banco
+
+# URLs e Redes
+VITE_API_URL=  # Deixe vazio se usar Nginx como proxy no mesmo domínio
+```
+
+### 3. Build e Execução
+```bash
+# Sobe a infraestrutura completa em background
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+### 4. Setup Inicial Automatizado (Obrigatório)
+Após o primeiro build, execute o script de bootstrap para configurar a base de dados e os status vitais do Kanban:
+
+```bash
+docker compose -f docker-compose.prod.yml exec backend bash scripts/setup_prod.sh
+```
+
+### 5. Configuração do Administrador
+Crie o usuário mestre para acessar o painel:
+```bash
+docker compose -f docker-compose.prod.yml exec backend python manage.py createsuperuser
+```
+
+### 6. Configuração do Nginx Global (Host)
+Exemplo de bloco de configuração para `/etc/nginx/sites-available/sigoq`:
+```nginx
+server {
+    server_name sigoq.seudominio.com;
+
+    location / {
+        proxy_pass http://127.0.0.1:8002; # Frontend
+        include proxy_params;
+    }
+
+    location /api/ {
+        proxy_pass http://127.0.0.1:8001; # Backend API
+        include proxy_params;
+    }
+
+    # Gerado pelo Certbot
+    listen 443 ssl; 
+    ...
+}
+```
+
+---
+
+## 🛠 Comandos de Manutenção
+
+- **Ver Logs em Tempo Real**:
+  ```bash
+  docker compose -f docker-compose.prod.yml logs -f backend
+  ```
+- **Importação Massiva de Materiais**:
+  Certifique-se de que o arquivo `materiais.xlsx` está na raiz e execute:
+  ```bash
+  docker compose -f docker-compose.prod.yml exec backend python scripts/import_materiais.py
+  ```
+- **Backup do Banco de Dados**:
+  ```bash
+  docker exec -t sigoq_db_prod pg_dumpall -c -U sigoq_user > backup_data.sql
+  ```
+
+---
+
+**Importante**: Qualquer alteração estrutural deve ser precedida pela consulta a estes arquivos para garantir que as travas de segurança e IDs fixos sejam preservados.
+
+---
+
+## 📄 Licença e Propriedade
+Sistema desenvolvido para **MSF Soluções** para uso exclusivo da SIGOQ. Todos os direitos reservados.
