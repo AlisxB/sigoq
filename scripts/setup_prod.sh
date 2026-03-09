@@ -33,13 +33,30 @@ for id, nome, cor, ordem, tech in data:
 print('Status do Kanban validados com sucesso!')
 "
 
-echo "4/4 -> Verificando integridade das configurações de preço..."
+echo "4/5 -> Verificando integridade das configurações de preço..."
 python manage.py shell -c "
 from orcamentos.models import ConfiguracaoPreco
 if not ConfiguracaoPreco.objects.filter(ativo=True).exists():
     print('Atenção: Nenhuma configuração de preço ativa encontrada. Lembre-se de configurar os markups no sistema.')
 else:
     print('Configurações de preço detectadas.')
+"
+
+echo "5/5 -> Garantindo privilégios de ADMIN para o Superusuário..."
+python manage.py shell -c "
+from django.contrib.auth.models import User
+from usuarios.models import Perfil
+u = User.objects.filter(is_superuser=True).first()
+if u:
+    perfil, _ = Perfil.objects.get_or_create(user=u)
+    if perfil.cargo != 'ADMIN':
+        perfil.cargo = 'ADMIN'
+        perfil.save()
+        print(f'Sucesso: Cargo ADMIN vinculado ao superusuário {u.username}.')
+    else:
+        print(f'Superusuário {u.username} já possui cargo ADMIN.')
+else:
+    print('Aviso: Nenhum superusuário encontrado ainda. Crie um para liberar o acesso total.')
 "
 
 echo "----------------------------------------------------------"

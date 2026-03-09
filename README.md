@@ -68,17 +68,21 @@ docker compose -f docker-compose.prod.yml up -d --build
 ```
 
 ### 4. Setup Inicial Automatizado (Obrigatório)
-Após o primeiro build, execute o script de bootstrap para configurar a base de dados e os status vitais do Kanban:
+Após o primeiro build, execute o script de bootstrap para configurar a base de dados, os status vitais do Kanban e garantir privilégios de ADMIN para o seu superusuário:
 
 ```bash
 docker compose -f docker-compose.prod.yml exec backend bash scripts/setup_prod.sh
 ```
 
 ### 5. Configuração do Administrador
-Crie o usuário mestre para acessar o painel:
-```bash
-docker compose -f docker-compose.prod.yml exec backend python manage.py createsuperuser
-```
+1. **Crie o usuário mestre** (se ainda não existir):
+   ```bash
+   docker compose -f docker-compose.prod.yml exec backend python manage.py createsuperuser
+   ```
+2. **Execute o setup novamente** para vincular o cargo de ADMIN ao novo usuário:
+   ```bash
+   docker compose -f docker-compose.prod.yml exec backend bash scripts/setup_prod.sh
+   ```
 
 ### 6. Configuração do Nginx Global (Host)
 Exemplo de bloco de configuração para `/etc/nginx/sites-available/sigoq`:
