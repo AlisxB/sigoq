@@ -87,23 +87,44 @@ const Kanban: React.FC = () => {
         mutationFn: ({ id, statusId, extraData }: { id: number, statusId: number, extraData?: any }) =>
             comercialApi.update(id, { status: statusId, ...extraData }),
         onMutate: async ({ id, statusId }) => {
+            // Cancela buscas em andamento para não sobrescrever o estado otimista
             await queryClient.cancelQueries({ queryKey: ['kanban-ops'] });
-            const previousOps = queryClient.getQueryData<Oportunidade[]>(['kanban-ops']);
+            
+            // Salva o estado anterior para rollback em caso de erro
+            const previousOps = queryClient.getQueryData<any>(['kanban-ops']);
 
+            // Atualiza o cache local instantaneamente
             if (previousOps) {
-                queryClient.setQueryData(['kanban-ops'], previousOps.map(op =>
-                    op.id === id ? { ...op, status: statusId } : op
-                ));
+                let newData;
+                if (Array.isArray(previousOps)) {
+                    newData = previousOps.map(op => op.id === id ? { ...op, status: statusId } : op);
+                } else if (previousOps.results) {
+                    newData = {
+                        ...previousOps,
+                        results: previousOps.results.map((op: any) => 
+                            op.id === id ? { ...op, status: statusId } : op
+                        )
+                    };
+                } else {
+                    newData = previousOps;
+                }
+                queryClient.setQueryData(['kanban-ops'], newData);
             }
 
             return { previousOps };
         },
-        onError: (err, variables, context) => {
+        onError: (err: any, _variables, context) => {
+            // Se falhar, reverte para o estado anterior
             if (context?.previousOps) {
                 queryClient.setQueryData(['kanban-ops'], context.previousOps);
             }
+            const errorMsg = err.response?.data?.status || 
+                            err.response?.data?.detail || 
+                            "Esta movimentação foi bloqueada pelas regras de negócio do sistema.";
+            alert(errorMsg);
         },
         onSettled: () => {
+            // Sincroniza com o servidor ao final
             queryClient.invalidateQueries({ queryKey: ['kanban-ops'] });
         }
     });

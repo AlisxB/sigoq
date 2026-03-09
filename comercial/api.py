@@ -72,9 +72,8 @@ class OportunidadeViewSet(viewsets.ModelViewSet):
         
         if new_status:
             # 1. Regra de Retrocesso (No Rollback parcial)
+            # Oportunidades liberadas não podem voltar para estágios antes de Negociação (ID 4)
             if instance.liberado_orcamento:
-                # Oportunidade liberada pode transitar livremente de Negociação (4) em diante.
-                # Mas não pode voltar para estágios anteriores a Negociação (1, 2, 3).
                 if new_status.id < 4:
                     from rest_framework.exceptions import ValidationError
                     raise ValidationError({
