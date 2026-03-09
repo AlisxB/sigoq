@@ -23,12 +23,17 @@ const AdminDashboardView: React.FC = () => {
     const [evolutionPeriod, setEvolutionPeriod] = useState<'dia' | 'mes' | 'ano'>('mes');
     const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
-    const { data: funnelData, isFetching: isFetchingFunnel } = useQuery({
+    const { data: rawFunnelData, isFetching: isFetchingFunnel } = useQuery({
         queryKey: ['analytics-funnel'],
         queryFn: analyticsApi.getFunnel,
         staleTime: 1000 * 60 * 5,
         refetchInterval: 1000 * 60 * 5, // Auto-refresh a cada 5 min
     });
+
+    const funnelData: any[] = useMemo(() => {
+        if (!rawFunnelData) return [];
+        return Array.isArray(rawFunnelData) ? rawFunnelData : (rawFunnelData.results || []);
+    }, [rawFunnelData]);
 
     const { data: financeData, isLoading: isLoadingFinance, isFetching: isFetchingFinance } = useQuery({
         queryKey: ['analytics-finance', evolutionPeriod],

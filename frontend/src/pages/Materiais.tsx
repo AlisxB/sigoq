@@ -15,7 +15,7 @@ const Materiais: React.FC = () => {
 
     const { data: categoriasData } = useQuery({ 
         queryKey: ['categorias'], 
-        queryFn: () => categoriaApi.list() 
+        queryFn: () => categoriaApi.list({ page_size: 1000 }) 
     });
     const categorias: Categoria[] = Array.isArray(categoriasData) 
         ? categoriasData 
@@ -23,7 +23,7 @@ const Materiais: React.FC = () => {
 
     const { data: fornecedoresData } = useQuery({ 
         queryKey: ['fornecedores'], 
-        queryFn: () => fornecedorApi.list() 
+        queryFn: () => fornecedorApi.list({ page_size: 1000 }) 
     });
     const fornecedores: Fornecedor[] = Array.isArray(fornecedoresData) 
         ? fornecedoresData 

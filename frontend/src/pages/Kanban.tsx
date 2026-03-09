@@ -40,23 +40,32 @@ const Kanban: React.FC = () => {
     const [showLossModal, setShowLossModal] = useState(false);
     const [lossData, setLossData] = useState({ opId: 0, statusId: 0, motivo: '', detalhes: '' });
 
-    const { data: statusData, isLoading: loadingStatus } = useQuery({
+    const { data: statusData, isLoading: loadingStatus } = useQuery<any>({
         queryKey: ['kanban-status'],
-        queryFn: comercialApi.listStatus
+        queryFn: () => comercialApi.listStatus()
     });
-    const statusList = Array.isArray(statusData) ? statusData : [];
+    const statusList: StatusOportunidade[] = useMemo(() => {
+        if (!statusData) return [];
+        return Array.isArray(statusData) ? statusData : (statusData.results || []);
+    }, [statusData]);
 
-    const { data: opsData, isLoading: loadingOps } = useQuery({
+    const { data: opsData, isLoading: loadingOps } = useQuery<any>({
         queryKey: ['kanban-ops'],
-        queryFn: comercialApi.list
+        queryFn: () => comercialApi.list()
     });
-    const oportunidades = Array.isArray(opsData) ? opsData : [];
+    const oportunidades: Oportunidade[] = useMemo(() => {
+        if (!opsData) return [];
+        return Array.isArray(opsData) ? opsData : (opsData.results || []);
+    }, [opsData]);
 
-    const { data: clientesData } = useQuery({
+    const { data: clientesData } = useQuery<any>({
         queryKey: ['clientes'],
         queryFn: () => clienteApi.list({ page_size: 1000 })
     });
-    const clientes = Array.isArray(clientesData) ? clientesData : (clientesData as any)?.results || [];
+    const clientes: Cliente[] = useMemo(() => {
+        if (!clientesData) return [];
+        return Array.isArray(clientesData) ? clientesData : (clientesData.results || []);
+    }, [clientesData]);
 
     const [showModal, setShowModal] = useState(false);
     const [formData, setFormData] = useState<Partial<Oportunidade>>({

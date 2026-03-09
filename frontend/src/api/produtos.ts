@@ -30,11 +30,7 @@ export const produtoApi = {
 };
 
 export const categoriaApi = {
-    list: (): Promise<Categoria[]> => api.get('produtos/api/categorias/?page_size=1000').then(res => {
-        const data = res.data;
-        if (data && data.results && Array.isArray(data.results)) return data.results;
-        return Array.isArray(data) ? data : [];
-    }),
+    list: (params?: any): Promise<any> => api.get('produtos/api/categorias/', { params: { page_size: 1000, ...params } }).then(res => res.data),
     get: (id: string | number): Promise<Categoria> => api.get(`produtos/api/categorias/${id}/`).then(res => res.data),
     create: (data: Partial<Categoria>): Promise<Categoria> => api.post('produtos/api/categorias/', data).then(res => res.data),
     update: (id: string | number, data: Partial<Categoria>): Promise<Categoria> => api.put(`produtos/api/categorias/${id}/`, data).then(res => res.data),

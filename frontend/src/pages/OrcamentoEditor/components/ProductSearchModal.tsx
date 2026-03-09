@@ -32,19 +32,19 @@ const ProductSearchModal: React.FC<ProductSearchModalProps> = ({ show, onHide, o
 
     const { data: categoriasData } = useQuery<Categoria[]>({
         queryKey: ['categorias'],
-        queryFn: () => categoriaApi.list(),
+        queryFn: () => categoriaApi.list({ page_size: 1000 }),
         enabled: show,
         staleTime: 1000 * 60 * 60
     });
-    const categorias = Array.isArray(categoriasData) ? categoriasData : [];
+    const categorias = Array.isArray(categoriasData) ? categoriasData : (categoriasData as any)?.results || [];
 
     const { data: fornecedoresData } = useQuery<Fornecedor[]>({
         queryKey: ['fornecedores'],
-        queryFn: () => fornecedorApi.list(),
+        queryFn: () => fornecedorApi.list({ page_size: 1000 }),
         enabled: show,
         staleTime: 1000 * 60 * 60
     });
-    const fornecedores = Array.isArray(fornecedoresData) ? fornecedoresData : [];
+    const fornecedores = Array.isArray(fornecedoresData) ? fornecedoresData : (fornecedoresData as any)?.results || [];
 
     const isSearchActive = debouncedSearch.length >= 2 || !!selCategoria || !!selFornecedor;
 

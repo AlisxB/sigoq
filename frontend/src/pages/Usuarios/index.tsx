@@ -15,10 +15,11 @@ const Usuarios: React.FC = () => {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
-    const { data: users = [], isLoading } = useQuery<User[]>({
+    const { data: usersData, isLoading } = useQuery({
         queryKey: ['usuarios'],
         queryFn: () => usuarioApi.list()
     });
+    const users: User[] = Array.isArray(usersData) ? usersData : (usersData?.results || []);
 
     const saveMutation = useMutation({
         mutationFn: (data: any) => selectedUser 

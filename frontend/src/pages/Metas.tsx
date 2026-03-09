@@ -24,17 +24,23 @@ const Metas: React.FC = () => {
     const [displayValue, setDisplayValue] = useState('');
     const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
 
-    const { data: metasData, isLoading } = useQuery<MetaMensal[]>({
+    const { data: metasData, isLoading } = useQuery<any>({
         queryKey: ['metas'],
         queryFn: () => comercialApi.listMetas()
     });
-    const metas = Array.isArray(metasData) ? metasData : [];
+    const metas: MetaMensal[] = useMemo(() => {
+        if (!metasData) return [];
+        return Array.isArray(metasData) ? metasData : (metasData.results || []);
+    }, [metasData]);
 
-    const { data: vendedoresData } = useQuery<User[]>({
+    const { data: vendedoresData } = useQuery<any>({
         queryKey: ['vendedores'],
         queryFn: () => usuarioApi.list({ role: 'COMERCIAL', page_size: 1000 })
     });
-    const vendedores = Array.isArray(vendedoresData) ? vendedoresData : [];
+    const vendedores: User[] = useMemo(() => {
+        if (!vendedoresData) return [];
+        return Array.isArray(vendedoresData) ? vendedoresData : (vendedoresData.results || []);
+    }, [vendedoresData]);
 
     // Filtros de Metas
     const globalMetas = useMemo(() => metas.filter(m => !m.vendedor), [metas]);

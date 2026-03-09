@@ -25,11 +25,16 @@ const TechnicalDashboardView: React.FC = () => {
         refetchInterval: 1000 * 60 * 5,
     });
 
-    const { data: orcamentos = [], isLoading: isLoadingOrcs, isFetching: isFetchingOrcs } = useQuery({
+    const { data: rawOrcamentos, isLoading: isLoadingOrcs, isFetching: isFetchingOrcs } = useQuery({
         queryKey: ['orcamentos-tech-queue'],
         queryFn: orcamentoApi.list,
         refetchInterval: 1000 * 60 * 5,
     });
+
+    const orcamentos = useMemo(() => {
+        if (!rawOrcamentos) return [];
+        return Array.isArray(rawOrcamentos) ? rawOrcamentos : (rawOrcamentos.results || []);
+    }, [rawOrcamentos]);
 
     const isRefreshing = isFetchingAnalytics || isFetchingOrcs;
 
