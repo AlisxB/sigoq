@@ -132,6 +132,7 @@ const Autocomplete: React.FC<AutocompleteProps> = ({
                                     key={opt.id}
                                     className={`px-3 py-2 cursor-pointer autocomplete-item ${opt.id === value ? 'bg-primary-light text-primary' : ''}`}
                                     onClick={() => handleSelect(opt.id)}
+                                    style={{ cursor: 'pointer' }}
                                 >
                                     <span className="small fw-bold">{opt.label}</span>
                                 </div>

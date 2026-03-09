@@ -261,7 +261,7 @@ const GenericCRUD = <T extends { id?: number | string }>({
                                                             variant="light"
                                                             size="sm"
                                                             className="text-primary border-0"
-                                                            style={{ borderRadius: '8px', padding: '8px' }}
+                                                            style={{ borderRadius: '8px', padding: '8px', cursor: 'pointer' }}
                                                             onClick={() => handleOpen(item)}
                                                             title="Editar"
                                                         >
@@ -271,7 +271,7 @@ const GenericCRUD = <T extends { id?: number | string }>({
                                                             variant="light"
                                                             size="sm"
                                                             className="text-danger border-0"
-                                                            style={{ borderRadius: '8px', padding: '8px' }}
+                                                            style={{ borderRadius: '8px', padding: '8px', cursor: 'pointer' }}
                                                             onClick={() => item.id && handleDeleteClick(item.id)}
                                                             title="Excluir"
                                                         >
@@ -294,6 +294,7 @@ const GenericCRUD = <T extends { id?: number | string }>({
                                 className="rounded-pill px-4 fw-bold d-inline-flex align-items-center gap-2"
                                 onClick={() => infiniteQuery.fetchNextPage()}
                                 disabled={infiniteQuery.isFetchingNextPage}
+                                style={{ cursor: 'pointer' }}
                             >
                                 {infiniteQuery.isFetchingNextPage ? (
                                     <Spinner animation="border" size="sm" />
