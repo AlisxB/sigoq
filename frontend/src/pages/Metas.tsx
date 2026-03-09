@@ -280,33 +280,47 @@ const Metas: React.FC = () => {
                 <Modal.Body className="p-4">
                     <Form onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(selectedMeta!); }}>
                         <Row className="g-4">
-                            <Col md={12}>
-                                <Form.Group>
-                                    <Form.Label className="form-premium-label">Selecione o Mês e Ano (MM/AAAA)</Form.Label>
-                                    <div className="datepicker-modern-container shadow-inner rounded-12 border">
-                                        <Calendar className="datepicker-icon text-primary" size={18} />
-                                        <DatePicker
-                                            selected={selectedDate}
-                                            onChange={(date: Date | null) => {
-                                                if (date) {
-                                                    setSelectedDate(date);
-                                                    setSelectedMeta({
-                                                        ...selectedMeta,
-                                                        mes: date.getMonth() + 1,
-                                                        ano: date.getFullYear()
-                                                    });
-                                                }
-                                            }}
-                                            dateFormat="MMMM 'de' yyyy"
-                                            showMonthYearPicker
-                                            locale="pt-BR"
-                                            className="form-control border-0 bg-transparent ps-5 py-2 shadow-none"
-                                            placeholderText="Selecione MM/AAAA"
-                                            required
-                                        />
+                            {/* Oculta data em Metas Globais (período já fixado pelo clique) */}
+                            {(activeTab === 'salesman' || !selectedMeta?.id) && (
+                                <Col md={12} className={activeTab === 'global' ? 'd-none' : ''}>
+                                    <Form.Group>
+                                        <Form.Label className="form-premium-label">Selecione o Mês e Ano (MM/AAAA)</Form.Label>
+                                        <div className="datepicker-modern-container shadow-inner rounded-12 border">
+                                            <Calendar className="datepicker-icon text-primary" size={18} />
+                                            <DatePicker
+                                                selected={selectedDate}
+                                                onChange={(date: Date | null) => {
+                                                    if (date) {
+                                                        setSelectedDate(date);
+                                                        setSelectedMeta({
+                                                            ...selectedMeta,
+                                                            mes: date.getMonth() + 1,
+                                                            ano: date.getFullYear()
+                                                        });
+                                                    }
+                                                }}
+                                                dateFormat="MMMM 'de' yyyy"
+                                                showMonthYearPicker
+                                                locale="pt-BR"
+                                                className="form-control border-0 bg-transparent ps-5 py-2 shadow-none w-100"
+                                                placeholderText="Selecione MM/AAAA"
+                                                required
+                                            />
+                                        </div>
+                                    </Form.Group>
+                                </Col>
+                            )}
+
+                            {activeTab === 'global' && (
+                                <Col md={12}>
+                                    <div className="bg-light rounded-12 p-3 text-center border-dashed border-primary border-opacity-25">
+                                        <span className="text-muted small fw-bold uppercase d-block mb-1">Período Definido</span>
+                                        <span className="h5 fw-bold text-primary mb-0">
+                                            {selectedMeta?.mes ? new Date(2000, selectedMeta.mes - 1).toLocaleString('pt-BR', { month: 'long' }) : ''} de {selectedMeta?.ano}
+                                        </span>
                                     </div>
-                                </Form.Group>
-                            </Col>
+                                </Col>
+                            )}
 
                             {activeTab === 'salesman' && (
                                 <Col md={12}>
@@ -397,30 +411,56 @@ const Metas: React.FC = () => {
                     font-family: 'Plus Jakarta Sans', sans-serif; 
                     border-radius: 24px; 
                     border: none;
-                    box-shadow: 0 20px 50px rgba(0,0,0,0.1); 
-                    padding: 15px;
-                    width: 320px; /* Largura fixa para garantir a grade */
+                    box-shadow: 0 20px 50px rgba(0,0,0,0.15); 
+                    padding: 20px;
+                    width: 320px !important; 
+                    background-color: #fff !important;
                 }
-                .react-datepicker__header { background-color: #fff; border-bottom: none; padding-top: 10px; }
-                .react-datepicker__current-month { color: #2A3547; font-weight: 800; font-size: 1.1rem; margin-bottom: 15px; text-transform: capitalize; }
+                .react-datepicker__header { background-color: #fff; border-bottom: none; padding-top: 0; width: 100% !important; }
+                .react-datepicker__current-month { color: #2A3547; font-weight: 800; font-size: 1.1rem; margin-bottom: 20px; text-transform: capitalize; }
                 
-                .react-datepicker__month-container { width: 100%; }
-                .react-datepicker__month { margin: 0; display: flex; flex-wrap: wrap; justify-content: space-between; }
+                .react-datepicker__month-container { width: 100% !important; }
+                .react-datepicker__month { 
+                    margin: 0 !important; 
+                    display: flex !important; 
+                    flex-direction: column !important;
+                    gap: 5px !important;
+                }
+                
+                .react-datepicker__month-row {
+                    display: flex !important;
+                    justify-content: space-between !important;
+                    width: 100% !important;
+                    margin-bottom: 5px !important;
+                }
                 
                 .react-datepicker__month-text { 
                     display: inline-flex !important;
                     align-items: center;
                     justify-content: center;
                     padding: 12px 0 !important; 
-                    margin: 4px 1% !important; 
+                    margin: 0 !important; 
                     font-weight: 600; 
                     border-radius: 12px !important; 
                     transition: 0.2s; 
-                    width: 31% !important; /* 3 colunas perfeitas */
+                    width: 31% !important; /* 3 meses por linha */
                     color: #5A6A83;
                     font-size: 0.85rem;
                     text-transform: capitalize;
                 }
+                .react-datepicker__month--selected, .react-datepicker__month-text--keyboard-selected { 
+                    background-color: #5D87FF !important; 
+                    color: #fff !important; 
+                    box-shadow: 0 8px 15px rgba(93, 135, 255, 0.25); 
+                }
+                .react-datepicker__month-text:hover { background-color: #ECF2FF !important; color: #5D87FF !important; }
+                
+                .react-datepicker__navigation { top: 22px; }
+                .react-datepicker__navigation--previous { left: 15px; }
+                .react-datepicker__navigation--next { right: 15px; }
+                
+                /* Garante que o popper não seja cortado */
+                .react-datepicker-popper { z-index: 9999 !important; }
                 .react-datepicker__month-text--keyboard-selected, .react-datepicker__month-text--selected { 
                     background-color: #5D87FF !important; 
                     color: #fff !important; 
