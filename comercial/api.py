@@ -70,13 +70,21 @@ class OportunidadeViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         new_status = serializer.validated_data.get('status')
         
-        # Regra de Negócio: Oportunidade liberada não pode voltar no Kanban
-        if instance.liberado_orcamento and new_status:
-            # Se o novo status tiver uma ordem menor que o atual, bloqueia
-            if new_status.ordem < instance.status.ordem:
+        if new_status:
+            # 1. Regra de Retrocesso (No Rollback)
+            if instance.liberado_orcamento:
+                if new_status.ordem < instance.status.ordem:
+                    from rest_framework.exceptions import ValidationError
+                    raise ValidationError({
+                        "status": "Esta oportunidade já foi liberada pelo setor de orçamento e não pode retornar para estágios anteriores."
+                    })
+            
+            # 2. Regra de Avanço (Portão Técnico)
+            # IDs 4 (Negociação) e 5 (Ganho) exigem liberação. ID 6 (Perdido) é exceção.
+            if new_status.id in [4, 5] and not instance.liberado_orcamento:
                 from rest_framework.exceptions import ValidationError
                 raise ValidationError({
-                    "status": "Esta oportunidade já foi liberada pelo setor de orçamento e não pode retornar para estágios anteriores."
+                    "status": "Não é possível mover para Negociação ou Ganho sem a liberação do setor de orçamento (check ✓)."
                 })
         
         serializer.save()
