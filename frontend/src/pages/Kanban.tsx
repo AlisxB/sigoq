@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
@@ -6,7 +6,7 @@ import { Container, Row, Col, Card, Badge, Button, Spinner, Dropdown, InputGroup
 import { 
     Plus, MoreVertical, DollarSign, Calendar, User, Search, 
     Briefcase, Building, Flag, ListTodo, Lock, Paperclip, 
-    AlertCircle, MessageSquare
+    AlertCircle, MessageSquare, Check, LayoutDashboard, FileText
 } from 'lucide-react';
 import { comercialApi } from '../api/comercial';
 import { clienteApi } from '../api/clientes';
@@ -15,6 +15,8 @@ import { Oportunidade, StatusOportunidade, Cliente } from '../types';
 import { Modal, Form } from 'react-bootstrap';
 import { maskCurrency, unmaskCurrency } from '../utils/masks';
 import OpportunityFileManager from '../components/OpportunityFileManager';
+import ConfirmModal from '../components/ConfirmModal';
+import Autocomplete from '../components/Autocomplete';
 
 const LOSS_REASONS = [
     { value: 'PRECO', label: 'Preço Elevado' },
@@ -38,13 +40,13 @@ const Kanban: React.FC = () => {
     const [showLossModal, setShowLossModal] = useState(false);
     const [lossData, setLossData] = useState({ opId: 0, statusId: 0, motivo: '', detalhes: '' });
 
-    const { data: statusData, isLoading: loadingStatus } = useQuery<StatusOportunidade[]>({
+    const { data: statusData, isLoading: loadingStatus } = useQuery({
         queryKey: ['kanban-status'],
         queryFn: comercialApi.listStatus
     });
     const statusList = Array.isArray(statusData) ? statusData : [];
 
-    const { data: opsData, isLoading: loadingOps } = useQuery<Oportunidade[]>({
+    const { data: opsData, isLoading: loadingOps } = useQuery({
         queryKey: ['kanban-ops'],
         queryFn: comercialApi.list
     });
@@ -52,11 +54,9 @@ const Kanban: React.FC = () => {
 
     const { data: clientesData } = useQuery({
         queryKey: ['clientes'],
-        queryFn: () => clienteApi.list({ page_size: 1000 }) // Busca todos para o select
+        queryFn: () => clienteApi.list({ page_size: 1000 })
     });
-    const clientes: Cliente[] = Array.isArray(clientesData) 
-        ? clientesData 
-        : (clientesData as any)?.results || [];
+    const clientes = Array.isArray(clientesData) ? clientesData : (clientesData as any)?.results || [];
 
     const [showModal, setShowModal] = useState(false);
     const [formData, setFormData] = useState<Partial<Oportunidade>>({
@@ -223,7 +223,7 @@ const Kanban: React.FC = () => {
                                 <div className="d-flex align-items-center">
                                     <h6 className="fw-bold mb-0 me-2">{status.nome}</h6>
                                     <Badge pill bg="light" text="dark" className="border">
-                                        {oportunidades.filter((o: Oportunidade) => o.status === status.id).length}
+                                        {oportunidades.filter((o: Oportunidade) => Number(o.status) === Number(status.id)).length}
                                     </Badge>
                                 </div>
                                 <div style={{ width: '20px', height: '4px', backgroundColor: status.cor, borderRadius: '2px' }}></div>
@@ -238,7 +238,7 @@ const Kanban: React.FC = () => {
                                         style={{ minHeight: 'calc(100vh - 200px)', overflowY: 'auto', transition: 'background-color 0.2s ease' }}
                                     >
                                         {oportunidades
-                                            .filter((o: Oportunidade) => o.status === status.id)
+                                            .filter((o: Oportunidade) => Number(o.status) === Number(status.id))
                                             .map((op: Oportunidade, index: number) => {
                                                 const isLocked = op.status_detalhe?.notifica_setor_tecnico;
 
@@ -264,27 +264,21 @@ const Kanban: React.FC = () => {
                                                                 className={`mb-3 border-0 shadow-sm card-premium ${snapshot.isDragging ? 'shadow-lg rotate-1' : ''} ${isLocked ? 'locked-card' : ''}`}
                                                                 style={{
                                                                     ...provided.draggableProps.style,
-                                                                    borderLeft: `4px solid ${status.cor} !important`
+                                                                    borderLeft: `4px solid ${status.cor}`
                                                                 }}
                                                             >
                                                                 <Card.Body className="p-3">
                                                                     <div className="d-flex justify-content-between align-items-start mb-2">
                                                                         <div className="d-flex align-items-center gap-1">
                                                                             <span className="text-muted x-small fw-bold me-1">OP-{op.numero?.toString().padStart(4, '0') || '0000'}</span>
-                                                                            {isLocked && <Lock size={12} className="text-warning" title="Bloqueado para movimentação" />}
-                                                                            {op.liberado_orcamento && <Check size={14} className="text-success fw-extrabold" title="Liberado pelo Orçamento" />}
+                                                                            {isLocked && <Lock size={12} className="text-warning" />}
+                                                                            {op.liberado_orcamento && <Check size={14} className="text-success fw-extrabold" />}
                                                                         </div>
                                                                         <Dropdown align="end">
                                                                             <Dropdown.Toggle as="div" className="p-0 border-0 bg-transparent text-muted cursor-pointer">
                                                                                 <MoreVertical size={14} />
                                                                             </Dropdown.Toggle>
                                                                             <Dropdown.Menu className="shadow border-0">
-                                                                                <Dropdown.Item
-                                                                                    className="small fw-bold text-primary"
-                                                                                    onClick={() => navigate(`/novo-orcamento?oportunidade=${op.id}&cliente=${op.cliente}`)}
-                                                                                >
-                                                                                    Gerar Orçamento
-                                                                                </Dropdown.Item>
                                                                                 <Dropdown.Item
                                                                                     className="small d-flex align-items-center gap-2"
                                                                                     onClick={() => {
@@ -294,14 +288,18 @@ const Kanban: React.FC = () => {
                                                                                 >
                                                                                     <Paperclip size={14} /> Arquivos ({op.total_arquivos || 0})
                                                                                 </Dropdown.Item>
-                                                                                <Dropdown.Item 
-                                                                                    className={`small ${!op.liberado_orcamento ? 'text-muted opacity-50' : ''}`}
-                                                                                    onClick={() => op.liberado_orcamento && window.open(`${import.meta.env.VITE_API_URL || ''}/comercial/api/oportunidade/${op.id}/pdf/`, '_blank')}
-                                                                                    disabled={!op.liberado_orcamento}
-                                                                                >
-                                                                                    {op.liberado_orcamento ? 'Gerar Proposta PDF' : 'Proposta PDF (Aguardando Liberação)'}
-                                                                                </Dropdown.Item>
-                                                                                <Dropdown.Item className="small" onClick={() => handleViewDetails(op)}>Ver Detalhes</Dropdown.Item>
+                                                                                {op.liberado_orcamento && (
+                                                                                    <Dropdown.Item 
+                                                                                        className="small"
+                                                                                        onClick={() => {
+                                                                                            const baseUrl = (import.meta as any).env.VITE_API_URL || '';
+                                                                                            window.open(`${baseUrl}/comercial/api/oportunidade/${op.id}/pdf/`, '_blank');
+                                                                                        }}
+                                                                                    >
+                                                                                        Gerar Proposta PDF
+                                                                                    </Dropdown.Item>
+                                                                                )}
+
                                                                                 <Dropdown.Item className="small" onClick={() => { setFormData(op); setShowModal(true); }}>Editar</Dropdown.Item>
                                                                                 <Dropdown.Divider />
                                                                                 <Dropdown.Item className="small text-danger" onClick={() => handleDeleteClick(op.id)}>Excluir</Dropdown.Item>
@@ -469,10 +467,10 @@ const Kanban: React.FC = () => {
                     <Button
                         variant="primary"
                         className="px-4 fw-bold rounded-pill shadow-sm"
-                        onClick={() => createMutation.mutate(formData)}
-                        disabled={createMutation.isPending}
+                        onClick={() => saveMutation.mutate(formData)}
+                        disabled={saveMutation.isPending}
                     >
-                        {createMutation.isPending ? 'Criando...' : 'Criar Oportunidade'}
+                        {saveMutation.isPending ? 'Salvando...' : (formData.id ? 'Salvar Alterações' : 'Criar Oportunidade')}
                     </Button>
                 </Modal.Footer>
             </Modal>
