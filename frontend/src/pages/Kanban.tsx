@@ -140,6 +140,10 @@ const Kanban: React.FC = () => {
         setShowDeleteModal(true);
     };
 
+    // Estados para Bloqueio Técnico
+    const [showBlockModal, setShowBlockModal] = useState(false);
+    const [blockMessage, setBlockMessage] = useState('');
+
     const onDragEnd = (result: DropResult) => {
         const { destination, source, draggableId } = result;
 
@@ -149,18 +153,25 @@ const Kanban: React.FC = () => {
         const opId = parseInt(draggableId);
         const newStatusId = parseInt(destination.droppableId);
         
-        // Localiza a oportunidade sendo movida
+        // 1. Regra de Retrocesso (No Rollback)
         const op = oportunidades.find((o: Oportunidade) => o.id === opId);
-        
-        // Verifica se a oportunidade está liberada e tentando voltar
         if (op?.liberado_orcamento) {
             const currentStatus = statusList.find((s: StatusOportunidade) => s.id === op.status);
             const targetStatus = statusList.find((s: StatusOportunidade) => s.id === newStatusId);
             
             if (currentStatus && targetStatus && targetStatus.ordem < currentStatus.ordem) {
-                alert("Esta oportunidade já foi liberada pelo setor de orçamento e não pode retornar para estágios anteriores.");
+                setBlockMessage("Esta oportunidade já foi liberada pelo setor de orçamento e não pode retornar para estágios anteriores.");
+                setShowBlockModal(true);
                 return;
             }
+        }
+
+        // 2. Regra de Avanço (Portão Técnico)
+        // Bloqueia avançar para Negociação (4) ou Ganho (5) sem liberação
+        if ([4, 5].includes(newStatusId) && !op?.liberado_orcamento) {
+            setBlockMessage("Esta oportunidade precisa ser liberada pela equipe técnica (setor de orçamento) antes de avançar para Negociação ou Ganho.");
+            setShowBlockModal(true);
+            return;
         }
 
         // Verifica se o destino é o status "Perdido"
@@ -555,6 +566,20 @@ const Kanban: React.FC = () => {
                 confirmLabel="Excluir"
                 cancelLabel="Cancelar"
             />
+
+            {/* Modal de Aviso de Bloqueio Técnico */}
+            <Modal show={showBlockModal} onHide={() => setShowBlockModal(false)} centered size="sm" className="modal-premium">
+                <Modal.Body className="p-4 text-center">
+                    <div className="bg-warning bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style={{ width: '60px', height: '60px' }}>
+                        <AlertCircle size={32} className="text-warning" />
+                    </div>
+                    <h5 className="fw-bold text-dark mb-3">Ação Restrita</h5>
+                    <p className="text-muted small mb-4">{blockMessage}</p>
+                    <Button variant="primary" className="rounded-pill px-4 fw-bold w-100 shadow-sm" onClick={() => setShowBlockModal(false)}>
+                        Entendido
+                    </Button>
+                </Modal.Body>
+            </Modal>
 
             <style>{`
                 .rounded-12 { border-radius: 12px !important; }
