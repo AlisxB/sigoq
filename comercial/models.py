@@ -84,6 +84,9 @@ class Oportunidade(BaseModel):
     prioridade = models.CharField(max_length=10, choices=PRIORIDADE_CHOICES, default='MEDIA', verbose_name="Prioridade")
     vendedor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='oportunidades', verbose_name="Vendedor")
     
+    # Controle de Fluxo Técnico
+    liberado_orcamento = models.BooleanField(default=False, verbose_name="Liberado pelo Orçamento", help_text="Se marcado, a proposta pode ser gerada e a OP não pode voltar no Kanban.")
+    
     # Novos campos para validação de perda
     motivo_perda = models.CharField(max_length=20, choices=MOTIVO_PERDA_CHOICES, blank=True, null=True, verbose_name="Motivo da Perda")
     detalhes_perda = models.TextField(blank=True, null=True, verbose_name="Detalhes da Perda")

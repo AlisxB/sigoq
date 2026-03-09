@@ -36,5 +36,11 @@ class OportunidadeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Oportunidade
-        fields = '__all__'
+        fields = [
+            'id', 'numero', 'titulo', 'descricao', 'cliente', 'cliente_nome',
+            'status', 'status_nome', 'status_cor', 'valor_estimado', 'margem_lucro',
+            'probabilidade', 'data_prevista_fechamento', 'fonte', 'prioridade',
+            'vendedor', 'vendedor_nome', 'total_arquivos', 'motivo_perda', 
+            'detalhes_perda', 'liberado_orcamento', 'criado_em', 'atualizado_em'
+        ]
         read_only_fields = ['numero', 'criado_em']

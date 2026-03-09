@@ -66,6 +66,21 @@ class OportunidadeViewSet(viewsets.ModelViewSet):
         else:
             serializer.save()
 
+    def perform_update(self, serializer):
+        instance = self.get_object()
+        new_status = serializer.validated_data.get('status')
+        
+        # Regra de Negócio: Oportunidade liberada não pode voltar no Kanban
+        if instance.liberado_orcamento and new_status:
+            # Se o novo status tiver uma ordem menor que o atual, bloqueia
+            if new_status.ordem < instance.status.ordem:
+                from rest_framework.exceptions import ValidationError
+                raise ValidationError({
+                    "status": "Esta oportunidade já foi liberada pelo setor de orçamento e não pode retornar para estágios anteriores."
+                })
+        
+        serializer.save()
+
     @action(detail=False, methods=['get'])
     def estatisticas(self, request):
         """

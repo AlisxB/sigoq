@@ -99,17 +99,46 @@ const Kanban: React.FC = () => {
         }
     });
 
-    const createMutation = useMutation({
-        mutationFn: (data: Partial<Oportunidade>) => comercialApi.create(data),
+    const [showViewModal, setShowViewModal] = useState(false);
+    const [selectedOpForView, setSelectedOpForView] = useState<Oportunidade | null>(null);
+
+    const handleViewDetails = (op: Oportunidade) => {
+        setSelectedOpForView(op);
+        setShowViewModal(true);
+    };
+
+    const saveMutation = useMutation({
+        mutationFn: (data: Partial<Oportunidade>) => 
+            data.id ? comercialApi.update(data.id, data) : comercialApi.create(data),
         onSuccess: (newOp) => {
             queryClient.invalidateQueries({ queryKey: ['kanban-ops'] });
             setShowModal(false);
             setFormData({ titulo: '', valor_estimado: '0.00', prioridade: 'MEDIA', fonte: 'SITE' });
             
-            setSelectedOpForFiles({ id: newOp.id, titulo: newOp.titulo });
-            setFileManagerShow(true);
+            // Se for uma criação nova, abre o gestor de arquivos automaticamente
+            if (!formData.id) {
+                setSelectedOpForFiles({ id: newOp.id, titulo: newOp.titulo });
+                setFileManagerShow(true);
+            }
         }
     });
+
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [opToDelete, setOpToDelete] = useState<number | null>(null);
+
+    const deleteMutation = useMutation({
+        mutationFn: comercialApi.delete,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['kanban-ops'] });
+            setShowDeleteModal(false);
+            setOpToDelete(null);
+        }
+    });
+
+    const handleDeleteClick = (id: number) => {
+        setOpToDelete(id);
+        setShowDeleteModal(true);
+    };
 
     const onDragEnd = (result: DropResult) => {
         const { destination, source, draggableId } = result;
@@ -120,6 +149,20 @@ const Kanban: React.FC = () => {
         const opId = parseInt(draggableId);
         const newStatusId = parseInt(destination.droppableId);
         
+        // Localiza a oportunidade sendo movida
+        const op = oportunidades.find((o: Oportunidade) => o.id === opId);
+        
+        // Verifica se a oportunidade está liberada e tentando voltar
+        if (op?.liberado_orcamento) {
+            const currentStatus = statusList.find((s: StatusOportunidade) => s.id === op.status);
+            const targetStatus = statusList.find((s: StatusOportunidade) => s.id === newStatusId);
+            
+            if (currentStatus && targetStatus && targetStatus.ordem < currentStatus.ordem) {
+                alert("Esta oportunidade já foi liberada pelo setor de orçamento e não pode retornar para estágios anteriores.");
+                return;
+            }
+        }
+
         // Verifica se o destino é o status "Perdido"
         const targetStatus = statusList.find((s: StatusOportunidade) => s.id === newStatusId);
         const isLost = targetStatus?.nome.toLowerCase().includes('perdido') || targetStatus?.id === 6;
@@ -226,9 +269,10 @@ const Kanban: React.FC = () => {
                                                             >
                                                                 <Card.Body className="p-3">
                                                                     <div className="d-flex justify-content-between align-items-start mb-2">
-                                                                        <div className="d-flex align-items-center">
-                                                                            <span className="text-muted x-small fw-bold me-2">OP-{op.numero?.toString().padStart(4, '0') || '0000'}</span>
-                                                                            {isLocked && <Lock size={12} className="text-warning" />}
+                                                                        <div className="d-flex align-items-center gap-1">
+                                                                            <span className="text-muted x-small fw-bold me-1">OP-{op.numero?.toString().padStart(4, '0') || '0000'}</span>
+                                                                            {isLocked && <Lock size={12} className="text-warning" title="Bloqueado para movimentação" />}
+                                                                            {op.liberado_orcamento && <Check size={14} className="text-success fw-extrabold" title="Liberado pelo Orçamento" />}
                                                                         </div>
                                                                         <Dropdown align="end">
                                                                             <Dropdown.Toggle as="div" className="p-0 border-0 bg-transparent text-muted cursor-pointer">
@@ -250,13 +294,17 @@ const Kanban: React.FC = () => {
                                                                                 >
                                                                                     <Paperclip size={14} /> Arquivos ({op.total_arquivos || 0})
                                                                                 </Dropdown.Item>
-                                                                                <Dropdown.Item className="small" onClick={() => window.open(`http://localhost:8000/comercial/api/oportunidade/${op.id}/pdf/`, '_blank')}>
-                                                                                    Gerar Proposta PDF
+                                                                                <Dropdown.Item 
+                                                                                    className={`small ${!op.liberado_orcamento ? 'text-muted opacity-50' : ''}`}
+                                                                                    onClick={() => op.liberado_orcamento && window.open(`${import.meta.env.VITE_API_URL || ''}/comercial/api/oportunidade/${op.id}/pdf/`, '_blank')}
+                                                                                    disabled={!op.liberado_orcamento}
+                                                                                >
+                                                                                    {op.liberado_orcamento ? 'Gerar Proposta PDF' : 'Proposta PDF (Aguardando Liberação)'}
                                                                                 </Dropdown.Item>
-                                                                                <Dropdown.Item className="small">Ver Detalhes</Dropdown.Item>
-                                                                                <Dropdown.Item className="small">Editar</Dropdown.Item>
+                                                                                <Dropdown.Item className="small" onClick={() => handleViewDetails(op)}>Ver Detalhes</Dropdown.Item>
+                                                                                <Dropdown.Item className="small" onClick={() => { setFormData(op); setShowModal(true); }}>Editar</Dropdown.Item>
                                                                                 <Dropdown.Divider />
-                                                                                <Dropdown.Item className="small text-danger">Excluir</Dropdown.Item>
+                                                                                <Dropdown.Item className="small text-danger" onClick={() => handleDeleteClick(op.id)}>Excluir</Dropdown.Item>
                                                                             </Dropdown.Menu>
                                                                         </Dropdown>
                                                                     </div>
@@ -499,6 +547,16 @@ const Kanban: React.FC = () => {
                     oportunidadeTitulo={selectedOpForFiles.titulo}
                 />
             )}
+
+            <ConfirmModal
+                show={showDeleteModal}
+                title="Excluir Oportunidade"
+                message="Tem certeza que deseja excluir esta oportunidade? Esta ação não pode ser desfeita."
+                onConfirm={() => opToDelete && deleteMutation.mutate(opToDelete)}
+                onCancel={() => setShowDeleteModal(false)}
+                confirmLabel="Excluir"
+                cancelLabel="Cancelar"
+            />
 
             <style>{`
                 .rounded-12 { border-radius: 12px !important; }

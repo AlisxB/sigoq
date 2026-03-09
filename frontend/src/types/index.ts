@@ -160,6 +160,7 @@ export interface Oportunidade {
     total_arquivos?: number;
     motivo_perda?: string;
     detalhes_perda?: string;
+    liberado_orcamento: boolean;
 }
 
 export interface ArquivoOportunidade {
