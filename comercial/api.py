@@ -46,7 +46,6 @@ class OportunidadeViewSet(viewsets.ModelViewSet):
         if not user.is_authenticated:
             return Oportunidade.objects.none()
             
-        # RESTRIÇÃO: ADMIN, GERENTE e ORCAMENTISTA vêem tudo.
         is_privileged = user.is_superuser or user.is_staff or (
             hasattr(user, 'perfil') and 
             user.perfil.cargo in ['ADMIN', 'GERENTE', 'ORCAMENTISTA']
@@ -55,8 +54,9 @@ class OportunidadeViewSet(viewsets.ModelViewSet):
         qs = Oportunidade.objects.all().select_related('cliente', 'status', 'vendedor')
         
         if not is_privileged:
-            # Vendedores comuns vêem apenas seus próprios registros
-            qs = qs.filter(vendedor=user)
+            # Vendedores comuns vêem seus registros e também registros sem vendedor atribuído
+            from django.db.models import Q
+            qs = qs.filter(Q(vendedor=user) | Q(vendedor__isnull=True))
             
         return qs.order_by('-numero')
 
