@@ -57,7 +57,8 @@ const AdminDashboardView: React.FC = () => {
 
     // Memoized Chart Data
     const radialSeries = useMemo(() => {
-        if (!funnelData || totalFunnel === 0) return [];
+        if (!funnelData) return [];
+        if (totalFunnel === 0) return funnelData.map(() => 0);
         return funnelData.map(d => Math.round((parseFloat(d.total) / totalFunnel) * 100));
     }, [funnelData, totalFunnel]);
 
