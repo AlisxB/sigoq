@@ -57,8 +57,8 @@ export const usePricingCalculations = (config: ConfiguracaoPreco | undefined) =>
         const updatedKits = kits.map(kit => {
             const updatedItens = kit.itens.map(item => {
                 const custoUnit = parseFloat(item.custo_unit_snapshot);
-                const qtdRaw = parseFloat(item.quantidade || '0');
-                const quantidade = qtdRaw > 0 ? qtdRaw : 0; // Impede quantidades negativas
+                const qtdRaw = parseFloat(item.quantidade || '1');
+                const quantidade = qtdRaw >= 1 ? qtdRaw : 1; // Impede quantidades < 1
 
                 const { vlrVendaUnit, subtotal } = calculateItemTotals(
                     custoUnit,
