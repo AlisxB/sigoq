@@ -343,6 +343,44 @@ const Clientes: React.FC = () => {
         </Row>
     );
 
+    const [selectedVendedor, setSelectedVendedor] = useState<number | string>('');
+
+    const renderFilters = () => {
+        if (!isOnlyAdmin) return null;
+
+        return (
+            <div style={{ flex: '1 1 200px', maxWidth: '300px' }}>
+                <Form.Label className="form-premium-label">Vendedor</Form.Label>
+                <InputGroup className="shadow-sm rounded-12 overflow-hidden border">
+                    <InputGroup.Text className="bg-white border-0 ps-3">
+                        <UserIcon size={18} className="text-muted" />
+                    </InputGroup.Text>
+                    <Form.Select
+                        value={selectedVendedor}
+                        onChange={(e) => setSelectedVendedor(e.target.value)}
+                        className="border-0 shadow-none py-2 ps-0"
+                        style={{ color: '#2A3547' }}
+                    >
+                        <option value="">Todos os Vendedores</option>
+                        {vendedores.map((v: User) => (
+                            <option key={v.id} value={v.id}>
+                                {v.full_name || v.username}
+                            </option>
+                        ))}
+                    </Form.Select>
+                </InputGroup>
+            </div>
+        );
+    };
+
+    const extraParams = useMemo(() => {
+        const params: any = {};
+        if (isOnlyAdmin && selectedVendedor) {
+            params.vendedor = selectedVendedor;
+        }
+        return params;
+    }, [isOnlyAdmin, selectedVendedor]);
+
     return (
         <GenericCRUD<Cliente>
             title="Gestão de Clientes"
@@ -353,6 +391,8 @@ const Clientes: React.FC = () => {
             initialData={initialData}
             queryKey="clientes"
             useInfinite={true}
+            renderFilters={renderFilters}
+            extraParams={extraParams}
         />
     );
 };

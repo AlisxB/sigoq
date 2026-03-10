@@ -21,6 +21,11 @@ class ClienteViewSet(viewsets.ModelViewSet):
         
         # Usamos Cliente.objects para garantir que o SoftDeleteManager filtre os deletados
         qs = Cliente.objects.all().select_related('vendedor')
+
+        # Filtro manual por vendedor para administradores
+        vendedor_id = self.request.query_params.get('vendedor')
+        if vendedor_id and is_privileged:
+            qs = qs.filter(vendedor_id=vendedor_id)
         
         if not is_privileged:
             # Vendedores comuns vêem apenas seus próprios clientes

@@ -2,7 +2,7 @@ import api from './client';
 import { Cliente } from '../types';
 
 export const clienteApi = {
-    list: (params?: { page?: number, search?: string, page_size?: number }): Promise<any> => 
+    list: (params?: any): Promise<any> => 
         api.get('clientes/api/clientes/', { params }).then(res => res.data),
     get: (id: string | number): Promise<Cliente> => api.get(`clientes/api/clientes/${id}/`).then(res => res.data),
     create: (data: Partial<Cliente>): Promise<Cliente> => api.post('clientes/api/clientes/', data).then(res => res.data),
