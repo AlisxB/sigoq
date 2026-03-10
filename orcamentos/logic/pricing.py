@@ -42,8 +42,10 @@ def calculate_item_totals(
     """
     Calcula os totais de um item de orçamento considerando desconto.
     Retorna um dicionário com os valores calculados.
+    Garante que quantidades negativas sejam tratadas como zero.
     """
-    subtotal = vlr_unit_venda * quantidade
+    qtd_segura = max(Decimal('0'), quantidade)
+    subtotal = vlr_unit_venda * qtd_segura
     desconto_valor = subtotal * (desconto_percent / Decimal('100'))
     total = subtotal - desconto_valor
     

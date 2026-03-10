@@ -33,13 +33,25 @@ for id, nome, cor, ordem, tech in data:
 print('Status do Kanban validados com sucesso!')
 "
 
-echo "4/5 -> Verificando integridade das configurações de preço..."
+echo "4/5 -> Verificando/Criando configurações de preço padrão..."
 python manage.py shell -c "
 from orcamentos.models import ConfiguracaoPreco
 if not ConfiguracaoPreco.objects.filter(ativo=True).exists():
-    print('Atenção: Nenhuma configuração de preço ativa encontrada. Lembre-se de configurar os markups no sistema.')
+    ConfiguracaoPreco.objects.create(
+        nome='Padrão (Auto)',
+        markup_engenharia=0.1000,
+        markup_capitalizacao=0.0500,
+        markup_frete=0.0300,
+        markup_imposto=0.1500,
+        markup_comissao=0.0500,
+        markup_difal=0.0000,
+        markup_frete_especial=0.0000,
+        margem_contribuicao_padrao=0.2000,
+        ativo=True
+    )
+    print('Sucesso: Configuração de preço padrão criada.')
 else:
-    print('Configurações de preço detectadas.')
+    print('Configurações de preço já existem.')
 "
 
 echo "5/5 -> Garantindo privilégios de ADMIN para todos os Superusuários..."

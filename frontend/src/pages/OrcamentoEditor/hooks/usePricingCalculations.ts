@@ -28,19 +28,28 @@ export const usePricingCalculations = (config: ConfiguracaoPreco | undefined) =>
         marginStr: string,
         discountStr: string
     ) => {
-        if (!config) return { kits, custoTotal: 0, valorTotal: 0 };
+        // Fallback robusto caso não haja configuração no banco (Markup padrão de ~33% de encargos + margem)
+        const activeConfig = config || {
+            markup_engenharia: '0.1000',
+            markup_capitalizacao: '0.0500',
+            markup_frete: '0.0300',
+            markup_imposto: '0.1500',
+            markup_comissao: '0.0000',
+            markup_difal: '0.0000',
+            markup_frete_especial: '0.0000'
+        };
 
         const margin = parseFloat(marginStr || '0.2000');
         const discount = parseFloat(discountStr || '0') / 100;
 
         const somaEncargos = 
-            parseFloat(config.markup_engenharia) +
-            parseFloat(config.markup_capitalizacao) +
-            parseFloat(config.markup_frete) +
-            parseFloat(config.markup_imposto) +
-            parseFloat(config.markup_comissao) +
-            parseFloat(config.markup_difal) +
-            parseFloat(config.markup_frete_especial);
+            parseFloat(activeConfig.markup_engenharia || '0') +
+            parseFloat(activeConfig.markup_capitalizacao || '0') +
+            parseFloat(activeConfig.markup_frete || '0') +
+            parseFloat(activeConfig.markup_imposto || '0') +
+            parseFloat(activeConfig.markup_comissao || '0') +
+            parseFloat(activeConfig.markup_difal || '0') +
+            parseFloat(activeConfig.markup_frete_especial || '0');
 
         let totalCusto = 0;
         let totalVenda = 0;
@@ -48,18 +57,21 @@ export const usePricingCalculations = (config: ConfiguracaoPreco | undefined) =>
         const updatedKits = kits.map(kit => {
             const updatedItens = kit.itens.map(item => {
                 const custoUnit = parseFloat(item.custo_unit_snapshot);
+                const qtdRaw = parseFloat(item.quantidade || '0');
+                const quantidade = qtdRaw > 0 ? qtdRaw : 0; // Impede quantidades negativas
+
                 const { vlrVendaUnit, subtotal } = calculateItemTotals(
                     custoUnit,
-                    parseFloat(item.quantidade),
+                    quantidade,
                     somaEncargos,
                     margin,
                     parseFloat(item.desconto_unit_valor || '0')
                 );
 
-                totalCusto += custoUnit * parseFloat(item.quantidade);
+                totalCusto += custoUnit * quantidade;
                 totalVenda += subtotal;
 
-                return { ...item, vlr_unit_venda: vlrVendaUnit.toFixed(2) };
+                return { ...item, vlr_unit_venda: vlrVendaUnit.toFixed(2), quantidade: quantidade.toString() };
             });
             return { ...kit, itens: updatedItens };
         });
