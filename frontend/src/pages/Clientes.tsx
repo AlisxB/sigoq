@@ -34,15 +34,28 @@ const Clientes: React.FC = () => {
         return [];
     }, [vendedoresData]);
 
-    const columns = [
-        { header: 'Nome/Razão Social', accessor: (item: Cliente) => item.nome_fantasia || item.razao_social },
-        { 
-            header: 'Doc (CPF/CNPJ)', 
-            accessor: (item: Cliente) => item.cnpj ? maskCNPJ(item.cnpj) : (item.cpf ? maskCPF(item.cpf) : '---')
-        },
-        { header: 'E-mail', accessor: 'email' as const },
-        { header: 'Cidade/UF', accessor: (item: Cliente) => `${item.cidade || ''}/${item.estado || ''}` },
-    ];
+    const isOnlyAdmin = useMemo(() => user?.role === 'ADMIN', [user]);
+
+    const columns = useMemo(() => {
+        const baseColumns = [
+            { header: 'Nome/Razão Social', accessor: (item: Cliente) => item.nome_fantasia || item.razao_social },
+            { 
+                header: 'Doc (CPF/CNPJ)', 
+                accessor: (item: Cliente) => item.cnpj ? maskCNPJ(item.cnpj) : (item.cpf ? maskCPF(item.cpf) : '---')
+            },
+            { header: 'E-mail', accessor: 'email' as const },
+            { header: 'Cidade/UF', accessor: (item: Cliente) => `${item.cidade || ''}/${item.estado || ''}` },
+        ];
+
+        if (isOnlyAdmin) {
+            baseColumns.push({ 
+                header: 'Vendedor', 
+                accessor: (item: any) => item.vendedor_nome || '---' 
+            });
+        }
+
+        return baseColumns;
+    }, [isOnlyAdmin]);
 
     const initialData = useMemo(() => ({
         razao_social: '',
